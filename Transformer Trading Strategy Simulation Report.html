@@ -275,8 +275,8 @@ max-height: 60vh;
         }
     };
 
-    const top10 = fullData.slice(0, 10);
-    const worst10 = fullData.slice(-10).sort((a,b) => a.return_pct - b.return_pct);
+    const top10 = fullData.slice(0, 50);
+    const worst10 = fullData.slice(-50).sort((a,b) => a.return_pct - b.return_pct);
 
     new Chart(document.getElementById('topPerformersChart'), {
         type: 'bar',
