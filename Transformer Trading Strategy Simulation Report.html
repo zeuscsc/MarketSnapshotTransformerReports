@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Annual Portfolio Performance Report</title>
+<title>AI Trading Strategy Performance Analysis</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,288 +20,303 @@ width: 100%;
 max-width: 600px;
 margin-left: auto;
 margin-right: auto;
-height: 400px;
-max-height: 50vh;
+height: 350px;
+max-height: 400px;
 }
-@media (max-width: 768px) {
+@media (min-width: 768px) {
 .chart-container {
-height: 300px;
-max-height: 40vh;
+height: 400px;
 }
+}
+.stat-card {
+background-color: rgba(255, 255, 255, 0.1);
+backdrop-filter: blur(10px);
+border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.loss {
+color: #FF5B5B;
+}
+.profit {
+color: #4ade80;
 }
 </style>
 </head>
-<body class="bg-gray-900 text-gray-200">
+<body class="bg-[#023047] text-gray-200">
 
 <div class="container mx-auto p-4 md:p-8">
-    
+
     <header class="text-center mb-12">
-        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight" style="color: #00F5D4;">Annual Portfolio Performance Review</h1>
-        <p class="mt-4 text-lg text-gray-400">An analysis of asset performance over the past year.</p>
+        <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-2">AI Trading Strategy Performance Analysis</h1>
+        <p class="text-lg md:text-xl text-[#90E0EF]">A Deep Dive into a 120-Ticker Simulation on the Test Set</p>
     </header>
-    
-    <section id="overview" class="mb-16">
-        <h2 class="text-3xl font-bold text-center mb-8" style="color: #00CCBF;">Portfolio At-a-Glance</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div class="bg-gray-800 p-6 rounded-lg shadow-lg flex flex-col justify-center">
-                <p class="text-lg font-medium text-gray-400">Total Portfolio Value</p>
-                <p id="totalValue" class="text-4xl font-extrabold" style="color: #00F5D4;">$0.00</p>
+
+    <section id="summary" class="mb-16">
+        <h2 class="text-3xl font-bold text-white text-center mb-8">Executive Summary: The Big Picture</h2>
+        <div class="text-center mb-8 max-w-3xl mx-auto">
+            <p class="text-lg text-gray-300">
+                An extensive simulation was conducted on a test set of 120 diverse tickers to evaluate the efficacy of a new AI-driven trading strategy. While the model identified several tickers with significant positive returns, the cumulative performance across the entire portfolio indicates that the strategy, in its current state, is not profitable. The overall result was a net loss, highlighting key areas for further analysis and optimization.
+            </p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-white">
+            <div class="stat-card rounded-2xl p-6 text-center shadow-2xl col-span-1 md:col-span-2">
+                <h3 class="text-2xl font-semibold text-[#90E0EF] mb-2">Overall Portfolio Return</h3>
+                <p class="text-6xl font-black loss">-1.35%</p>
             </div>
-            <div class="bg-gray-800 p-6 rounded-lg shadow-lg flex flex-col justify-center">
-                <p class="text-lg font-medium text-gray-400">Overall Portfolio Return</p>
-                <p id="overallReturn" class="text-4xl font-extrabold text-green-400">0.00%</p>
+            <div class="stat-card rounded-2xl p-6 text-center shadow-lg">
+                <h3 class="text-xl font-semibold text-[#90E0EF] mb-2">Total Profit / Loss</h3>
+                <p class="text-4xl font-bold loss">-$16,160.52</p>
             </div>
-            <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
-                 <p class="text-lg font-medium text-gray-400 mb-2">Asset Performance Split</p>
-                <div class="chart-container" style="height: 150px; max-height: 150px;">
-                    <canvas id="winLossChart"></canvas>
+            <div class="stat-card rounded-2xl p-6 text-center shadow-lg">
+                <h3 class="text-xl font-semibold text-[#90E0EF] mb-2">Average Max Drawdown</h3>
+                <p class="text-4xl font-bold">-13.09%</p>
+            </div>
+            <div class="stat-card rounded-2xl p-6 text-center shadow-lg">
+                <h3 class="text-xl font-semibold text-[#90E0EF] mb-2">Average Ticker Return</h3>
+                <p class="text-4xl font-bold loss">-1.35%</p>
+            </div>
+            <div class="stat-card rounded-2xl p-6 text-center shadow-lg">
+                <h3 class="text-xl font-semibold text-[#90E0EF] mb-2">Average # of Trades</h3>
+                <p class="text-4xl font-bold">80.08</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="distribution" class="mb-16">
+        <h2 class="text-3xl font-bold text-white text-center mb-8">Performance Distribution: Winners vs. Losers</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-1 bg-white/10 p-6 rounded-2xl shadow-lg">
+                <h3 class="text-2xl font-semibold text-center mb-4 text-[#90E0EF]">Profitable vs. Unprofitable Tickers</h3>
+                 <p class="text-gray-300 mb-4 text-center">
+                    Out of 120 tickers, the strategy yielded more losing positions than winning ones. This visualization clearly shows that the losses from a majority of the tickers outweighed the gains from the minority, leading to an overall negative portfolio return.
+                </p>
+                <div class="chart-container h-[300px] md:h-[350px]">
+                    <canvas id="distributionChart"></canvas>
+                </div>
+            </div>
+            <div class="lg:col-span-2 bg-white/10 p-6 rounded-2xl shadow-lg">
+                <h3 class="text-2xl font-semibold text-center mb-4 text-[#90E0EF]">Top & Bottom Performers</h3>
+                 <p class="text-gray-300 mb-4 text-center">
+                    A closer look reveals a dramatic split in performance. A small group of tickers, led by ASTS, delivered exceptional returns. Conversely, a significant number of tickers experienced substantial losses, with the bottom performers severely impacting the portfolio's total value.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                         <h4 class="text-lg font-bold text-center text-green-400">Top 10 Best Performing Tickers (% Return)</h4>
+                        <div class="chart-container h-[300px] md:h-[400px]">
+                            <canvas id="topPerformersChart"></canvas>
+                        </div>
+                    </div>
+                    <div>
+                         <h4 class="text-lg font-bold text-center text-red-400">Top 10 Worst Performing Tickers (% Return)</h4>
+                         <div class="chart-container h-[300px] md:h-[400px]">
+                            <canvas id="bottomPerformersChart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="top-performers" class="mb-16">
-        <h2 class="text-3xl font-bold text-center mb-2" style="color: #00CCBF;">🚀 Top Performers</h2>
-        <p class="text-center text-gray-400 mb-8">These assets led the portfolio with significant year-over-year gains, driving overall growth.</p>
-        <div class="bg-gray-800 p-4 md:p-6 rounded-lg shadow-lg">
-            <div class="chart-container">
-                <canvas id="topPerformersChart"></canvas>
-            </div>
-        </div>
-    </section>
-    
-    <section id="underperformers" class="mb-16">
-        <h2 class="text-3xl font-bold text-center mb-2" style="color: #00CCBF;">📉 Underperformers</h2>
-        <p class="text-center text-gray-400 mb-8">These assets detracted from the portfolio's performance, representing areas for strategic review.</p>
-        <div class="bg-gray-800 p-4 md:p-6 rounded-lg shadow-lg">
-            <div class="chart-container">
-                <canvas id="underperformersChart"></canvas>
-            </div>
-        </div>
-    </section>
-
-    <section id="risk-analysis" class="mb-16">
-        <h2 class="text-3xl font-bold text-center mb-2" style="color: #00CCBF;">Risk vs. Reward Analysis</h2>
-        <p class="text-center text-gray-400 mb-8">Comparing year-over-year returns against peak-to-trough drawdowns to understand asset volatility.</p>
-         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-2 bg-gray-800 p-4 md:p-6 rounded-lg shadow-lg">
-                <div class="chart-container" style="height: 450px; max-height: 60vh;">
-                    <canvas id="riskRewardScatter"></canvas>
+    <section id="risk-return" class="mb-16">
+        <h2 class="text-3xl font-bold text-white text-center mb-8">Risk vs. Return Analysis</h2>
+         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+            <div class="lg:col-span-2 bg-white/10 p-6 rounded-2xl shadow-lg">
+                <h3 class="text-2xl font-semibold text-center mb-4 text-[#90E0EF]">Return % vs. Max Drawdown %</h3>
+                <div class="chart-container h-96 max-h-[500px]">
+                     <canvas id="riskReturnScatter"></canvas>
                 </div>
             </div>
-            <div class="bg-gray-800 p-6 rounded-lg shadow-lg flex flex-col justify-center text-center">
-                <p class="text-lg font-medium text-gray-400">Highest Volatility (Drawdown)</p>
-                <p id="highestDrawdownTicker" class="text-5xl font-extrabold mt-2" style="color: #00F5D4;"></p>
-                <p id="highestDrawdownValue" class="text-3xl font-bold text-red-400 mt-1"></p>
-                <p class="text-gray-500 mt-4">This asset experienced the largest percentage drop from its peak during the period.</p>
+            <div class="lg:col-span-1">
+                 <p class="text-lg text-gray-300">
+                    This scatter plot visualizes the relationship between risk (Max Drawdown) and reward (Return %). Each point is a ticker. Ideally, we want to see tickers in the top-left quadrant (high return, low drawdown).
+                </p>
+                <p class="text-lg text-gray-300 mt-4">
+                    The data shows that many profitable tickers (green) required tolerating significant drawdowns of -15% to -25%. Conversely, many losing tickers (red) also exhibited high drawdowns, indicating the strategy's risk profile is high across the board and not always compensated by returns.
+                </p>
             </div>
         </div>
     </section>
 
-    <section id="full-report">
-        <h2 class="text-3xl font-bold text-center mb-8" style="color: #00CCBF;">Detailed Performance Data</h2>
-         <div class="overflow-x-auto bg-gray-800 rounded-lg shadow-lg p-4">
-            <table class="w-full text-left">
-                <thead class="border-b border-gray-600">
-                    <tr>
-                        <th class="p-3 text-sm font-semibold tracking-wide" style="color: #00F5D4;">Ticker</th>
-                        <th class="p-3 text-sm font-semibold tracking-wide text-right" style="color: #00F5D4;">YoY Return (%)</th>
-                        <th class="p-3 text-sm font-semibold tracking-wide text-right" style="color: #00F5D4;">Drawdown (%)</th>
-                        <th class="p-3 text-sm font-semibold tracking-wide text-right" style="color: #00F5D4;">Final Value</th>
-                    </tr>
-                </thead>
-                <tbody id="dataTableBody">
-                </tbody>
-            </table>
+    <section id="trades-return" class="mb-16">
+        <h2 class="text-3xl font-bold text-white text-center mb-8">Trading Activity Analysis</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+             <div class="lg:col-span-1 lg:order-2">
+                 <p class="text-lg text-gray-300">
+                    Does more trading lead to more profit? This scatter plot investigates the relationship between the number of trades executed and the final return for each ticker.
+                </p>
+                <p class="text-lg text-gray-300 mt-4">
+                    There appears to be no clear positive correlation. Some of the most profitable tickers had a moderate number of trades (e.g., ASTS with 51 trades). Meanwhile, some of the most frequently traded tickers (e.g., JNJ with 168 trades) resulted in significant losses. This suggests that trade quantity is not a primary driver of success for this strategy; trade quality is paramount.
+                </p>
+            </div>
+            <div class="lg:col-span-2 bg-white/10 p-6 rounded-2xl shadow-lg lg:order-1">
+                <h3 class="text-2xl font-semibold text-center mb-4 text-[#90E0EF]">Return % vs. Number of Trades</h3>
+                <div class="chart-container h-96 max-h-[500px]">
+                    <canvas id="tradesReturnScatter"></canvas>
+                </div>
+            </div>
         </div>
     </section>
 
-    <footer class="text-center mt-12 py-6 border-t border-gray-700">
-        <p class="text-gray-500">Data based on internal performance logs as of June 5, 2025.</p>
-        <p class="text-gray-600 text-sm mt-2">This is an auto-generated report. Not financial advice.</p>
+    <footer class="text-center mt-12 pt-8 border-t border-blue-900/50">
+         <p class="text-lg text-[#90E0EF]">Concluding Insights</p>
+        <p class="max-w-3xl mx-auto text-gray-300">
+            While the AI model demonstrates an ability to find profitable opportunities, its overall performance is undermined by a larger number of unprofitable trades and high-risk exposure. The strategy is not currently viable for deployment. Future work should focus on improving trade selection criteria, implementing more robust risk management protocols to reduce drawdowns, and identifying the specific characteristics that separate the winning tickers from the losers.
+        </p>
     </footer>
 
 </div>
 
 <script>
-    const rawData = `
-
-ASTS   51.62%  5161.93       -18.37%         51     10000.00    15161.93
-CMG    41.54%  4154.01       -10.03%         33     10000.00    14154.01
-CORT   41.44%  4144.15       -10.04%         33     10000.00    14144.15
-EQT    18.54%  1854.29        -7.04%         83     10000.00    11854.29
-MU     17.77%  1776.75       -18.62%         54     10000.00    11776.75
-NVDA   11.76%  1175.54       -15.40%         82     10000.00    11175.54
-AXS    11.12%  1112.07        -4.35%        132     10000.00    11112.07
-LBRDA  10.78%  1078.25        -8.52%         57     10000.00    11078.25
-HIMS   10.05%  1004.59       -30.82%         24     10000.00    11004.59
-CRWD    9.11%   911.33       -15.32%         70     10000.00    10911.33
-BSX     8.75%   874.56        -7.21%        108     10000.00    10874.56
-F       8.67%   866.72        -7.95%         87     10000.00    10866.72
-KNSL    7.96%   796.24        -9.20%         72     10000.00    10796.24
-EXEL    7.82%   782.26        -4.73%         99     10000.00    10782.26
-MELI    7.43%   742.65        -8.10%         81     10000.00    10742.65
-AR      7.40%   740.14       -10.38%         65     10000.00    10740.14
-APH     6.87%   687.38        -7.79%        110     10000.00    10687.38
-AVGO    6.29%   629.38       -24.08%         64     10000.00    10629.38
-FTAI    6.28%   628.16       -24.79%         32     10000.00    10628.16
-BA      6.24%   623.80        -9.83%         70     10000.00    10623.80
-FTNT    5.93%   593.28       -11.73%         96     10000.00    10593.28
-KLAC    5.92%   591.70       -11.31%         86     10000.00    10591.70
-DE      5.84%   584.14        -7.68%        133     10000.00    10584.14
-EAT     4.86%   485.84       -13.28%         43     10000.00    10485.84
-OVV     4.65%   465.31       -11.69%         75     10000.00    10465.31
-CQP     4.15%   415.33        -5.35%        110     10000.00    10415.33
-NFLX    3.98%   398.25        -7.58%         64     10000.00    10398.25
-BKNG    3.91%   390.77        -0.91%          1     10000.00    10390.77
-LNTH    3.68%   368.31       -17.02%         47     10000.00    10368.31
-INSM    2.89%   289.06        -7.61%         85     10000.00    10289.06
-CHTR    2.64%   263.96        -6.86%         92     10000.00    10263.96
-INTC    2.59%   258.85       -13.12%         61     10000.00    10258.85
-AJG     2.29%   229.00        -4.31%        101     10000.00    10229.00
-COR     2.09%   208.72        -4.85%         80     10000.00    10208.72
-JPM     2.05%   204.70       -10.28%        100     10000.00    10204.70
-PANW    1.77%   177.13        -7.96%         79     10000.00    10177.13
-AM      1.32%   132.49        -5.77%        115     10000.00    10132.49
-ADSK    1.27%   127.24       -11.12%         81     10000.00    10127.24
-CSCO    1.22%   121.71        -8.82%         86     10000.00    10121.71
-ETN     1.12%   112.08       -12.40%         44     10000.00    10112.08
-AER     0.98%    98.31        -7.42%        149     10000.00    10098.31
-AMZN    0.52%    52.38       -14.03%         93     10000.00    10052.38
-CBOE    0.29%    28.78        -5.69%        108     10000.00    10028.78
-BRK     0.00%     0.00         0.00%          0     10000.00    10000.00
-IBM    -0.13%   -13.39        -7.92%        100     10000.00     9986.61
-GOOG   -0.25%   -25.48       -13.27%         81     10000.00     9974.52
-NOW    -0.30%   -30.31       -15.08%         67     10000.00     9969.69
-AXP    -0.62%   -61.53       -13.39%         78     10000.00     9938.47
-MTG    -0.76%   -76.44       -10.12%        115     10000.00     9923.56
-MO     -0.81%   -81.47        -7.52%         88     10000.00     9918.53
-MSFT   -0.89%   -89.35        -7.09%        149     10000.00     9910.65
-COST   -1.02%  -102.34        -8.20%        111     10000.00     9897.66
-MPC    -1.09%  -108.71       -10.79%         69     10000.00     9891.29
-ORLY   -1.41%  -140.93        -4.99%        135     10000.00     9859.07
-HCA    -1.77%  -177.09       -12.15%         77     10000.00     9822.91
-MSI    -1.78%  -177.95        -8.39%         95     10000.00     9822.05
-MS     -1.86%  -186.44       -13.83%         71     10000.00     9813.56
-MPLX   -2.15%  -214.55        -6.90%        132     10000.00     9785.45
-ISRG   -2.23%  -223.25       -11.41%        122     10000.00     9776.75
-EG     -2.34%  -234.00        -8.03%        133     10000.00     9766.00
-MSTR   -2.69%  -269.34       -25.01%         24     10000.00     9730.66
-CNC    -2.83%  -283.36       -13.95%         96     10000.00     9716.64
-GLD    -3.08%  -308.13        -6.57%        117     10000.00     9691.87
-BAC    -3.33%  -332.69       -13.23%         83     10000.00     9667.31
-NEE    -3.40%  -339.50       -10.52%         88     10000.00     9660.50
-ABBV   -3.69%  -369.32        -8.67%         59     10000.00     9630.68
-EWBC   -3.76%  -376.07       -14.49%         67     10000.00     9623.93
-ORCL   -3.86%  -386.27       -14.33%         57     10000.00     9613.73
-IBKR   -4.01%  -401.07       -20.79%         47     10000.00     9598.93
-ET     -4.14%  -414.22       -11.84%        103     10000.00     9585.78
-GILD   -4.26%  -426.33        -9.61%        109     10000.00     9573.67
-MCK    -4.31%  -430.60        -8.01%        118     10000.00     9569.40
-KO     -4.39%  -438.62        -8.66%        104     10000.00     9561.38
-META   -4.49%  -449.07       -15.79%         82     10000.00     9550.93
-MMC    -4.63%  -463.19        -8.02%        117     10000.00     9536.81
-CG     -4.63%  -463.21       -18.54%         63     10000.00     9536.79
-CB     -4.83%  -483.38        -9.56%        166     10000.00     9516.62
-CTRA   -4.93%  -492.75        -9.45%         84     10000.00     9507.25
-ADMA   -5.17%  -517.04       -18.79%         24     10000.00     9482.96
-ACGL   -5.28%  -527.55       -12.05%         66     10000.00     9472.45
-EOG    -5.35%  -534.59        -9.69%         80     10000.00     9465.41
-CF     -5.52%  -552.03       -11.54%         75     10000.00     9447.97
-BLK    -5.76%  -576.09       -13.65%        111     10000.00     9423.91
-ESNT   -6.29%  -629.18       -11.26%         41     10000.00     9370.82
-MKTX   -6.37%  -636.51       -17.26%         80     10000.00     9363.49
-CVX    -6.49%  -648.59        -9.56%         82     10000.00     9351.41
-ACN    -6.69%  -669.26       -13.31%         87     10000.00     9330.74
-CAT    -6.97%  -697.17       -14.64%         88     10000.00     9302.83
-DINO   -7.11%  -710.98       -16.86%         59     10000.00     9289.02
-DVN    -7.11%  -711.39       -16.34%         70     10000.00     9288.61
-ARCC   -7.20%  -720.41       -13.48%        132     10000.00     9279.59
-ADBE   -7.31%  -731.15       -15.13%          5     10000.00     9268.85
-DIS    -7.48%  -748.38       -16.92%        103     10000.00     9251.62
-HES    -7.63%  -763.24       -12.66%         87     10000.00     9236.76
-ANET   -8.29%  -828.84       -24.21%         64     10000.00     9171.16
-GS     -8.32%  -831.88       -13.07%        131     10000.00     9168.12
-HON    -8.35%  -835.28       -13.09%        131     10000.00     9164.72
-OKE    -9.45%  -944.73       -13.08%         52     10000.00     9055.27
-APO    -9.47%  -946.71       -19.83%         63     10000.00     9053.29
-NKE    -9.61%  -960.96       -17.67%         42     10000.00     9039.04
-DELL   -9.62%  -961.76       -23.08%         36     10000.00     9038.24
-EPD    -9.71%  -970.60       -12.66%        132     10000.00     9029.40
-BMY    -9.79%  -978.88       -14.17%         93     10000.00     9021.12
-CDNS  -10.96% -1096.27       -13.79%         89     10000.00     8903.73
-PEP   -10.99% -1099.07       -11.77%        124     10000.00     8900.93
-LEN   -11.30% -1129.61       -15.55%         59     10000.00     8870.39
-AMGN  -11.36% -1135.81       -15.25%         72     10000.00     8864.19
-DHR   -11.63% -1162.53       -18.56%         56     10000.00     8837.47
-ELV   -13.16% -1316.41       -14.21%         15     10000.00     8683.59
-BX    -13.19% -1319.16       -20.52%         55     10000.00     8680.84
-JNJ   -13.47% -1346.89       -14.64%        168     10000.00     8653.11
-PAA   -14.07% -1406.61       -15.91%        108     10000.00     8593.39
-COP   -14.44% -1443.90       -17.38%         67     10000.00     8556.10
-MPWR  -14.85% -1484.74       -26.40%         35     10000.00     8515.26
-KKR   -15.21% -1520.85       -25.89%         59     10000.00     8479.15
-INTU  -15.28% -1528.01       -25.91%         59     10000.00     8471.99
-DHI   -16.11% -1610.66       -19.44%         56     10000.00     8389.34
-MRVL  -17.59% -1759.23       -33.40%         44     10000.00     8240.77
-APA   -18.04% -1803.88       -26.07%         36     10000.00     8196.12
-CVNA  -26.35% -2634.87       -37.17%         31     10000.00     7365.13
-`;
-
-    const data = rawData.trim().split('n').map(line => {
-        const parts = line.trim().split(/s+/);
-        return {
-            ticker: parts[0],
-            yoyReturn: parseFloat(parts[1]),
-            drawdown: parseFloat(parts[3]),
-            finalValue: parseFloat(parts[6])
-        };
-    });
-
-    const palette = {
-        primary: '#00F5D4',
-        secondary: '#00CCBF',
-        tertiary: '#00A3A3',
-        quaternary: '#007A87',
-        quinary: '#00526B',
-        loss: '#FF5A5F',
-        gain: '#00F5D4'
-    };
+    const performanceData = [
+        { ticker: 'ASTS', return_pct: 51.62, profit: 5161.93, max_drawdown_pct: -18.37, num_trades: 51 },
+        { ticker: 'CMG', return_pct: 41.54, profit: 4154.01, max_drawdown_pct: -10.03, num_trades: 33 },
+        { ticker: 'CORT', return_pct: 41.44, profit: 4144.15, max_drawdown_pct: -10.04, num_trades: 33 },
+        { ticker: 'EQT', return_pct: 18.54, profit: 1854.29, max_drawdown_pct: -7.04, num_trades: 83 },
+        { ticker: 'MU', return_pct: 17.77, profit: 1776.75, max_drawdown_pct: -18.62, num_trades: 54 },
+        { ticker: 'NVDA', return_pct: 11.76, profit: 1175.54, max_drawdown_pct: -15.40, num_trades: 82 },
+        { ticker: 'AXS', return_pct: 11.12, profit: 1112.07, max_drawdown_pct: -4.35, num_trades: 132 },
+        { ticker: 'LBRDA', return_pct: 10.78, profit: 1078.25, max_drawdown_pct: -8.52, num_trades: 57 },
+        { ticker: 'HIMS', return_pct: 10.05, profit: 1004.59, max_drawdown_pct: -30.82, num_trades: 24 },
+        { ticker: 'CRWD', return_pct: 9.11, profit: 911.33, max_drawdown_pct: -15.32, num_trades: 70 },
+        { ticker: 'BSX', return_pct: 8.75, profit: 874.56, max_drawdown_pct: -7.21, num_trades: 108 },
+        { ticker: 'F', return_pct: 8.67, profit: 866.72, max_drawdown_pct: -7.95, num_trades: 87 },
+        { ticker: 'KNSL', return_pct: 7.96, profit: 796.24, max_drawdown_pct: -9.20, num_trades: 72 },
+        { ticker: 'EXEL', return_pct: 7.82, profit: 782.26, max_drawdown_pct: -4.73, num_trades: 99 },
+        { ticker: 'MELI', return_pct: 7.43, profit: 742.65, max_drawdown_pct: -8.10, num_trades: 81 },
+        { ticker: 'AR', return_pct: 7.40, profit: 740.14, max_drawdown_pct: -10.38, num_trades: 65 },
+        { ticker: 'APH', return_pct: 6.87, profit: 687.38, max_drawdown_pct: -7.79, num_trades: 110 },
+        { ticker: 'AVGO', return_pct: 6.29, profit: 629.38, max_drawdown_pct: -24.08, num_trades: 64 },
+        { ticker: 'FTAI', return_pct: 6.28, profit: 628.16, max_drawdown_pct: -24.79, num_trades: 32 },
+        { ticker: 'BA', return_pct: 6.24, profit: 623.80, max_drawdown_pct: -9.83, num_trades: 70 },
+        { ticker: 'FTNT', return_pct: 5.93, profit: 593.28, max_drawdown_pct: -11.73, num_trades: 96 },
+        { ticker: 'KLAC', return_pct: 5.92, profit: 591.70, max_drawdown_pct: -11.31, num_trades: 86 },
+        { ticker: 'DE', return_pct: 5.84, profit: 584.14, max_drawdown_pct: -7.68, num_trades: 133 },
+        { ticker: 'EAT', return_pct: 4.86, profit: 485.84, max_drawdown_pct: -13.28, num_trades: 43 },
+        { ticker: 'OVV', return_pct: 4.65, profit: 465.31, max_drawdown_pct: -11.69, num_trades: 75 },
+        { ticker: 'CQP', return_pct: 4.15, profit: 415.33, max_drawdown_pct: -5.35, num_trades: 110 },
+        { ticker: 'NFLX', return_pct: 3.98, profit: 398.25, max_drawdown_pct: -7.58, num_trades: 64 },
+        { ticker: 'BKNG', return_pct: 3.91, profit: 390.77, max_drawdown_pct: -0.91, num_trades: 1 },
+        { ticker: 'LNTH', return_pct: 3.68, profit: 368.31, max_drawdown_pct: -17.02, num_trades: 47 },
+        { ticker: 'INSM', return_pct: 2.89, profit: 289.06, max_drawdown_pct: -7.61, num_trades: 85 },
+        { ticker: 'CHTR', return_pct: 2.64, profit: 263.96, max_drawdown_pct: -6.86, num_trades: 92 },
+        { ticker: 'INTC', return_pct: 2.59, profit: 258.85, max_drawdown_pct: -13.12, num_trades: 61 },
+        { ticker: 'AJG', return_pct: 2.29, profit: 229.00, max_drawdown_pct: -4.31, num_trades: 101 },
+        { ticker: 'COR', return_pct: 2.09, profit: 208.72, max_drawdown_pct: -4.85, num_trades: 80 },
+        { ticker: 'JPM', return_pct: 2.05, profit: 204.70, max_drawdown_pct: -10.28, num_trades: 100 },
+        { ticker: 'PANW', return_pct: 1.77, profit: 177.13, max_drawdown_pct: -7.96, num_trades: 79 },
+        { ticker: 'AM', return_pct: 1.32, profit: 132.49, max_drawdown_pct: -5.77, num_trades: 115 },
+        { ticker: 'ADSK', return_pct: 1.27, profit: 127.24, max_drawdown_pct: -11.12, num_trades: 81 },
+        { ticker: 'CSCO', return_pct: 1.22, profit: 121.71, max_drawdown_pct: -8.82, num_trades: 86 },
+        { ticker: 'ETN', return_pct: 1.12, profit: 112.08, max_drawdown_pct: -12.40, num_trades: 44 },
+        { ticker: 'AER', return_pct: 0.98, profit: 98.31, max_drawdown_pct: -7.42, num_trades: 149 },
+        { ticker: 'AMZN', return_pct: 0.52, profit: 52.38, max_drawdown_pct: -14.03, num_trades: 93 },
+        { ticker: 'CBOE', return_pct: 0.29, profit: 28.78, max_drawdown_pct: -5.69, num_trades: 108 },
+        { ticker: 'BRK', return_pct: 0.00, profit: 0.00, max_drawdown_pct: 0.00, num_trades: 0 },
+        { ticker: 'IBM', return_pct: -0.13, profit: -13.39, max_drawdown_pct: -7.92, num_trades: 100 },
+        { ticker: 'GOOG', return_pct: -0.25, profit: -25.48, max_drawdown_pct: -13.27, num_trades: 81 },
+        { ticker: 'NOW', return_pct: -0.30, profit: -30.31, max_drawdown_pct: -15.08, num_trades: 67 },
+        { ticker: 'AXP', return_pct: -0.62, profit: -61.53, max_drawdown_pct: -13.39, num_trades: 78 },
+        { ticker: 'MTG', return_pct: -0.76, profit: -76.44, max_drawdown_pct: -10.12, num_trades: 115 },
+        { ticker: 'MO', return_pct: -0.81, profit: -81.47, max_drawdown_pct: -7.52, num_trades: 88 },
+        { ticker: 'MSFT', return_pct: -0.89, profit: -89.35, max_drawdown_pct: -7.09, num_trades: 149 },
+        { ticker: 'COST', return_pct: -1.02, profit: -102.34, max_drawdown_pct: -8.20, num_trades: 111 },
+        { ticker: 'MPC', return_pct: -1.09, profit: -108.71, max_drawdown_pct: -10.79, num_trades: 69 },
+        { ticker: 'ORLY', return_pct: -1.41, profit: -140.93, max_drawdown_pct: -4.99, num_trades: 135 },
+        { ticker: 'HCA', return_pct: -1.77, profit: -177.09, max_drawdown_pct: -12.15, num_trades: 77 },
+        { ticker: 'MSI', return_pct: -1.78, profit: -177.95, max_drawdown_pct: -8.39, num_trades: 95 },
+        { ticker: 'MS', return_pct: -1.86, profit: -186.44, max_drawdown_pct: -13.83, num_trades: 71 },
+        { ticker: 'MPLX', return_pct: -2.15, profit: -214.55, max_drawdown_pct: -6.90, num_trades: 132 },
+        { ticker: 'ISRG', return_pct: -2.23, profit: -223.25, max_drawdown_pct: -11.41, num_trades: 122 },
+        { ticker: 'EG', return_pct: -2.34, profit: -234.00, max_drawdown_pct: -8.03, num_trades: 133 },
+        { ticker: 'MSTR', return_pct: -2.69, profit: -269.34, max_drawdown_pct: -25.01, num_trades: 24 },
+        { ticker: 'CNC', return_pct: -2.83, profit: -283.36, max_drawdown_pct: -13.95, num_trades: 96 },
+        { ticker: 'GLD', return_pct: -3.08, profit: -308.13, max_drawdown_pct: -6.57, num_trades: 117 },
+        { ticker: 'BAC', return_pct: -3.33, profit: -332.69, max_drawdown_pct: -13.23, num_trades: 83 },
+        { ticker: 'NEE', return_pct: -3.40, profit: -339.50, max_drawdown_pct: -10.52, num_trades: 88 },
+        { ticker: 'ABBV', return_pct: -3.69, profit: -369.32, max_drawdown_pct: -8.67, num_trades: 59 },
+        { ticker: 'EWBC', return_pct: -3.76, profit: -376.07, max_drawdown_pct: -14.49, num_trades: 67 },
+        { ticker: 'ORCL', return_pct: -3.86, profit: -386.27, max_drawdown_pct: -14.33, num_trades: 57 },
+        { ticker: 'IBKR', return_pct: -4.01, profit: -401.07, max_drawdown_pct: -20.79, num_trades: 47 },
+        { ticker: 'ET', return_pct: -4.14, profit: -414.22, max_drawdown_pct: -11.84, num_trades: 103 },
+        { ticker: 'GILD', return_pct: -4.26, profit: -426.33, max_drawdown_pct: -9.61, num_trades: 109 },
+        { ticker: 'MCK', return_pct: -4.31, profit: -430.60, max_drawdown_pct: -8.01, num_trades: 118 },
+        { ticker: 'KO', return_pct: -4.39, profit: -438.62, max_drawdown_pct: -8.66, num_trades: 104 },
+        { ticker: 'META', return_pct: -4.49, profit: -449.07, max_drawdown_pct: -15.79, num_trades: 82 },
+        { ticker: 'MMC', return_pct: -4.63, profit: -463.19, max_drawdown_pct: -8.02, num_trades: 117 },
+        { ticker: 'CG', return_pct: -4.63, profit: -463.21, max_drawdown_pct: -18.54, num_trades: 63 },
+        { ticker: 'CB', return_pct: -4.83, profit: -483.38, max_drawdown_pct: -9.56, num_trades: 166 },
+        { ticker: 'CTRA', return_pct: -4.93, profit: -492.75, max_drawdown_pct: -9.45, num_trades: 84 },
+        { ticker: 'ADMA', return_pct: -5.17, profit: -517.04, max_drawdown_pct: -18.79, num_trades: 24 },
+        { ticker: 'ACGL', return_pct: -5.28, profit: -527.55, max_drawdown_pct: -12.05, num_trades: 66 },
+        { ticker: 'EOG', return_pct: -5.35, profit: -534.59, max_drawdown_pct: -9.69, num_trades: 80 },
+        { ticker: 'CF', return_pct: -5.52, profit: -552.03, max_drawdown_pct: -11.54, num_trades: 75 },
+        { ticker: 'BLK', return_pct: -5.76, profit: -576.09, max_drawdown_pct: -13.65, num_trades: 111 },
+        { ticker: 'ESNT', return_pct: -6.29, profit: -629.18, max_drawdown_pct: -11.26, num_trades: 41 },
+        { ticker: 'MKTX', return_pct: -6.37, profit: -636.51, max_drawdown_pct: -17.26, num_trades: 80 },
+        { ticker: 'CVX', return_pct: -6.49, profit: -648.59, max_drawdown_pct: -9.56, num_trades: 82 },
+        { ticker: 'ACN', return_pct: -6.69, profit: -669.26, max_drawdown_pct: -13.31, num_trades: 87 },
+        { ticker: 'CAT', return_pct: -6.97, profit: -697.17, max_drawdown_pct: -14.64, num_trades: 88 },
+        { ticker: 'DINO', return_pct: -7.11, profit: -710.98, max_drawdown_pct: -16.86, num_trades: 59 },
+        { ticker: 'DVN', return_pct: -7.11, profit: -711.39, max_drawdown_pct: -16.34, num_trades: 70 },
+        { ticker: 'ARCC', return_pct: -7.20, profit: -720.41, max_drawdown_pct: -13.48, num_trades: 132 },
+        { ticker: 'ADBE', return_pct: -7.31, profit: -731.15, max_drawdown_pct: -15.13, num_trades: 5 },
+        { ticker: 'DIS', return_pct: -7.48, profit: -748.38, max_drawdown_pct: -16.92, num_trades: 103 },
+        { ticker: 'HES', return_pct: -7.63, profit: -763.24, max_drawdown_pct: -12.66, num_trades: 87 },
+        { ticker: 'ANET', return_pct: -8.29, profit: -828.84, max_drawdown_pct: -24.21, num_trades: 64 },
+        { ticker: 'GS', return_pct: -8.32, profit: -831.88, max_drawdown_pct: -13.07, num_trades: 131 },
+        { ticker: 'HON', return_pct: -8.35, profit: -835.28, max_drawdown_pct: -13.09, num_trades: 131 },
+        { ticker: 'OKE', return_pct: -9.45, profit: -944.73, max_drawdown_pct: -13.08, num_trades: 52 },
+        { ticker: 'APO', return_pct: -9.47, profit: -946.71, max_drawdown_pct: -19.83, num_trades: 63 },
+        { ticker: 'NKE', return_pct: -9.61, profit: -960.96, max_drawdown_pct: -17.67, num_trades: 42 },
+        { ticker: 'DELL', return_pct: -9.62, profit: -961.76, max_drawdown_pct: -23.08, num_trades: 36 },
+        { ticker: 'EPD', return_pct: -9.71, profit: -970.60, max_drawdown_pct: -12.66, num_trades: 132 },
+        { ticker: 'BMY', return_pct: -9.79, profit: -978.88, max_drawdown_pct: -14.17, num_trades: 93 },
+        { ticker: 'CDNS', return_pct: -10.96, profit: -1096.27, max_drawdown_pct: -13.79, num_trades: 89 },
+        { ticker: 'PEP', return_pct: -10.99, profit: -1099.07, max_drawdown_pct: -11.77, num_trades: 124 },
+        { ticker: 'LEN', return_pct: -11.30, profit: -1129.61, max_drawdown_pct: -15.55, num_trades: 59 },
+        { ticker: 'AMGN', return_pct: -11.36, profit: -1135.81, max_drawdown_pct: -15.25, num_trades: 72 },
+        { ticker: 'DHR', return_pct: -11.63, profit: -1162.53, max_drawdown_pct: -18.56, num_trades: 56 },
+        { ticker: 'ELV', return_pct: -13.16, profit: -1316.41, max_drawdown_pct: -14.21, num_trades: 15 },
+        { ticker: 'BX', return_pct: -13.19, profit: -1319.16, max_drawdown_pct: -20.52, num_trades: 55 },
+        { ticker: 'JNJ', return_pct: -13.47, profit: -1346.89, max_drawdown_pct: -14.64, num_trades: 168 },
+        { ticker: 'PAA', return_pct: -14.07, profit: -1406.61, max_drawdown_pct: -15.91, num_trades: 108 },
+        { ticker: 'COP', return_pct: -14.44, profit: -1443.90, max_drawdown_pct: -17.38, num_trades: 67 },
+        { ticker: 'MPWR', return_pct: -14.85, profit: -1484.74, max_drawdown_pct: -26.40, num_trades: 35 },
+        { ticker: 'KKR', return_pct: -15.21, profit: -1520.85, max_drawdown_pct: -25.89, num_trades: 59 },
+        { ticker: 'INTU', return_pct: -15.28, profit: -1528.01, max_drawdown_pct: -25.91, num_trades: 59 },
+        { ticker: 'DHI', return_pct: -16.11, profit: -1610.66, max_drawdown_pct: -19.44, num_trades: 56 },
+        { ticker: 'MRVL', return_pct: -17.59, profit: -1759.23, max_drawdown_pct: -33.40, num_trades: 44 },
+        { ticker: 'APA', return_pct: -18.04, profit: -1803.88, max_drawdown_pct: -26.07, num_trades: 36 },
+        { ticker: 'CVNA', return_pct: -26.35, profit: -2634.87, max_drawdown_pct: -37.17, num_trades: 31 },
+    ];
     
-    function formatLabel(label) {
-        if (typeof label === 'string' && label.length > 16) {
-            const words = label.split(' ');
-            const lines = [];
-            let currentLine = '';
-            for (const word of words) {
-                if ((currentLine + word).length > 16) {
-                    lines.push(currentLine.trim());
-                    currentLine = '';
-                }
-                currentLine += word + ' ';
-            }
-            lines.push(currentLine.trim());
-            return lines;
-        }
-        return label;
-    }
+    const brilliantBlues = {
+        primary: '#00A1E4',
+        darker: '#0077B6',
+        lighter: '#00BFFF',
+        accent: '#90E0EF',
+        background: '#CAF0F8',
+        profit: 'rgba(74, 222, 128, 0.8)',
+        loss: 'rgba(255, 91, 91, 0.8)',
+        profitBorder: 'rgba(74, 222, 128, 1)',
+        lossBorder: 'rgba(255, 91, 91, 1)'
+    };
 
     const tooltipTitleCallback = (tooltipItems) => {
         const item = tooltipItems[0];
         let label = item.chart.data.labels[item.dataIndex];
         if (Array.isArray(label)) {
-            return label.join(' ');
+          return label.join(' ');
         }
         return label;
     };
-    
+
     const commonChartOptions = {
-         responsive: true,
-         maintainAspectRatio: false,
-         plugins: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
             legend: {
                 labels: {
-                    color: '#cbd5e1',
+                    color: brilliantBlues.background,
                     font: {
                         size: 14
                     }
@@ -309,177 +324,140 @@ CVNA  -26.35% -2634.87       -37.17%         31     10000.00     7365.13
             },
             tooltip: {
                 callbacks: {
-                   title: tooltipTitleCallback
+                    title: tooltipTitleCallback
                 },
-                backgroundColor: 'rgba(31, 41, 55, 0.9)',
-                titleFont: { size: 16, weight: 'bold' },
-                bodyFont: { size: 14 },
-                padding: 12,
-                cornerRadius: 4,
-                displayColors: false
+                backgroundColor: '#023047',
+                titleColor: 'white',
+                bodyColor: 'white',
+                borderColor: brilliantBlues.primary,
+                borderWidth: 1
             }
-         },
+        },
         scales: {
             x: {
-                ticks: { color: '#9ca3af', maxRotation: 0, autoSkip: true },
-                grid: { color: 'rgba(75, 85, 99, 0.5)' }
+                ticks: { color: brilliantBlues.accent },
+                grid: { color: 'rgba(144, 224, 239, 0.2)' }
             },
             y: {
-                ticks: { color: '#9ca3af' },
-                grid: { color: 'rgba(75, 85, 99, 0.5)' }
+                ticks: { color: brilliantBlues.accent },
+                grid: { color: 'rgba(144, 224, 239, 0.2)' }
             }
         }
     };
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const sortedData = [...data].sort((a, b) => b.yoyReturn - a.yoyReturn);
-        const top10 = sortedData.slice(0, 10);
-        const bottom10 = sortedData.slice(-10).reverse();
-        
-        const totalFinalValue = data.reduce((sum, item) => sum + item.finalValue, 0);
-        const totalInitialValue = data.length * 10000;
-        const overallReturnPercent = ((totalFinalValue - totalInitialValue) / totalInitialValue) * 100;
+    const profitableCount = performanceData.filter(d => d.profit > 0).length;
+    const unprofitableCount = performanceData.length - profitableCount;
 
-        document.getElementById('totalValue').textContent = `$${totalFinalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        const overallReturnEl = document.getElementById('overallReturn');
-        overallReturnEl.textContent = `${overallReturnPercent.toFixed(2)}%`;
-        overallReturnEl.style.color = overallReturnPercent >= 0 ? palette.gain : palette.loss;
-        
-        const winners = data.filter(d => d.yoyReturn >= 0).length;
-        const losers = data.length - winners;
-
-        new Chart(document.getElementById('winLossChart').getContext('2d'), {
-            type: 'doughnut',
-            data: {
-                labels: ['Gain', 'Loss'],
-                datasets: [{
-                    data: [winners, losers],
-                    backgroundColor: [palette.gain, palette.loss],
-                    borderColor: '#4a5568',
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: true, position: 'bottom', labels: { color: '#cbd5e1' } },
-                    tooltip: commonChartOptions.plugins.tooltip
-                }
-            }
-        });
-        
-        new Chart(document.getElementById('topPerformersChart').getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: top10.map(d => d.ticker),
-                datasets: [{
-                    label: 'YoY Return %',
-                    data: top10.map(d => d.yoyReturn),
-                    backgroundColor: palette.gain,
-                    borderColor: palette.secondary,
-                    borderWidth: 1
-                }]
-            },
-            options: { ...commonChartOptions, indexAxis: 'y' }
-        });
-
-        new Chart(document.getElementById('underperformersChart').getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: bottom10.map(d => d.ticker),
-                datasets: [{
-                    label: 'YoY Return %',
-                    data: bottom10.map(d => d.yoyReturn),
-                    backgroundColor: palette.loss,
-                    borderColor: '#d9534f',
-                    borderWidth: 1
-                }]
-            },
-            options: { ...commonChartOptions, indexAxis: 'y' }
-        });
-
-        const scatterData = data.map(d => ({
-            x: d.drawdown,
-            y: d.yoyReturn,
-            label: d.ticker
-        }));
-
-        new Chart(document.getElementById('riskRewardScatter').getContext('2d'), {
-            type: 'scatter',
-            data: {
-                datasets: [{
-                    label: 'Asset Performance',
-                    data: scatterData,
-                    backgroundColor: data.map(d => d.yoyReturn >= 0 ? 'rgba(0, 245, 212, 0.7)' : 'rgba(255, 90, 95, 0.7)'),
-                    pointRadius: 6,
-                    pointHoverRadius: 9
-                }]
-            },
-            options: {
-                ...commonChartOptions,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            title: (tooltipItems) => {
-                                return tooltipItems[0].raw.label;
-                            },
-                            label: (context) => {
-                                return `Return: ${context.raw.y.toFixed(2)}% | Drawdown: ${context.raw.x.toFixed(2)}%`;
-                            }
-                        },
-                         backgroundColor: 'rgba(31, 41, 55, 0.9)',
-                         titleFont: { size: 16, weight: 'bold' },
-                         bodyFont: { size: 14 },
-                         padding: 12,
-                         cornerRadius: 4,
-                         displayColors: false
-                    }
-                },
-                scales: {
-                    x: {
-                        ...commonChartOptions.scales.x,
-                        title: {
-                            display: true,
-                            text: 'Drawdown (%)',
-                            color: '#cbd5e1',
-                            font: { size: 14, weight: 'bold' }
-                        }
-                    },
-                    y: {
-                        ...commonChartOptions.scales.y,
-                        title: {
-                            display: true,
-                            text: 'YoY Return (%)',
-                            color: '#cbd5e1',
-                            font: { size: 14, weight: 'bold' }
-                        }
-                    }
-                }
-            }
-        });
-
-        const highestDrawdown = data.reduce((max, item) => Math.abs(item.drawdown) > Math.abs(max.drawdown) ? item : max, data[0]);
-        document.getElementById('highestDrawdownTicker').textContent = highestDrawdown.ticker;
-        document.getElementById('highestDrawdownValue').textContent = `${highestDrawdown.drawdown.toFixed(2)}%`;
-        
-        const tableBody = document.getElementById('dataTableBody');
-        sortedData.forEach(item => {
-            const row = document.createElement('tr');
-            row.className = 'border-b border-gray-700 hover:bg-gray-700 transition-colors duration-200';
-            
-            const returnColor = item.yoyReturn >= 0 ? 'text-green-400' : 'text-red-400';
-
-            row.innerHTML = `
-                <td class="p-3 font-semibold">${item.ticker}</td>
-                <td class="p-3 text-right font-medium ${returnColor}">${item.yoyReturn.toFixed(2)}%</td>
-                <td class="p-3 text-right font-medium text-red-400">${item.drawdown.toFixed(2)}%</td>
-                <td class="p-3 text-right font-medium">${item.finalValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>
-            `;
-            tableBody.appendChild(row);
-        });
+    new Chart(document.getElementById('distributionChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Profitable Tickers', 'Unprofitable Tickers'],
+            datasets: [{
+                label: 'Ticker Distribution',
+                data: [profitableCount, unprofitableCount],
+                backgroundColor: [brilliantBlues.profit, brilliantBlues.loss],
+                borderColor: [brilliantBlues.profitBorder, brilliantBlues.lossBorder],
+                borderWidth: 2
+            }]
+        },
+        options: { ...commonChartOptions, scales: {} }
     });
+
+    const top10 = [...performanceData].sort((a, b) => b.return_pct - a.return_pct).slice(0, 10).reverse();
+    const bottom10 = [...performanceData].sort((a, b) => a.return_pct - b.return_pct).slice(0, 10);
+
+    new Chart(document.getElementById('topPerformersChart'), {
+        type: 'bar',
+        data: {
+            labels: top10.map(d => d.ticker),
+            datasets: [{
+                label: 'Return %',
+                data: top10.map(d => d.return_pct),
+                backgroundColor: brilliantBlues.profit,
+                borderColor: brilliantBlues.profitBorder,
+                borderWidth: 1
+            }]
+        },
+        options: { ...commonChartOptions, indexAxis: 'y' }
+    });
+
+    new Chart(document.getElementById('bottomPerformersChart'), {
+        type: 'bar',
+        data: {
+            labels: bottom10.map(d => d.ticker),
+            datasets: [{
+                label: 'Return %',
+                data: bottom10.map(d => d.return_pct),
+                backgroundColor: brilliantBlues.loss,
+                borderColor: brilliantBlues.lossBorder,
+                borderWidth: 1
+            }]
+        },
+        options: { ...commonChartOptions, indexAxis: 'y' }
+    });
+    
+    const riskReturnData = {
+        datasets: [{
+            label: 'Tickers',
+            data: performanceData.map(d => ({ x: d.max_drawdown_pct, y: d.return_pct })),
+            backgroundColor: performanceData.map(d => d.profit > 0 ? brilliantBlues.profit : brilliantBlues.loss),
+        }]
+    };
+
+    new Chart(document.getElementById('riskReturnScatter'), {
+        type: 'scatter',
+        data: riskReturnData,
+        options: { ...commonChartOptions, 
+            scales: {
+                x: { ...commonChartOptions.scales.x, title: { display: true, text: 'Max Drawdown %', color: brilliantBlues.accent } },
+                y: { ...commonChartOptions.scales.y, title: { display: true, text: 'Return %', color: brilliantBlues.accent } }
+            },
+            plugins: {
+                ...commonChartOptions.plugins,
+                tooltip: {
+                     ...commonChartOptions.plugins.tooltip,
+                     callbacks: {
+                        label: function(context) {
+                            const ticker = performanceData[context.dataIndex];
+                            return `${ticker.ticker}: (${context.parsed.x}%, ${context.parsed.y}%)`;
+                        }
+                     }
+                }
+            }
+        }
+    });
+
+    const tradesReturnData = {
+         datasets: [{
+            label: 'Tickers',
+            data: performanceData.map(d => ({ x: d.num_trades, y: d.return_pct })),
+            backgroundColor: performanceData.map(d => d.profit > 0 ? brilliantBlues.profit : brilliantBlues.loss),
+        }]
+    };
+
+    new Chart(document.getElementById('tradesReturnScatter'), {
+        type: 'scatter',
+        data: tradesReturnData,
+         options: { ...commonChartOptions, 
+            scales: {
+                x: { ...commonChartOptions.scales.x, title: { display: true, text: 'Number of Trades', color: brilliantBlues.accent } },
+                y: { ...commonChartOptions.scales.y, title: { display: true, text: 'Return %', color: brilliantBlues.accent } }
+            },
+             plugins: {
+                ...commonChartOptions.plugins,
+                tooltip: {
+                     ...commonChartOptions.plugins.tooltip,
+                     callbacks: {
+                        label: function(context) {
+                            const ticker = performanceData[context.dataIndex];
+                            return `${ticker.ticker}: (${context.parsed.x} trades, ${context.parsed.y}%)`;
+                        }
+                     }
+                }
+            }
+        }
+    });
+
 </script>
 
 </body>
