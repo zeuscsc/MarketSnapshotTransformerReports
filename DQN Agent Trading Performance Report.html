@@ -6,11 +6,14 @@
     <title>DQN Agent Trading Performance Infographic</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #F0F4F8;
+            background-color: #F8F4E3;
+            color: #004369;
         }
         .chart-container {
             position: relative;
@@ -26,442 +29,568 @@
                 height: 400px;
             }
         }
-        .kpi-card {
-            background: linear-gradient(145deg, #ffffff, #e6e6e6);
-            border-radius: 16px;
-            box-shadow: 8px 8px 16px #d1d1d1, -8px -8px 16px #ffffff;
-            transition: all 0.3s ease-in-out;
+        .kpi-value {
+            font-weight: 900;
+            font-size: 4rem;
+            line-height: 1;
+            color: #DB1F48;
         }
-        .kpi-card:hover {
-           transform: translateY(-5px);
-           box-shadow: 12px 12px 24px #c5c5c5, -12px -12px 24px #ffffff;
+        .kpi-label {
+            font-weight: 600;
+            font-size: 1.125rem;
+            color: #01949A;
         }
-        .header-gradient {
-            background: linear-gradient(90deg, #FF6B6B, #FFC145, #4D96FF, #6BCB77);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .section-title {
+            font-weight: 900;
+            font-size: 2.25rem;
+            line-height: 2.5rem;
+            text-align: center;
+        }
+        .section-intro {
+            text-align: center;
+            max-width: 48rem;
+            margin-left: auto;
+            margin-right: auto;
+            color: #004369;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            padding: 1.5rem;
+            border: 1px solid #E5DDC8;
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="antialiased">
+
     <div class="container mx-auto p-4 md:p-8">
 
-        <header class="text-center mb-12">
-            <h1 class="text-4xl md:text-6xl font-black tracking-tight header-gradient">DQN Agent Trading Performance</h1>
-            <p class="mt-4 text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">An analysis of an AI-powered trading agent's exceptional performance, transforming $10,000 into a significant profit through thousands of automated trades.</p>
+        <header class="text-center my-12">
+            <h1 class="text-4xl md:text-6xl font-black uppercase tracking-wide">DQN Agent</h1>
+            <p class="text-2xl md:text-3xl font-semibold text-[#01949A]">Algorithmic Trading Performance</p>
+            <p class="mt-2 text-sm text-gray-500">Analysis Date: June 7, 2025</p>
         </header>
 
-        <section id="overall-performance" class="mb-12">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
-                <div class="kpi-card p-6">
-                    <h3 class="text-gray-500 font-semibold text-lg">Total Net Profit</h3>
-                    <p class="text-5xl font-extrabold text-[#FF6B6B] mt-2">$1.5M+</p>
+        <section class="my-12 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-center">
+                <div>
+                    <p class="kpi-value">128.66%</p>
+                    <p class="kpi-label">Average Overall Return</p>
                 </div>
-                <div class="kpi-card p-6">
-                    <h3 class="text-gray-500 font-semibold text-lg">Overall Return</h3>
-                    <p class="text-5xl font-extrabold text-[#6BCB77] mt-2">15,182%</p>
-                </div>
-                <div class="kpi-card p-6">
-                    <h3 class="text-gray-500 font-semibold text-lg">Total Trades</h3>
-                    <p class="text-5xl font-extrabold text-[#4D96FF] mt-2">3,937</p>
-                </div>
-                 <div class="kpi-card p-6">
-                    <h3 class="text-gray-500 font-semibold text-lg">Max Drawdown</h3>
-                    <p class="text-5xl font-extrabold text-[#FFC145] mt-2">2.97%</p>
+                <div>
+                    <p class="kpi-value">$1.52M</p>
+                    <p class="kpi-label">Total Net Profit</p>
                 </div>
             </div>
         </section>
 
-        <section id="profit-drivers" class="mb-12">
-             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h2 class="text-2xl font-bold mb-4 text-center">Top 10 Profit-Driving Tickers</h2>
-                    <p class="text-center text-gray-600 mb-6">A small subset of tickers generated a disproportionate amount of the total profit. The agent demonstrated a remarkable ability to identify and capitalize on high-growth opportunities, especially in volatile stocks like HIMS and MSTR.</p>
-                    <div class="chart-container h-[450px] md:h-[500px]">
-                        <canvas id="topTickersChart"></canvas>
+        <section class="my-16">
+            <h2 class="section-title">Performance Overview</h2>
+            <p class="section-intro mt-4 mb-12">
+                The DQN agent demonstrated robust performance by consistently generating profits across thousands of trades. The following charts provide a high-level summary of its effectiveness, showcasing the average win rate and the substantial growth from initial capital.
+            </p>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                <div class="card">
+                    <h3 class="font-bold text-xl mb-4 text-center">Average Win Rate</h3>
+                     <p class="text-center text-sm mb-4 text-gray-600">This chart illustrates the proportion of trades that were profitable. A rate of 66.32% signifies that the agent won approximately two out of every three trades executed.</p>
+                    <div class="chart-container">
+                        <canvas id="winRateChart"></canvas>
                     </div>
                 </div>
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h2 class="text-2xl font-bold mb-4 text-center">Profit Distribution: Top 5 vs. The Rest</h2>
-                    <p class="text-center text-gray-600 mb-6">This donut chart illustrates the stark concentration of profits. The top 5 most profitable tickers alone account for over a third of the total gains, highlighting the "whale" trades that defined the agent's success.</p>
-                     <div class="chart-container h-[450px] md:h-[500px]">
-                        <canvas id="profitConcentrationChart"></canvas>
+                <div class="card">
+                    <h3 class="font-bold text-xl mb-4 text-center">Capital Growth Per Ticker</h3>
+                    <p class="text-center text-sm mb-4 text-gray-600">This visual compares the average starting capital to the average final capital per ticker, highlighting the agent's ability to more than double the initial investment on average.</p>
+                    <div class="chart-container">
+                        <canvas id="capitalGrowthChart"></canvas>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="win-rate-analysis" class="mb-12">
-            <div class="bg-white rounded-lg shadow-md p-6 lg:p-8">
-                <h2 class="text-3xl font-bold mb-2 text-center">Win Rate vs. Average Profit Per Trade</h2>
-                <p class="text-center text-gray-600 mb-8 max-w-4xl mx-auto">This scatter plot reveals the relationship between how often the agent wins (Win Rate) and how much it makes on an average trade for each ticker. While many tickers cluster with high win rates and moderate profits, outliers like MSTR, FTAI, and HIMS show that the biggest returns came from trades that were not only often successful but also immensely profitable on average.</p>
-                <div class="chart-container h-[50vh] max-h-[600px]">
-                    <canvas id="winRateVsAvgProfitChart"></canvas>
+        <section class="my-16">
+            <h2 class="section-title">The Profit Champions</h2>
+            <p class="section-intro mt-4 mb-12">
+                While profitable overall, a few select tickers were responsible for extraordinary gains, driving the portfolio's exceptional performance. This chart ranks the top five tickers by the total profit they generated, with some reaching astronomical figures.
+            </p>
+            <div class="card md:col-span-2">
+                <h3 class="font-bold text-xl mb-4 text-center">Top 5 Tickers by Total Profit ($)</h3>
+                <p class="text-center text-sm mb-4 text-gray-600">The bar chart below compares the absolute profit generated by the most successful assets. The performance of HIMS and MSTR, in particular, demonstrates the agent's capacity for capturing massive upside.</p>
+                <div class="chart-container h-[500px] max-h-[500px]">
+                    <canvas id="topProfitChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section class="my-16">
+            <h2 class="section-title">Consistency & Risk Analysis</h2>
+            <p class="section-intro mt-4 mb-12">
+                Profit is only one part of the story. A successful strategy must also be consistent and manage risk effectively. The following visualizations explore the agent's win rates and the crucial relationship between profit and risk (drawdown).
+            </p>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="card">
+                    <h3 class="font-bold text-xl mb-4 text-center">Highest Win Rate Tickers</h3>
+                    <p class="text-center text-sm mb-4 text-gray-600">This chart highlights tickers where the agent showed remarkable consistency, winning trades at an exceptionally high rate. EOG stands out with over a 92% success rate, indicating a highly reliable strategy for this asset.</p>
+                    <div class="chart-container">
+                        <canvas id="topWinRateChart"></canvas>
+                    </div>
+                </div>
+                 <div class="card">
+                    <h3 class="font-bold text-xl mb-4 text-center">Profit vs. Max Drawdown</h3>
+                    <p class="text-center text-sm mb-4 text-gray-600">This scatter plot reveals the risk-reward profile of each ticker. Tickers in the top-left (like EOG, GOOG) represent ideal low-risk, high-return scenarios, while those in the top-right (HIMS, MSTR) show high returns accompanied by significant risk.</p>
+                    <div class="chart-container">
+                        <canvas id="riskRewardScatter"></canvas>
+                    </div>
                 </div>
             </div>
         </section>
         
-        <section id="trade-composition" class="mb-12">
-             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h2 class="text-2xl font-bold mb-4 text-center">Most Frequently Traded Tickers</h2>
-                    <p class="text-center text-gray-600 mb-6">The agent was most active in a specific set of stocks, executing over 50 trades in tickers like ADMA, EAT, and MS. This chart shows the top 10 stocks by trade volume, indicating where the agent focused its high-frequency strategies.</p>
-                    <div class="chart-container h-[450px] md:h-[500px]">
-                        <canvas id="mostTradedChart"></canvas>
-                    </div>
-                </div>
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h2 class="text-2xl font-bold mb-4 text-center">Highest Win-Rate Tickers</h2>
-                    <p class="text-center text-gray-600 mb-6">Consistency is key. The agent achieved a win rate of over 80% on several tickers, demonstrating a highly reliable pattern-recognition capability. EOG, GOOG, and EQT stand out as symbols of the agent's predictive accuracy.</p>
-                     <div class="chart-container h-[450px] md:h-[500px]">
-                        <canvas id="highestWinRateChart"></canvas>
-                    </div>
+        <section class="my-16">
+            <h2 class="section-title">Distribution of Profitability</h2>
+            <p class="section-intro mt-4 mb-12">
+                To understand the overall performance, it's useful to see how many tickers fell into various profit brackets. This provides insight into whether success was concentrated in a few outliers or more broadly distributed.
+            </p>
+            <div class="card md:col-span-2">
+                <h3 class="font-bold text-xl mb-4 text-center">Ticker Count by Profit Range</h3>
+                <p class="text-center text-sm mb-4 text-gray-600">This histogram shows the number of tickers within specific profit ranges. A majority of tickers were profitable, with most falling into the $0-$10,000 range, indicating a widespread, positive performance baseline, complemented by a few exceptional high-earners.</p>
+                <div class="chart-container h-[500px] max-h-[500px]">
+                    <canvas id="profitDistributionChart"></canvas>
                 </div>
             </div>
         </section>
-        
+
+
+        <footer class="text-center mt-20 py-8 border-t border-[#E5DDC8]">
+            <h2 class="section-title mb-8">Key Takeaways & Recommendations</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+                <div class="card">
+                    <h3 class="font-bold text-xl mb-2 text-[#01949A]">1. Isolate High-Alpha Strategies</h3>
+                    <p class="text-gray-600">Analyze the trading patterns on top-performing, low-drawdown tickers like EOG, GOOG, and EQT. These strategies may be replicable across other assets to generate more consistent, lower-risk returns.</p>
+                </div>
+                <div class="card">
+                    <h3 class="font-bold text-xl mb-2 text-[#DB1F48]">2. Refine Risk Management</h3>
+                    <p class="text-gray-600">For tickers with enormous profits but severe drawdowns (e.g., HIMS, MSTR), implement dynamic risk protocols. This could involve adjusting position sizes based on volatility or stricter stop-loss mechanisms.</p>
+                </div>
+                <div class="card">
+                    <h3 class="font-bold text-xl mb-2 text-[#004369]">3. Review Underperformers</h3>
+                    <p class="text-gray-600">Assets with win rates below 55% (e.g., MSFT) should be reviewed. The model may be less effective for these tickers, warranting retraining or exclusion from the portfolio.</p>
+                </div>
+            </div>
+             <p class="mt-12 text-sm text-gray-500">&copy; 2025 DQN Performance Analytics. All rights reserved.</p>
+        </footer>
+
     </div>
 
     <script>
         const tradingData = [
-            { ticker: "ABBV", total_profit: 11283.43, number_of_trades: 29, winning_trades: 23, losing_trades: 6, average_profit_per_trade: 389.08, win_rate_pct: 79.31 },
-            { ticker: "ACGL", total_profit: 2959.41, number_of_trades: 23, winning_trades: 15, losing_trades: 8, average_profit_per_trade: 128.67, win_rate_pct: 65.22 },
-            { ticker: "ACN", total_profit: 4550.97, number_of_trades: 49, winning_trades: 29, losing_trades: 20, average_profit_per_trade: 92.88, win_rate_pct: 59.18 },
-            { ticker: "ADBE", total_profit: 3617.68, number_of_trades: 33, winning_trades: 19, losing_trades: 14, average_profit_per_trade: 109.63, win_rate_pct: 57.58 },
-            { ticker: "ADMA", total_profit: 20964.51, number_of_trades: 63, winning_trades: 39, losing_trades: 24, average_profit_per_trade: 332.77, win_rate_pct: 61.90 },
-            { ticker: "ADSK", total_profit: 4302.06, number_of_trades: 21, winning_trades: 14, losing_trades: 7, average_profit_per_trade: 204.86, win_rate_pct: 66.67 },
-            { ticker: "AER", total_profit: 9774.51, number_of_trades: 44, winning_trades: 34, losing_trades: 10, average_profit_per_trade: 222.15, win_rate_pct: 77.27 },
-            { ticker: "AJG", total_profit: 4640.15, number_of_trades: 28, winning_trades: 19, losing_trades: 9, average_profit_per_trade: 165.72, win_rate_pct: 67.86 },
-            { ticker: "AM", total_profit: 11026.33, number_of_trades: 54, winning_trades: 37, losing_trades: 17, average_profit_per_trade: 204.19, win_rate_pct: 68.52 },
-            { ticker: "AMGN", total_profit: 5141.94, number_of_trades: 42, winning_trades: 30, losing_trades: 12, average_profit_per_trade: 122.43, win_rate_pct: 71.43 },
-            { ticker: "AMZN", total_profit: 10976.77, number_of_trades: 50, winning_trades: 34, losing_trades: 16, average_profit_per_trade: 219.54, win_rate_pct: 68.00 },
-            { ticker: "ANET", total_profit: 31407.24, number_of_trades: 33, winning_trades: 28, losing_trades: 5, average_profit_per_trade: 951.73, win_rate_pct: 84.85 },
-            { ticker: "APA", total_profit: 13610.98, number_of_trades: 29, winning_trades: 24, losing_trades: 5, average_profit_per_trade: 469.34, win_rate_pct: 82.76 },
-            { ticker: "APH", total_profit: 9760.16, number_of_trades: 25, winning_trades: 17, losing_trades: 8, average_profit_per_trade: 390.41, win_rate_pct: 68.00 },
-            { ticker: "APO", total_profit: 4886.64, number_of_trades: 13, winning_trades: 8, losing_trades: 5, average_profit_per_trade: 375.90, win_rate_pct: 61.54 },
-            { ticker: "AR", total_profit: 15979.85, number_of_trades: 28, winning_trades: 21, losing_trades: 7, average_profit_per_trade: 570.71, win_rate_pct: 75.00 },
-            { ticker: "ARCC", total_profit: 4364.51, number_of_trades: 26, winning_trades: 20, losing_trades: 6, average_profit_per_trade: 167.87, win_rate_pct: 76.92 },
-            { ticker: "ASTS", total_profit: 23420.07, number_of_trades: 36, winning_trades: 20, losing_trades: 16, average_profit_per_trade: 650.56, win_rate_pct: 55.56 },
-            { ticker: "AVGO", total_profit: 18574.78, number_of_trades: 44, winning_trades: 24, losing_trades: 20, average_profit_per_trade: 422.15, win_rate_pct: 54.55 },
-            { ticker: "AXP", total_profit: 8013.66, number_of_trades: 30, winning_trades: 21, losing_trades: 9, average_profit_per_trade: 267.12, win_rate_pct: 70.00 },
-            { ticker: "AXS", total_profit: 6311.46, number_of_trades: 24, winning_trades: 19, losing_trades: 5, average_profit_per_trade: 262.98, win_rate_pct: 79.17 },
-            { ticker: "BA", total_profit: 13097.54, number_of_trades: 25, winning_trades: 18, losing_trades: 7, average_profit_per_trade: 523.90, win_rate_pct: 72.00 },
-            { ticker: "BAC", total_profit: 7279.58, number_of_trades: 50, winning_trades: 31, losing_trades: 19, average_profit_per_trade: 145.59, win_rate_pct: 62.00 },
-            { ticker: "BKNG", total_profit: 3892.06, number_of_trades: 46, winning_trades: 28, losing_trades: 18, average_profit_per_trade: 84.61, win_rate_pct: 60.87 },
-            { ticker: "BLK", total_profit: 1649.61, number_of_trades: 5, winning_trades: 3, losing_trades: 2, average_profit_per_trade: 329.92, win_rate_pct: 60.00 },
-            { ticker: "BMY", total_profit: 4913.09, number_of_trades: 25, winning_trades: 18, losing_trades: 7, average_profit_per_trade: 196.52, win_rate_pct: 72.00 },
-            { ticker: "BSX", total_profit: 5131.67, number_of_trades: 19, winning_trades: 16, losing_trades: 3, average_profit_per_trade: 270.09, win_rate_pct: 84.21 },
-            { ticker: "BX", total_profit: 7005.76, number_of_trades: 23, winning_trades: 15, losing_trades: 8, average_profit_per_trade: 304.60, win_rate_pct: 65.22 },
-            { ticker: "CAT", total_profit: 5933.27, number_of_trades: 37, winning_trades: 22, losing_trades: 15, average_profit_per_trade: 160.36, win_rate_pct: 59.46 },
-            { ticker: "CB", total_profit: 5061.73, number_of_trades: 45, winning_trades: 30, losing_trades: 15, average_profit_per_trade: 112.48, win_rate_pct: 66.67 },
-            { ticker: "CBOE", total_profit: 6358.46, number_of_trades: 40, winning_trades: 28, losing_trades: 12, average_profit_per_trade: 158.96, win_rate_pct: 70.00 },
-            { ticker: "CDNS", total_profit: 7308.04, number_of_trades: 21, winning_trades: 12, losing_trades: 9, average_profit_per_trade: 348.00, win_rate_pct: 57.14 },
-            { ticker: "CF", total_profit: 8193.09, number_of_trades: 33, winning_trades: 21, losing_trades: 12, average_profit_per_trade: 248.28, win_rate_pct: 63.64 },
-            { ticker: "CG", total_profit: 22803.32, number_of_trades: 40, winning_trades: 29, losing_trades: 11, average_profit_per_trade: 570.08, win_rate_pct: 72.50 },
-            { ticker: "CHTR", total_profit: 14459.74, number_of_trades: 47, winning_trades: 29, losing_trades: 18, average_profit_per_trade: 307.65, win_rate_pct: 61.70 },
-            { ticker: "CMG", total_profit: 32914.16, number_of_trades: 22, winning_trades: 17, losing_trades: 5, average_profit_per_trade: 1496.10, win_rate_pct: 77.27 },
-            { ticker: "CNC", total_profit: 5940.13, number_of_trades: 36, winning_trades: 24, losing_trades: 12, average_profit_per_trade: 165.00, win_rate_pct: 66.67 },
-            { ticker: "COP", total_profit: 5564.52, number_of_trades: 26, winning_trades: 16, losing_trades: 10, average_profit_per_trade: 214.02, win_rate_pct: 61.54 },
-            { ticker: "COR", total_profit: 5658.71, number_of_trades: 30, winning_trades: 20, losing_trades: 10, average_profit_per_trade: 188.62, win_rate_pct: 66.67 },
-            { ticker: "CORT", total_profit: 16971.28, number_of_trades: 37, winning_trades: 22, losing_trades: 15, average_profit_per_trade: 458.68, win_rate_pct: 59.46 },
-            { ticker: "COST", total_profit: 4053.15, number_of_trades: 21, winning_trades: 15, losing_trades: 6, average_profit_per_trade: 193.01, win_rate_pct: 71.43 },
-            { ticker: "CQP", total_profit: 16860.16, number_of_trades: 50, winning_trades: 37, losing_trades: 13, average_profit_per_trade: 337.20, win_rate_pct: 74.00 },
-            { ticker: "CRWD", total_profit: 14432.59, number_of_trades: 21, winning_trades: 13, losing_trades: 8, average_profit_per_trade: 687.27, win_rate_pct: 61.90 },
-            { ticker: "CSCO", total_profit: 4380.35, number_of_trades: 11, winning_trades: 8, losing_trades: 3, average_profit_per_trade: 398.21, win_rate_pct: 72.73 },
-            { ticker: "CTRA", total_profit: 9436.54, number_of_trades: 54, winning_trades: 37, losing_trades: 17, average_profit_per_trade: 174.75, win_rate_pct: 68.52 },
-            { ticker: "CVNA", total_profit: 50020.99, number_of_trades: 29, winning_trades: 23, losing_trades: 6, average_profit_per_trade: 1724.86, win_rate_pct: 79.31 },
-            { ticker: "CVX", total_profit: 3946.30, number_of_trades: 27, winning_trades: 21, losing_trades: 6, average_profit_per_trade: 146.16, win_rate_pct: 77.78 },
-            { ticker: "DE", total_profit: 5075.01, number_of_trades: 26, winning_trades: 17, losing_trades: 9, average_profit_per_trade: 195.19, win_rate_pct: 65.38 },
-            { ticker: "DELL", total_profit: 12768.17, number_of_trades: 27, winning_trades: 17, losing_trades: 10, average_profit_per_trade: 472.90, win_rate_pct: 62.96 },
-            { ticker: "DHI", total_profit: 1868.85, number_of_trades: 30, winning_trades: 16, losing_trades: 14, average_profit_per_trade: 62.30, win_rate_pct: 53.33 },
-            { ticker: "DHR", total_profit: 3211.08, number_of_trades: 22, winning_trades: 16, losing_trades: 6, average_profit_per_trade: 145.96, win_rate_pct: 72.73 },
-            { ticker: "DINO", total_profit: 4732.75, number_of_trades: 34, winning_trades: 19, losing_trades: 15, average_profit_per_trade: 139.20, win_rate_pct: 55.88 },
-            { ticker: "DIS", total_profit: 5071.30, number_of_trades: 25, winning_trades: 13, losing_trades: 12, average_profit_per_trade: 202.85, win_rate_pct: 52.00 },
-            { ticker: "DVN", total_profit: 4407.16, number_of_trades: 20, winning_trades: 11, losing_trades: 9, average_profit_per_trade: 220.36, win_rate_pct: 55.00 },
-            { ticker: "EAT", total_profit: 36722.87, number_of_trades: 59, winning_trades: 37, losing_trades: 22, average_profit_per_trade: 622.42, win_rate_pct: 62.71 },
-            { ticker: "EG", total_profit: 3848.19, number_of_trades: 39, winning_trades: 25, losing_trades: 14, average_profit_per_trade: 98.67, win_rate_pct: 64.10 },
-            { ticker: "ELV", total_profit: 4160.57, number_of_trades: 56, winning_trades: 29, losing_trades: 27, average_profit_per_trade: 74.30, win_rate_pct: 51.79 },
-            { ticker: "EOG", total_profit: 3388.31, number_of_trades: 14, winning_trades: 13, losing_trades: 1, average_profit_per_trade: 242.02, win_rate_pct: 92.86 },
-            { ticker: "EPD", total_profit: 3971.79, number_of_trades: 41, winning_trades: 25, losing_trades: 16, average_profit_per_trade: 96.87, win_rate_pct: 60.98 },
-            { ticker: "EQT", total_profit: 17374.92, number_of_trades: 26, winning_trades: 23, losing_trades: 3, average_profit_per_trade: 668.27, win_rate_pct: 88.46 },
-            { ticker: "ESNT", total_profit: 5981.11, number_of_trades: 43, winning_trades: 30, losing_trades: 13, average_profit_per_trade: 139.10, win_rate_pct: 69.77 },
-            { ticker: "ET", total_profit: 10502.81, number_of_trades: 37, winning_trades: 28, losing_trades: 9, average_profit_per_trade: 283.86, win_rate_pct: 75.68 },
-            { ticker: "ETN", total_profit: 8622.97, number_of_trades: 27, winning_trades: 17, losing_trades: 10, average_profit_per_trade: 319.37, win_rate_pct: 62.96 },
-            { ticker: "EWBC", total_profit: 5684.55, number_of_trades: 22, winning_trades: 14, losing_trades: 8, average_profit_per_trade: 258.39, win_rate_pct: 63.64 },
-            { ticker: "EXEL", total_profit: 14834.44, number_of_trades: 36, winning_trades: 26, losing_trades: 10, average_profit_per_trade: 412.07, win_rate_pct: 72.22 },
-            { ticker: "F", total_profit: 4379.73, number_of_trades: 29, winning_trades: 19, losing_trades: 10, average_profit_per_trade: 151.03, win_rate_pct: 65.52 },
-            { ticker: "FTAI", total_profit: 73451.25, number_of_trades: 36, winning_trades: 28, losing_trades: 8, average_profit_per_trade: 2040.31, win_rate_pct: 77.78 },
-            { ticker: "FTNT", total_profit: 7980.23, number_of_trades: 9, winning_trades: 6, losing_trades: 3, average_profit_per_trade: 886.69, win_rate_pct: 66.67 },
-            { ticker: "GILD", total_profit: 7322.72, number_of_trades: 51, winning_trades: 37, losing_trades: 14, average_profit_per_trade: 143.58, win_rate_pct: 72.55 },
-            { ticker: "GOOG", total_profit: 8967.93, number_of_trades: 29, winning_trades: 26, losing_trades: 3, average_profit_per_trade: 309.24, win_rate_pct: 89.66 },
-            { ticker: "GS", total_profit: 4945.88, number_of_trades: 32, winning_trades: 24, losing_trades: 8, average_profit_per_trade: 154.56, win_rate_pct: 75.00 },
-            { ticker: "HCA", total_profit: 6136.60, number_of_trades: 42, winning_trades: 24, losing_trades: 18, average_profit_per_trade: 146.11, win_rate_pct: 57.14 },
-            { ticker: "HES", total_profit: 6456.14, number_of_trades: 35, winning_trades: 21, losing_trades: 14, average_profit_per_trade: 184.46, win_rate_pct: 60.00 },
-            { ticker: "HIMS", total_profit: 213931.12, number_of_trades: 55, winning_trades: 37, losing_trades: 18, average_profit_per_trade: 3889.66, win_rate_pct: 67.27 },
-            { ticker: "HON", total_profit: 4446.84, number_of_trades: 29, winning_trades: 19, losing_trades: 10, average_profit_per_trade: 153.34, win_rate_pct: 65.52 },
-            { ticker: "IBKR", total_profit: 11222.62, number_of_trades: 39, winning_trades: 22, losing_trades: 17, average_profit_per_trade: 287.76, win_rate_pct: 56.41 },
-            { ticker: "IBM", total_profit: 3301.40, number_of_trades: 40, winning_trades: 24, losing_trades: 16, average_profit_per_trade: 82.53, win_rate_pct: 60.00 },
-            { ticker: "INSM", total_profit: 8311.55, number_of_trades: 35, winning_trades: 22, losing_trades: 13, average_profit_per_trade: 237.47, win_rate_pct: 62.86 },
-            { ticker: "INTC", total_profit: 14596.76, number_of_trades: 42, winning_trades: 27, losing_trades: 15, average_profit_per_trade: 347.54, win_rate_pct: 64.29 },
-            { ticker: "INTU", total_profit: 8264.26, number_of_trades: 39, winning_trades: 25, losing_trades: 14, average_profit_per_trade: 211.90, win_rate_pct: 64.10 },
-            { ticker: "ISRG", total_profit: 6956.81, number_of_trades: 20, winning_trades: 11, losing_trades: 9, average_profit_per_trade: 347.84, win_rate_pct: 55.00 },
-            { ticker: "JNJ", total_profit: 1457.85, number_of_trades: 39, winning_trades: 22, losing_trades: 17, average_profit_per_trade: 37.38, win_rate_pct: 56.41 },
-            { ticker: "JPM", total_profit: 4170.02, number_of_trades: 12, winning_trades: 9, losing_trades: 3, average_profit_per_trade: 347.50, win_rate_pct: 75.00 },
-            { ticker: "KKR", total_profit: 6634.72, number_of_trades: 38, winning_trades: 24, losing_trades: 14, average_profit_per_trade: 174.60, win_rate_pct: 63.16 },
-            { ticker: "KLAC", total_profit: 5271.48, number_of_trades: 28, winning_trades: 21, losing_trades: 7, average_profit_per_trade: 188.27, win_rate_pct: 75.00 },
-            { ticker: "KNSL", total_profit: 16969.52, number_of_trades: 45, winning_trades: 37, losing_trades: 8, average_profit_per_trade: 377.10, win_rate_pct: 82.22 },
-            { ticker: "KO", total_profit: 650.66, number_of_trades: 3, winning_trades: 2, losing_trades: 1, average_profit_per_trade: 216.89, win_rate_pct: 66.67 },
-            { ticker: "LBRDA", total_profit: 19815.72, number_of_trades: 49, winning_trades: 33, losing_trades: 16, average_profit_per_trade: 404.40, win_rate_pct: 67.35 },
-            { ticker: "LEN", total_profit: 4365.62, number_of_trades: 38, winning_trades: 27, losing_trades: 11, average_profit_per_trade: 114.88, win_rate_pct: 71.05 },
-            { ticker: "LNTH", total_profit: 10595.80, number_of_trades: 39, winning_trades: 22, losing_trades: 17, average_profit_per_trade: 271.69, win_rate_pct: 56.41 },
-            { ticker: "MCK", total_profit: 3923.68, number_of_trades: 41, winning_trades: 23, losing_trades: 18, average_profit_per_trade: 95.70, win_rate_pct: 56.10 },
-            { ticker: "MELI", total_profit: 11737.96, number_of_trades: 54, winning_trades: 33, losing_trades: 21, average_profit_per_trade: 217.37, win_rate_pct: 61.11 },
-            { ticker: "META", total_profit: 11024.35, number_of_trades: 37, winning_trades: 25, losing_trades: 12, average_profit_per_trade: 297.96, win_rate_pct: 67.57 },
-            { ticker: "MKTX", total_profit: 859.97, number_of_trades: 33, winning_trades: 17, losing_trades: 16, average_profit_per_trade: 26.06, win_rate_pct: 51.52 },
-            { ticker: "MMC", total_profit: 3462.49, number_of_trades: 30, winning_trades: 17, losing_trades: 13, average_profit_per_trade: 115.42, win_rate_pct: 56.67 },
-            { ticker: "MO", total_profit: 4072.90, number_of_trades: 31, winning_trades: 23, losing_trades: 8, average_profit_per_trade: 131.38, win_rate_pct: 74.19 },
-            { ticker: "MPC", total_profit: 5188.59, number_of_trades: 16, winning_trades: 14, losing_trades: 2, average_profit_per_trade: 324.29, win_rate_pct: 87.50 },
-            { ticker: "MPLX", total_profit: 7282.95, number_of_trades: 39, winning_trades: 26, losing_trades: 13, average_profit_per_trade: 186.74, win_rate_pct: 66.67 },
-            { ticker: "MPWR", total_profit: 19174.83, number_of_trades: 30, winning_trades: 22, losing_trades: 8, average_profit_per_trade: 639.16, win_rate_pct: 73.33 },
-            { ticker: "MRVL", total_profit: 24442.76, number_of_trades: 33, winning_trades: 22, losing_trades: 11, average_profit_per_trade: 740.69, win_rate_pct: 66.67 },
-            { ticker: "MS", total_profit: 11012.51, number_of_trades: 55, winning_trades: 36, losing_trades: 19, average_profit_per_trade: 200.23, win_rate_pct: 65.45 },
-            { ticker: "MSFT", total_profit: 2462.73, number_of_trades: 52, winning_trades: 23, losing_trades: 29, average_profit_per_trade: 47.36, win_rate_pct: 44.23 },
-            { ticker: "MSI", total_profit: 1346.68, number_of_trades: 8, winning_trades: 5, losing_trades: 3, average_profit_per_trade: 168.34, win_rate_pct: 62.50 },
-            { ticker: "MSTR", total_profit: 163774.06, number_of_trades: 30, winning_trades: 20, losing_trades: 10, average_profit_per_trade: 5459.14, win_rate_pct: 66.67 },
-            { ticker: "MTG", total_profit: 3666.66, number_of_trades: 24, winning_trades: 19, losing_trades: 5, average_profit_per_trade: 152.78, win_rate_pct: 79.17 },
-            { ticker: "MU", total_profit: 22564.50, number_of_trades: 31, winning_trades: 21, losing_trades: 10, average_profit_per_trade: 727.89, win_rate_pct: 67.74 },
-            { ticker: "NEE", total_profit: 3250.93, number_of_trades: 24, winning_trades: 12, losing_trades: 12, average_profit_per_trade: 135.46, win_rate_pct: 50.00 },
-            { ticker: "NFLX", total_profit: 13785.15, number_of_trades: 37, winning_trades: 24, losing_trades: 13, average_profit_per_trade: 372.57, win_rate_pct: 64.86 },
-            { ticker: "NKE", total_profit: 8560.87, number_of_trades: 44, winning_trades: 29, losing_trades: 15, average_profit_per_trade: 194.57, win_rate_pct: 65.91 },
-            { ticker: "NOW", total_profit: 7618.55, number_of_trades: 17, winning_trades: 11, losing_trades: 6, average_profit_per_trade: 448.15, win_rate_pct: 64.71 },
-            { ticker: "NVDA", total_profit: 20611.04, number_of_trades: 37, winning_trades: 30, losing_trades: 7, average_profit_per_trade: 557.06, win_rate_pct: 81.08 },
-            { ticker: "OKE", total_profit: 3438.16, number_of_trades: 20, winning_trades: 12, losing_trades: 8, average_profit_per_trade: 171.91, win_rate_pct: 60.00 },
-            { ticker: "ORCL", total_profit: 8408.36, number_of_trades: 39, winning_trades: 25, losing_trades: 14, average_profit_per_trade: 215.60, win_rate_pct: 64.10 },
-            { ticker: "ORLY", total_profit: 4826.94, number_of_trades: 38, winning_trades: 26, losing_trades: 12, average_profit_per_trade: 127.02, win_rate_pct: 68.42 },
-            { ticker: "OVV", total_profit: 12626.15, number_of_trades: 53, winning_trades: 36, losing_trades: 17, average_profit_per_trade: 238.23, win_rate_pct: 67.92 },
-            { ticker: "PAA", total_profit: 5832.30, number_of_trades: 39, winning_trades: 26, losing_trades: 13, average_profit_per_trade: 149.55, win_rate_pct: 66.67 },
-            { ticker: "PANW", total_profit: 9166.60, number_of_trades: 37, winning_trades: 24, losing_trades: 13, average_profit_per_trade: 247.75, win_rate_pct: 64.86 },
-            { ticker: "PEP", total_profit: 2457.60, number_of_trades: 27, winning_trades: 17, losing_trades: 10, average_profit_per_trade: 91.02, win_rate_pct: 62.96 },
+            { ticker: 'ABBV', pl: 11283.43, trades: 29, winRate: 79.31, maxDD: 217.46 },
+            { ticker: 'ACGL', pl: 2959.41, trades: 23, winRate: 65.22, maxDD: 306.26 },
+            { ticker: 'ACN', pl: 4550.97, trades: 49, winRate: 59.18, maxDD: 609.96 },
+            { ticker: 'ADBE', pl: 3617.68, trades: 33, winRate: 57.58, maxDD: 1586.74 },
+            { ticker: 'ADMA', pl: 20964.51, trades: 63, winRate: 61.90, maxDD: 1751.55 },
+            { ticker: 'ADSK', pl: 4302.06, trades: 21, winRate: 66.67, maxDD: 1021.07 },
+            { ticker: 'AER', pl: 9774.51, trades: 44, winRate: 77.27, maxDD: 260.07 },
+            { ticker: 'AJG', pl: 4640.15, trades: 28, winRate: 67.86, maxDD: 698.84 },
+            { ticker: 'AM', pl: 11026.33, trades: 54, winRate: 68.52, maxDD: 511.36 },
+            { ticker: 'AMGN', pl: 5141.94, trades: 42, winRate: 71.43, maxDD: 338.26 },
+            { ticker: 'AMZN', pl: 10976.77, trades: 50, winRate: 68.00, maxDD: 1086.63 },
+            { ticker: 'ANET', pl: 31407.24, trades: 33, winRate: 84.85, maxDD: 310.35 },
+            { ticker: 'APA', pl: 13610.98, trades: 29, winRate: 82.76, maxDD: 912.86 },
+            { ticker: 'APH', pl: 9760.16, trades: 25, winRate: 68.00, maxDD: 1691.17 },
+            { ticker: 'APO', pl: 4886.64, trades: 13, winRate: 61.54, maxDD: 692.88 },
+            { ticker: 'AR', pl: 15979.85, trades: 28, winRate: 75.00, maxDD: 872.42 },
+            { ticker: 'ARCC', pl: 4364.51, trades: 26, winRate: 76.92, maxDD: 192.63 },
+            { ticker: 'ASTS', pl: 23420.07, trades: 36, winRate: 55.56, maxDD: 5995.39 },
+            { ticker: 'AVGO', pl: 18574.78, trades: 44, winRate: 54.55, maxDD: 4892.38 },
+            { ticker: 'AXP', pl: 8013.66, trades: 30, winRate: 70.00, maxDD: 380.68 },
+            { ticker: 'AXS', pl: 6311.46, trades: 24, winRate: 79.17, maxDD: 227.26 },
+            { ticker: 'BA', pl: 13097.54, trades: 25, winRate: 72.00, maxDD: 853.56 },
+            { ticker: 'BAC', pl: 7279.58, trades: 50, winRate: 62.00, maxDD: 432.58 },
+            { ticker: 'BKNG', pl: 3892.06, trades: 46, winRate: 60.87, maxDD: 1613.85 },
+            { ticker: 'BLK', pl: 1649.61, trades: 5, winRate: 60.00, maxDD: 942.44 },
+            { ticker: 'BMY', pl: 4913.09, trades: 25, winRate: 72.00, maxDD: 1252.68 },
+            { ticker: 'BSX', pl: 5131.67, trades: 19, winRate: 84.21, maxDD: 216.81 },
+            { ticker: 'BX', pl: 7005.76, trades: 23, winRate: 65.22, maxDD: 342.33 },
+            { ticker: 'CAT', pl: 5933.27, trades: 37, winRate: 59.46, maxDD: 1128.42 },
+            { ticker: 'CB', pl: 5061.73, trades: 45, winRate: 66.67, maxDD: 134.05 },
+            { ticker: 'CBOE', pl: 6358.46, trades: 40, winRate: 70.00, maxDD: 504.21 },
+            { ticker: 'CDNS', pl: 7308.04, trades: 21, winRate: 57.14, maxDD: 314.18 },
+            { ticker: 'CF', pl: 8193.09, trades: 33, winRate: 63.64, maxDD: 454.39 },
+            { ticker: 'CG', pl: 22803.32, trades: 40, winRate: 72.50, maxDD: 2092.26 },
+            { ticker: 'CHTR', pl: 14459.74, trades: 47, winRate: 61.70, maxDD: 1056.42 },
+            { ticker: 'CMG', pl: 32914.16, trades: 22, winRate: 77.27, maxDD: 1679.52 },
+            { ticker: 'CNC', pl: 5940.13, trades: 36, winRate: 66.67, maxDD: 766.00 },
+            { ticker: 'COP', pl: 5564.52, trades: 26, winRate: 61.54, maxDD: 681.10 },
+            { ticker: 'COR', pl: 5658.71, trades: 30, winRate: 66.67, maxDD: 839.28 },
+            { ticker: 'CORT', pl: 16971.28, trades: 37, winRate: 59.46, maxDD: 3834.24 },
+            { ticker: 'COST', pl: 4053.15, trades: 21, winRate: 71.43, maxDD: 913.85 },
+            { ticker: 'CQP', pl: 16860.16, trades: 50, winRate: 74.00, maxDD: 690.87 },
+            { ticker: 'CRWD', pl: 14432.59, trades: 21, winRate: 61.90, maxDD: 2203.33 },
+            { ticker: 'CSCO', pl: 4380.35, trades: 11, winRate: 72.73, maxDD: 1043.44 },
+            { ticker: 'CTRA', pl: 9436.54, trades: 54, winRate: 68.52, maxDD: 1172.32 },
+            { ticker: 'CVNA', pl: 50020.99, trades: 29, winRate: 79.31, maxDD: 1033.40 },
+            { ticker: 'CVX', pl: 3946.30, trades: 27, winRate: 77.78, maxDD: 524.89 },
+            { ticker: 'DE', pl: 5075.01, trades: 26, winRate: 65.38, maxDD: 1409.32 },
+            { ticker: 'DELL', pl: 12768.17, trades: 27, winRate: 62.96, maxDD: 3978.32 },
+            { ticker: 'DHI', pl: 1868.85, trades: 30, winRate: 53.33, maxDD: 798.61 },
+            { ticker: 'DHR', pl: 3211.08, trades: 22, winRate: 72.73, maxDD: 717.44 },
+            { ticker: 'DINO', pl: 4732.75, trades: 34, winRate: 55.88, maxDD: 1120.72 },
+            { ticker: 'DIS', pl: 5071.30, trades: 25, winRate: 52.00, maxDD: 1287.46 },
+            { ticker: 'DVN', pl: 4407.16, trades: 20, winRate: 55.00, maxDD: 1285.84 },
+            { ticker: 'EAT', pl: 36722.87, trades: 59, winRate: 62.71, maxDD: 1200.63 },
+            { ticker: 'EG', pl: 3848.19, trades: 39, winRate: 64.10, maxDD: 642.94 },
+            { ticker: 'ELV', pl: 4160.57, trades: 56, winRate: 51.79, maxDD: 1595.74 },
+            { ticker: 'EOG', pl: 3388.31, trades: 14, winRate: 92.86, maxDD: 13.85 },
+            { ticker: 'EPD', pl: 3971.79, trades: 41, winRate: 60.98, maxDD: 312.50 },
+            { ticker: 'EQT', pl: 17374.92, trades: 26, winRate: 88.46, maxDD: 43.99 },
+            { ticker: 'ESNT', pl: 5981.11, trades: 43, winRate: 69.77, maxDD: 173.07 },
+            { ticker: 'ET', pl: 10502.81, trades: 37, winRate: 75.68, maxDD: 690.44 },
+            { ticker: 'ETN', pl: 8622.97, trades: 27, winRate: 62.96, maxDD: 1534.82 },
+            { ticker: 'EWBC', pl: 5684.55, trades: 22, winRate: 63.64, maxDD: 3121.61 },
+            { ticker: 'EXEL', pl: 14834.44, trades: 36, winRate: 72.22, maxDD: 369.40 },
+            { ticker: 'F', pl: 4379.73, trades: 29, winRate: 65.52, maxDD: 676.04 },
+            { ticker: 'FTAI', pl: 73451.25, trades: 36, winRate: 77.78, maxDD: 3264.25 },
+            { ticker: 'FTNT', pl: 7980.23, trades: 9, winRate: 66.67, maxDD: 1918.47 },
+            { ticker: 'GILD', pl: 7322.72, trades: 51, winRate: 72.55, maxDD: 949.93 },
+            { ticker: 'GOOG', pl: 8967.93, trades: 29, winRate: 89.66, maxDD: 74.01 },
+            { ticker: 'GS', pl: 4945.88, trades: 32, winRate: 75.00, maxDD: 246.23 },
+            { ticker: 'HCA', pl: 6136.60, trades: 42, winRate: 57.14, maxDD: 1290.93 },
+            { ticker: 'HES', pl: 6456.14, trades: 35, winRate: 60.00, maxDD: 380.00 },
+            { ticker: 'HIMS', pl: 213931.12, trades: 55, winRate: 67.27, maxDD: 30017.89 },
+            { ticker: 'HON', pl: 4446.84, trades: 29, winRate: 65.52, maxDD: 540.75 },
+            { ticker: 'IBKR', pl: 11222.62, trades: 39, winRate: 56.41, maxDD: 2007.77 },
+            { ticker: 'IBM', pl: 3301.40, trades: 40, winRate: 60.00, maxDD: 994.40 },
+            { ticker: 'INSM', pl: 8311.55, trades: 35, winRate: 62.86, maxDD: 1713.15 },
+            { ticker: 'INTC', pl: 14596.76, trades: 42, winRate: 64.29, maxDD: 986.44 },
+            { ticker: 'INTU', pl: 8264.26, trades: 39, winRate: 64.10, maxDD: 1727.88 },
+            { ticker: 'ISRG', pl: 6956.81, trades: 20, winRate: 55.00, maxDD: 984.44 },
+            { ticker: 'JNJ', pl: 1457.85, trades: 39, winRate: 56.41, maxDD: 768.21 },
+            { ticker: 'JPM', pl: 4170.02, trades: 12, winRate: 75.00, maxDD: 671.52 },
+            { ticker: 'KKR', pl: 6634.72, trades: 38, winRate: 63.16, maxDD: 2109.37 },
+            { ticker: 'KLAC', pl: 5271.48, trades: 28, winRate: 75.00, maxDD: 1436.71 },
+            { ticker: 'KNSL', pl: 16969.52, trades: 45, winRate: 82.22, maxDD: 318.32 },
+            { ticker: 'KO', pl: 650.66, trades: 3, winRate: 66.67, maxDD: 0.00 },
+            { ticker: 'LBRDA', pl: 19815.72, trades: 49, winRate: 67.35, maxDD: 2161.34 },
+            { ticker: 'LEN', pl: 4365.62, trades: 38, winRate: 71.05, maxDD: 110.91 },
+            { ticker: 'LNTH', pl: 10595.80, trades: 39, winRate: 56.41, maxDD: 2169.18 },
+            { ticker: 'MCK', pl: 3923.68, trades: 41, winRate: 56.10, maxDD: 514.45 },
+            { ticker: 'MELI', pl: 11737.96, trades: 54, winRate: 61.11, maxDD: 1216.37 },
+            { ticker: 'META', pl: 11024.35, trades: 37, winRate: 67.57, maxDD: 1364.32 },
+            { ticker: 'MKTX', pl: 859.97, trades: 33, winRate: 51.52, maxDD: 1333.30 },
+            { ticker: 'MMC', pl: 3462.49, trades: 30, winRate: 56.67, maxDD: 339.12 },
+            { ticker: 'MO', pl: 4072.90, trades: 31, winRate: 74.19, maxDD: 459.54 },
+            { ticker: 'MPC', pl: 5188.59, trades: 16, winRate: 87.50, maxDD: 247.05 },
+            { ticker: 'MPLX', pl: 7282.95, trades: 39, winRate: 66.67, maxDD: 428.79 },
+            { ticker: 'MPWR', pl: 19174.83, trades: 30, winRate: 73.33, maxDD: 1773.06 },
+            { ticker: 'MRVL', pl: 24442.76, trades: 33, winRate: 66.67, maxDD: 1392.65 },
+            { ticker: 'MS', pl: 11012.51, trades: 55, winRate: 65.45, maxDD: 1610.21 },
+            { ticker: 'MSFT', pl: 2462.73, trades: 52, winRate: 44.23, maxDD: 814.99 },
+            { ticker: 'MSI', pl: 1346.68, trades: 8, winRate: 62.50, maxDD: 949.71 },
+            { ticker: 'MSTR', pl: 163774.06, trades: 30, winRate: 66.67, maxDD: 8949.92 },
+            { ticker: 'MTG', pl: 3666.66, trades: 24, winRate: 79.17, maxDD: 570.56 },
+            { ticker: 'MU', pl: 22564.50, trades: 31, winRate: 67.74, maxDD: 3654.02 },
+            { ticker: 'NEE', pl: 3250.93, trades: 24, winRate: 50.00, maxDD: 672.93 },
+            { ticker: 'NFLX', pl: 13785.15, trades: 37, winRate: 64.86, maxDD: 822.73 },
+            { ticker: 'NKE', pl: 8560.87, trades: 44, winRate: 65.91, maxDD: 637.97 },
+            { ticker: 'NOW', pl: 7618.55, trades: 17, winRate: 64.71, maxDD: 336.94 },
+            { ticker: 'NVDA', pl: 20611.04, trades: 37, winRate: 81.08, maxDD: 1867.77 },
+            { ticker: 'OKE', pl: 3438.16, trades: 20, winRate: 60.00, maxDD: 447.68 },
+            { ticker: 'ORCL', pl: 8408.36, trades: 39, winRate: 64.10, maxDD: 1445.97 },
+            { ticker: 'ORLY', pl: 4826.94, trades: 38, winRate: 68.42, maxDD: 410.25 },
+            { ticker: 'OVV', pl: 12626.15, trades: 53, winRate: 67.92, maxDD: 809.52 },
+            { ticker: 'PAA', pl: 5832.30, trades: 39, winRate: 66.67, maxDD: 1021.33 },
+            { ticker: 'PANW', pl: 9166.60, trades: 37, winRate: 64.86, maxDD: 874.34 },
+            { ticker: 'PEP', pl: 2457.60, trades: 27, winRate: 62.96, maxDD: 206.85 }
         ];
-        
-        const palette = {
-            red: '#FF6B6B',
-            yellow: '#FFC145',
-            blue: '#4D96FF',
-            green: '#6BCB77',
-            orange: '#FF7F50',
-            purple: '#9B59B6',
-            teal: '#1ABC9C',
-            pink: '#F472B6',
-            indigo: '#6366F1',
-            lightBlue: '#38BDF8'
+
+        const colors = {
+            darkBlue: '#004369',
+            teal: '#01949A',
+            redPink: '#DB1F48',
+            beige: '#E5DDC8',
+            lightCream: '#F8F4E3'
         };
 
-        const sortedByProfit = [...tradingData].sort((a, b) => b.total_profit - a.total_profit);
-        const top10Tickers = sortedByProfit.slice(0, 10);
-        
-        const top5Profit = sortedByProfit.slice(0, 5).reduce((sum, item) => sum + item.total_profit, 0);
-        const totalProfit = 1518243.31;
-        const restOfProfit = totalProfit - top5Profit;
-
-        const sortedByTrades = [...tradingData].sort((a,b) => b.number_of_trades - a.number_of_trades).slice(0, 10);
-        const sortedByWinRate = [...tradingData].sort((a,b) => b.win_rate_pct - a.win_rate_pct).slice(0, 10);
-
-        const tooltipPlugin = {
-            tooltip: {
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                titleFont: { size: 16, weight: 'bold' },
-                bodyFont: { size: 14 },
-                padding: 12,
-                cornerRadius: 8,
-                callbacks: {
-                    title: function(tooltipItems) {
-                        const item = tooltipItems[0];
-                        let label = item.chart.data.labels[item.dataIndex];
-                        return Array.isArray(label) ? label.join(' ') : label;
+        const defaultTooltipOptions = {
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            const item = tooltipItems[0];
+                            let label = item.chart.data.labels[item.dataIndex];
+                            if (Array.isArray(label)) {
+                                return label.join(' ');
+                            }
+                            return label;
+                        }
                     }
                 }
             }
         };
+        
+        function wrapLabel(label, maxWidth) {
+            if (typeof label !== 'string' || label.length <= maxWidth) {
+                return label;
+            }
+            const words = label.split(' ');
+            const lines = [];
+            let currentLine = '';
+            words.forEach(word => {
+                if ((currentLine + word).length > maxWidth) {
+                    lines.push(currentLine.trim());
+                    currentLine = '';
+                }
+                currentLine += word + ' ';
+            });
+            lines.push(currentLine.trim());
+            return lines;
+        }
 
-        new Chart(document.getElementById('topTickersChart'), {
-            type: 'bar',
-            data: {
-                labels: top10Tickers.map(d => d.ticker),
-                datasets: [{
-                    label: 'Total Profit ($)',
-                    data: top10Tickers.map(d => d.total_profit),
-                    backgroundColor: Object.values(palette),
-                    borderColor: 'rgba(255, 255, 255, 0.5)',
-                    borderWidth: 1,
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                indexAxis: 'y',
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        grid: { color: 'rgba(0,0,0,0.05)' },
-                        ticks: {
-                           callback: function(value, index, values) {
-                                return '$' + (value / 1000) + 'K';
-                           }
-                        }
-                    },
-                    y: {
-                        grid: { display: false }
-                    }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const overallWinRate = 66.32;
+            new Chart(document.getElementById('winRateChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Wins', 'Losses'],
+                    datasets: [{
+                        data: [overallWinRate, 100 - overallWinRate],
+                        backgroundColor: [colors.teal, colors.beige],
+                        borderColor: [colors.teal, colors.beige],
+                        borderWidth: 1
+                    }]
                 },
-                plugins: {
-                    legend: { display: false },
-                    ...tooltipPlugin
-                }
-            }
-        });
-        
-        new Chart(document.getElementById('profitConcentrationChart'), {
-            type: 'doughnut',
-            data: {
-                labels: ['Top 5 Tickers', 'All Other Tickers'],
-                datasets: [{
-                    data: [top5Profit, restOfProfit],
-                    backgroundColor: [palette.blue, palette.red],
-                    borderColor: '#ffffff',
-                    borderWidth: 4,
-                    hoverOffset: 8
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            font: { size: 14 },
-                            padding: 20
-                        }
-                    },
-                    ...tooltipPlugin
-                }
-            }
-        });
-
-        new Chart(document.getElementById('winRateVsAvgProfitChart'), {
-            type: 'scatter',
-            data: {
-                datasets: [{
-                    label: 'Ticker Performance',
-                    data: tradingData.map(d => ({ x: d.win_rate_pct, y: d.average_profit_per_trade, ticker: d.ticker })),
-                    backgroundColor: tradingData.map(d => {
-                        if (d.average_profit_per_trade > 1000) return palette.red;
-                        if (d.win_rate_pct > 80) return palette.green;
-                        return palette.blue + '90'; // semi-transparent blue
-                    }),
-                    pointRadius: tradingData.map(d => 5 + (d.total_profit / 20000)),
-                    pointHoverRadius: tradingData.map(d => 8 + (d.total_profit / 20000))
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        type: 'linear',
-                        position: 'bottom',
-                        title: { display: true, text: 'Win Rate (%)', font: { size: 14, weight: 'bold'} },
-                        grid: { color: 'rgba(0,0,0,0.05)' }
-                    },
-                    y: {
-                        type: 'logarithmic',
-                        title: { display: true, text: 'Average Profit per Trade ($) - Log Scale', font: { size: 14, weight: 'bold'} },
-                         ticks: {
-                           callback: function(value, index, values) {
-                                if (value === 10 || value === 100 || value === 1000 || value === 10000) {
-                                   return '$' + value;
-                                }
-                           }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        ...defaultTooltipOptions.plugins,
+                        legend: {
+                            position: 'bottom',
                         },
-                        grid: { color: 'rgba(0,0,0,0.05)' }
                     }
+                }
+            });
+            
+            new Chart(document.getElementById('capitalGrowthChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Capital Comparison'],
+                    datasets: [
+                        {
+                            label: 'Avg Initial Capital',
+                            data: [10000],
+                            backgroundColor: colors.beige,
+                        },
+                        {
+                            label: 'Avg Final Capital',
+                            data: [22866.47],
+                            backgroundColor: colors.teal,
+                        }
+                    ]
                 },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                         backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                         titleFont: { size: 16, weight: 'bold' },
-                         bodyFont: { size: 14 },
-                         padding: 12,
-                         cornerRadius: 8,
-                        callbacks: {
-                            title: function(context) {
-                                return context[0].raw.ticker;
-                            },
-                            label: function(context) {
-                                return [
-                                    `Win Rate: ${context.raw.x.toFixed(2)}%`,
-                                    `Avg Profit: $${context.raw.y.toFixed(2)}`
-                                ];
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                     indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => '$' + value / 1000 + 'k'
                             }
                         }
+                    },
+                    plugins: {
+                        ...defaultTooltipOptions.plugins,
+                        legend: {
+                            position: 'bottom'
+                        }
                     }
                 }
-            }
-        });
+            });
 
-        new Chart(document.getElementById('mostTradedChart'), {
-            type: 'bar',
-            data: {
-                labels: sortedByTrades.map(d => d.ticker),
-                datasets: [{
-                    label: 'Number of Trades',
-                    data: sortedByTrades.map(d => d.number_of_trades),
-                    backgroundColor: palette.teal,
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                 scales: {
-                    y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
-                    x: { grid: { display: false } }
+            const top5Profit = [...tradingData].sort((a, b) => b.pl - a.pl).slice(0, 5);
+            new Chart(document.getElementById('topProfitChart'), {
+                type: 'bar',
+                data: {
+                    labels: top5Profit.map(d => d.ticker),
+                    datasets: [{
+                        label: 'Total Profit ($)',
+                        data: top5Profit.map(d => d.pl),
+                        backgroundColor: [colors.redPink, colors.teal, colors.darkBlue, colors.beige, '#a9a391'],
+                    }]
                 },
-                plugins: {
-                    legend: { display: false },
-                    ...tooltipPlugin
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                         y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => '$' + value / 1000 + 'k'
+                            }
+                        }
+                    },
+                    plugins: {
+                       ...defaultTooltipOptions.plugins,
+                        legend: {
+                            display: false
+                        }
+                    }
                 }
-            }
-        });
-
-        new Chart(document.getElementById('highestWinRateChart'), {
-            type: 'bar',
-            data: {
-                labels: sortedByWinRate.map(d => d.ticker),
-                datasets: [{
-                    label: 'Win Rate (%)',
-                    data: sortedByWinRate.map(d => d.win_rate_pct),
-                    backgroundColor: palette.purple,
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { beginAtZero: false, min: 75, max: 100, grid: { color: 'rgba(0,0,0,0.05)' } },
-                    x: { grid: { display: false } }
+            });
+            
+            const top5WinRate = [...tradingData].sort((a, b) => b.winRate - a.winRate).slice(0, 5);
+            new Chart(document.getElementById('topWinRateChart'), {
+                type: 'bar',
+                data: {
+                    labels: top5WinRate.map(d => d.ticker),
+                    datasets: [{
+                        label: 'Win Rate (%)',
+                        data: top5WinRate.map(d => d.winRate),
+                        backgroundColor: [colors.teal, colors.darkBlue, '#01a7ae', '#02c0c7', '#03d9e0'],
+                    }]
                 },
-                plugins: {
-                    legend: { display: false },
-                    ...tooltipPlugin
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 100,
+                             ticks: {
+                                callback: value => value + '%'
+                            }
+                        }
+                    },
+                    plugins: {
+                        ...defaultTooltipOptions.plugins,
+                        legend: {
+                           display: false
+                        }
+                    }
                 }
-            }
-        });
+            });
 
+            new Chart(document.getElementById('riskRewardScatter'), {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Ticker Performance',
+                        data: tradingData.map(d => ({ x: d.maxDD, y: d.pl })),
+                        backgroundColor: colors.teal,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'logarithmic',
+                            title: {
+                                display: true,
+                                text: 'Max Drawdown ($) - Log Scale'
+                            },
+                             ticks: {
+                                callback: (value, index, values) => {
+                                   if (value === 10 || value === 100 || value === 1000 || value === 10000 || value === 100000) {
+                                       return '$' + value.toLocaleString();
+                                   }
+                                }
+                            }
+                        },
+                        y: {
+                             type: 'logarithmic',
+                            title: {
+                                display: true,
+                                text: 'Total Profit ($) - Log Scale'
+                            },
+                             ticks: {
+                                callback: (value, index, values) => {
+                                   if (value === 1000 || value === 10000 || value === 100000 || value === 200000) {
+                                       return '$' + value.toLocaleString();
+                                   }
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                             callbacks: {
+                                label: function(context) {
+                                    const dataPoint = tradingData[context.dataIndex];
+                                    return `${dataPoint.ticker}: P/L $${dataPoint.pl.toFixed(2)}, Drawdown $${dataPoint.maxDD.toFixed(2)}`;
+                                }
+                            }
+                        },
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            const profitBins = {
+                '<$0': 0,
+                '$0-$5k': 0,
+                '$5k-$10k': 0,
+                '$10k-$20k': 0,
+                '$20k-$50k': 0,
+                '>$50k': 0
+            };
+
+            tradingData.forEach(d => {
+                if (d.pl < 0) profitBins['<$0']++;
+                else if (d.pl <= 5000) profitBins['$0-$5k']++;
+                else if (d.pl <= 10000) profitBins['$5k-$10k']++;
+                else if (d.pl <= 20000) profitBins['$10k-$20k']++;
+                else if (d.pl <= 50000) profitBins['$20k-$50k']++;
+                else profitBins['>$50k']++;
+            });
+            
+             const wrappedLabels = Object.keys(profitBins).map(label => wrapLabel(label, 16));
+
+            new Chart(document.getElementById('profitDistributionChart'), {
+                type: 'bar',
+                data: {
+                    labels: wrappedLabels,
+                    datasets: [{
+                        label: 'Number of Tickers',
+                        data: Object.values(profitBins),
+                        backgroundColor: [colors.darkBlue, colors.teal, colors.redPink, '#ff8c94', '#fdd3d5', '#b1a7a6']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Tickers'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Profit Range'
+                            }
+                        }
+                    },
+                    plugins: {
+                        ...defaultTooltipOptions,
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+        });
     </script>
 </body>
 </html>
