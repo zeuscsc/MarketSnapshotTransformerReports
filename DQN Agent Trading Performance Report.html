@@ -3,497 +3,418 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DQN Agent Trading Performance Infographic</title>
+    <title>DQN Agent Trading Performance Report</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for visualizations -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #F0F4F8; 
+            background-color: #f3f4f6; /* gray-100 */
         }
-        .chart-container {
-            position: relative;
-            margin: auto;
-            height: 40vh;
-            max-height: 450px;
-            width: 100%;
-            max-width: 800px;
-        }
-        .kpi-card {
+        .metric-card {
             background-color: white;
             border-radius: 0.75rem;
-            padding: 2rem;
-            text-align: center;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
         }
-        .kpi-card:hover {
+        .metric-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
         }
-        .kpi-title {
-            font-size: 1rem;
-            font-weight: 500;
-            color: #003459;
-            margin-bottom: 0.5rem;
+        .positive-value {
+            color: #10b981; /* emerald-500 */
         }
-        .kpi-value {
-            font-size: 3rem;
-            font-weight: 800;
-            color: #00A8E8;
-            line-height: 1.2;
+        .negative-value {
+            color: #ef4444; /* red-500 */
         }
-        .kpi-value-small {
-            font-size: 2.5rem;
+        .neutral-value {
+            color: #3b82f6; /* blue-500 */
         }
-        .flowchart-step {
-            background-color: #007EA7;
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: 0.5rem;
-            text-align: center;
-            font-weight: 600;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        .table-header-sortable {
+            cursor: pointer;
+            position: relative;
         }
-        .flowchart-arrow {
-            font-size: 2.5rem;
-            color: #00A8E8;
-            font-weight: bold;
+        .table-header-sortable:hover {
+            background-color: #f3f4f6; /* gray-100 */
+        }
+        .table-header-sortable::after {
+            content: '↕';
+            font-size: 0.8em;
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.4;
         }
     </style>
 </head>
-<body class="text-gray-800">
+<body class="p-4 md:p-8">
 
-    <div class="container mx-auto p-4 md:p-8">
-
-        <header class="text-center mb-12">
-            <h1 class="text-4xl md:text-5xl font-extrabold text-[#003459] mb-2">DQN Agent Trading Performance</h1>
-            <p class="text-lg text-gray-600 max-w-3xl mx-auto">An analysis of an AI-driven trading strategy, focusing on average per-ticker performance and risk-reward dynamics.</p>
+    <div class="max-w-7xl mx-auto">
+        <!-- Header Section -->
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800">DQN Agent Trading Performance</h1>
+            <p class="text-lg text-gray-500 mt-2">An infographic report on the agent's recent trading activity.</p>
         </header>
 
-        <section id="overview" class="mb-12">
-            <h2 class="text-3xl font-bold text-center text-[#003459] mb-8">Strategy Overview: The Big Picture</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div class="kpi-card">
-                    <h3 class="kpi-title">Average Overall Return</h3>
-                    <p class="kpi-value">128.66<span class="text-3xl">%</span></p>
-                    <p class="text-sm text-gray-500 mt-2">Represents the average gain on an initial $10,000 capital per ticker.</p>
+        <!-- Key Metrics Section -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-700 mb-6 text-center">📈 Average Ticker Performance</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 md:gap-6 text-center">
+                <!-- Avg Initial Capital -->
+                <div class="metric-card">
+                    <p class="text-sm text-gray-500 font-medium">Avg Initial Capital</p>
+                    <p class="text-2xl font-bold text-gray-700 mt-2">$10,000.00</p>
                 </div>
-                
-                <div class="kpi-card">
-                    <h3 class="kpi-title">Average Net Profit</h3>
-                    <p class="kpi-value kpi-value-small">$12,866.47</p>
-                     <p class="text-sm text-gray-500 mt-2">The average profit generated per stock traded by the agent.</p>
+                 <!-- Avg Final Capital -->
+                <div class="metric-card">
+                    <p class="text-sm text-gray-500 font-medium">Avg Final Capital</p>
+                    <p class="text-2xl font-bold positive-value mt-2">$22,866.47</p>
                 </div>
-
-                <div class="bg-white rounded-lg p-6 shadow-lg flex flex-col items-center justify-center">
-                    <h3 class="text-xl font-semibold text-[#003459] mb-4 text-center">Average Win Rate</h3>
-                    <div class="chart-container" style="height: 250px; max-height: 250px; width: 250px;">
-                        <canvas id="winRateChart"></canvas>
-                    </div>
-                     <p class="text-sm text-gray-500 mt-4 text-center">On average, the agent's trades were profitable over 66% of the time.</p>
+                <!-- Avg Net Profit/Loss -->
+                <div class="metric-card">
+                    <p class="text-sm text-gray-500 font-medium">Avg Net Profit</p>
+                    <p class="text-2xl font-bold positive-value mt-2">$12,866.47</p>
+                </div>
+                <!-- Avg Overall Return -->
+                <div class="metric-card">
+                    <p class="text-sm text-gray-500 font-medium">Avg Overall Return</p>
+                    <p class="text-2xl font-bold positive-value mt-2">128.66%</p>
+                </div>
+                <!-- Sortino Ratio -->
+                <div class="metric-card">
+                    <p class="text-sm text-gray-500 font-medium">Sortino Ratio</p>
+                    <p class="text-2xl font-bold neutral-value mt-2">1.05</p>
+                </div>
+                 <!-- Max Drawdown -->
+                <div class="metric-card">
+                    <p class="text-sm text-gray-500 font-medium">Max Drawdown</p>
+                    <p class="text-2xl font-bold negative-value mt-2">$20,748.37</p>
+                </div>
+                <!-- Avg Drawdown -->
+                <div class="metric-card">
+                    <p class="text-sm text-gray-500 font-medium">Avg Drawdown</p>
+                    <p class="text-2xl font-bold negative-value mt-2">$2,366.86</p>
                 </div>
             </div>
         </section>
 
-        <section id="top-performers" class="mb-12">
-            <div class="bg-white rounded-lg shadow-lg p-6 md:p-8">
-                <h2 class="text-3xl font-bold text-[#003459] mb-2 text-center">The Champions: Top Profit Generators</h2>
-                <p class="text-center text-gray-600 mb-6 max-w-2xl mx-auto">This chart showcases the tickers where the agent achieved the highest total profit, highlighting its ability to capture significant upside.</p>
-                <div class="chart-container">
-                    <canvas id="topProfitChart"></canvas>
+        <!-- Charts Section -->
+        <section class="mb-12">
+             <h2 class="text-2xl font-bold text-gray-700 mb-8 text-center">📊 Performance Visualizations</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="font-semibold text-lg text-gray-700 text-center mb-4">Top 10 Tickers by Total P/L ($)</h3>
+                    <canvas id="plChart"></canvas>
                 </div>
-            </div>
-        </section>
-
-        <section id="consistency" class="mb-12">
-            <div class="bg-white rounded-lg shadow-lg p-6 md:p-8">
-                <h2 class="text-3xl font-bold text-[#003459] mb-2 text-center">Consistency is Key: Highest Win Rates</h2>
-                 <p class="text-center text-gray-600 mb-6 max-w-2xl mx-auto">For traders who prioritize consistency, these tickers represent the agent's most reliable performers, with the highest percentage of winning trades.</p>
-                <div class="chart-container">
-                    <canvas id="topWinRateChart"></canvas>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="font-semibold text-lg text-gray-700 text-center mb-4">Top 10 Tickers by Win Rate (%)</h3>
+                    <canvas id="winRateChart"></canvas>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="font-semibold text-lg text-gray-700 text-center mb-4">Top 10 Tickers by Sortino Ratio</h3>
+                    <canvas id="sortinoChart"></canvas>
                 </div>
             </div>
         </section>
         
-        <section id="risk-reward" class="mb-12">
-            <div class="bg-white rounded-lg shadow-lg p-6 md:p-8">
-                <h2 class="text-3xl font-bold text-[#003459] mb-2 text-center">The Risk-Reward Spectrum</h2>
-                <p class="text-center text-gray-600 mb-6 max-w-2xl mx-auto">This scatter plot visualizes the relationship between risk (Max Drawdown) and reward (Total Profit). Each point is a ticker, revealing the strategy's different risk profiles. Tickers in the top-right quadrant offer the highest rewards but also come with higher risk.</p>
-                <div class="chart-container">
-                    <canvas id="riskRewardScatter"></canvas>
-                </div>
-            </div>
-        </section>
-
-        <section id="flowchart" class="mb-12">
-             <div class="bg-white rounded-lg shadow-lg p-6 md:p-8">
-                <h2 class="text-3xl font-bold text-[#003459] mb-4 text-center">How the DQN Agent Trades: A Simplified Flow</h2>
-                <p class="text-center text-gray-600 mb-8 max-w-2xl mx-auto">The agent follows a continuous learning loop to make trading decisions, adapting its strategy based on market feedback.</p>
-                <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4">
-                    <div class="flowchart-step">1. Market Data Input</div>
-                    <div class="flowchart-arrow hidden md:block">&rarr;</div>
-                    <div class="flowchart-arrow block md:hidden">&darr;</div>
-                    <div class="flowchart-step">2. DQN Agent Analysis</div>
-                     <div class="flowchart-arrow hidden md:block">&rarr;</div>
-                    <div class="flowchart-arrow block md:hidden">&darr;</div>
-                    <div class="flowchart-step">3. Execute Trade</div>
-                     <div class="flowchart-arrow hidden md:block">&rarr;</div>
-                    <div class="flowchart-arrow block md:hidden">&darr;</div>
-                    <div class="flowchart-step">4. Update & Learn</div>
-                </div>
+        <!-- Detailed Performance Breakdown Table -->
+        <section>
+             <h2 class="text-2xl font-bold text-gray-700 mb-6 text-center">📋 Performance Breakdown</h2>
+            <div class="bg-white rounded-lg shadow-md overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-600">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-4 py-3 table-header-sortable" onclick="sortTable(0)">Ticker</th>
+                            <th scope="col" class="px-4 py-3 table-header-sortable" onclick="sortTable(1, 'numeric')">Total P/L ($)</th>
+                            <th scope="col" class="px-4 py-3 table-header-sortable" onclick="sortTable(2, 'numeric')">Trades</th>
+                            <th scope="col" class="px-4 py-3 table-header-sortable" onclick="sortTable(3, 'numeric')">Win Rate (%)</th>
+                            <th scope="col" class="px-4 py-3 table-header-sortable" onclick="sortTable(4, 'numeric')">Avg Return ($)</th>
+                            <th scope="col" class="px-4 py-3 table-header-sortable" onclick="sortTable(5, 'numeric')">Return (%)</th>
+                            <th scope="col" class="px-4 py-3 table-header-sortable" onclick="sortTable(6, 'numeric')">Sortino Ratio</th>
+                        </tr>
+                    </thead>
+                    <tbody id="performanceTable">
+                        <!-- Table rows will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
             </div>
         </section>
 
     </div>
 
-    <footer class="text-center p-4 text-sm text-gray-500">
-        <p>DQN Agent Performance Report. Generated on June 7, 2025.</p>
-        <p>This is a data visualization and does not constitute financial advice.</p>
-    </footer>
-
     <script>
-        const tradingData = [
-            { ticker: 'ABBV', pl: 11283.43, trades: 29, winRate: 79.31, avgReturn: 389.08, maxDrawdown: 217.46 },
-            { ticker: 'ACGL', pl: 2959.41, trades: 23, winRate: 65.22, avgReturn: 128.67, maxDrawdown: 306.26 },
-            { ticker: 'ACN', pl: 4550.97, trades: 49, winRate: 59.18, avgReturn: 92.88, maxDrawdown: 609.96 },
-            { ticker: 'ADBE', pl: 3617.68, trades: 33, winRate: 57.58, avgReturn: 109.63, maxDrawdown: 1586.74 },
-            { ticker: 'ADMA', pl: 20964.51, trades: 63, winRate: 61.90, avgReturn: 332.77, maxDrawdown: 1751.55 },
-            { ticker: 'ADSK', pl: 4302.06, trades: 21, winRate: 66.67, avgReturn: 204.86, maxDrawdown: 1021.07 },
-            { ticker: 'AER', pl: 9774.51, trades: 44, winRate: 77.27, avgReturn: 222.15, maxDrawdown: 260.07 },
-            { ticker: 'AJG', pl: 4640.15, trades: 28, winRate: 67.86, avgReturn: 165.72, maxDrawdown: 698.84 },
-            { ticker: 'AM', pl: 11026.33, trades: 54, winRate: 68.52, avgReturn: 204.19, maxDrawdown: 511.36 },
-            { ticker: 'AMGN', pl: 5141.94, trades: 42, winRate: 71.43, avgReturn: 122.43, maxDrawdown: 338.26 },
-            { ticker: 'AMZN', pl: 10976.77, trades: 50, winRate: 68.00, avgReturn: 219.54, maxDrawdown: 1086.63 },
-            { ticker: 'ANET', pl: 31407.24, trades: 33, winRate: 84.85, avgReturn: 951.73, maxDrawdown: 310.35 },
-            { ticker: 'APA', pl: 13610.98, trades: 29, winRate: 82.76, avgReturn: 469.34, maxDrawdown: 912.86 },
-            { ticker: 'APH', pl: 9760.16, trades: 25, winRate: 68.00, avgReturn: 390.41, maxDrawdown: 1691.17 },
-            { ticker: 'APO', pl: 4886.64, trades: 13, winRate: 61.54, avgReturn: 375.90, maxDrawdown: 692.88 },
-            { ticker: 'AR', pl: 15979.85, trades: 28, winRate: 75.00, avgReturn: 570.71, maxDrawdown: 872.42 },
-            { ticker: 'ARCC', pl: 4364.51, trades: 26, winRate: 76.92, avgReturn: 167.87, maxDrawdown: 192.63 },
-            { ticker: 'ASTS', pl: 23420.07, trades: 36, winRate: 55.56, avgReturn: 650.56, maxDrawdown: 5995.39 },
-            { ticker: 'AVGO', pl: 18574.78, trades: 44, winRate: 54.55, avgReturn: 422.15, maxDrawdown: 4892.38 },
-            { ticker: 'AXP', pl: 8013.66, trades: 30, winRate: 70.00, avgReturn: 267.12, maxDrawdown: 380.68 },
-            { ticker: 'AXS', pl: 6311.46, trades: 24, winRate: 79.17, avgReturn: 262.98, maxDrawdown: 227.26 },
-            { ticker: 'BA', pl: 13097.54, trades: 25, winRate: 72.00, avgReturn: 523.90, maxDrawdown: 853.56 },
-            { ticker: 'BAC', pl: 7279.58, trades: 50, winRate: 62.00, avgReturn: 145.59, maxDrawdown: 432.58 },
-            { ticker: 'BKNG', pl: 3892.06, trades: 46, winRate: 60.87, avgReturn: 84.61, maxDrawdown: 1613.85 },
-            { ticker: 'BLK', pl: 1649.61, trades: 5, winRate: 60.00, avgReturn: 329.92, maxDrawdown: 942.44 },
-            { ticker: 'BMY', pl: 4913.09, trades: 25, winRate: 72.00, avgReturn: 196.52, maxDrawdown: 1252.68 },
-            { ticker: 'BSX', pl: 5131.67, trades: 19, winRate: 84.21, avgReturn: 270.09, maxDrawdown: 216.81 },
-            { ticker: 'BX', pl: 7005.76, trades: 23, winRate: 65.22, avgReturn: 304.60, maxDrawdown: 342.33 },
-            { ticker: 'CAT', pl: 5933.27, trades: 37, winRate: 59.46, avgReturn: 160.36, maxDrawdown: 1128.42 },
-            { ticker: 'CB', pl: 5061.73, trades: 45, winRate: 66.67, avgReturn: 112.48, maxDrawdown: 134.05 },
-            { ticker: 'CBOE', pl: 6358.46, trades: 40, winRate: 70.00, avgReturn: 158.96, maxDrawdown: 504.21 },
-            { ticker: 'CDNS', pl: 7308.04, trades: 21, winRate: 57.14, avgReturn: 348.00, maxDrawdown: 314.18 },
-            { ticker: 'CF', pl: 8193.09, trades: 33, winRate: 63.64, avgReturn: 248.28, maxDrawdown: 454.39 },
-            { ticker: 'CG', pl: 22803.32, trades: 40, winRate: 72.50, avgReturn: 570.08, maxDrawdown: 2092.26 },
-            { ticker: 'CHTR', pl: 14459.74, trades: 47, winRate: 61.70, avgReturn: 307.65, maxDrawdown: 1056.42 },
-            { ticker: 'CMG', pl: 32914.16, trades: 22, winRate: 77.27, avgReturn: 1496.10, maxDrawdown: 1679.52 },
-            { ticker: 'CNC', pl: 5940.13, trades: 36, winRate: 66.67, avgReturn: 165.00, maxDrawdown: 766.00 },
-            { ticker: 'COP', pl: 5564.52, trades: 26, winRate: 61.54, avgReturn: 214.02, maxDrawdown: 681.10 },
-            { ticker: 'COR', pl: 5658.71, trades: 30, winRate: 66.67, avgReturn: 188.62, maxDrawdown: 839.28 },
-            { ticker: 'CORT', pl: 16971.28, trades: 37, winRate: 59.46, avgReturn: 458.68, maxDrawdown: 3834.24 },
-            { ticker: 'COST', pl: 4053.15, trades: 21, winRate: 71.43, avgReturn: 193.01, maxDrawdown: 913.85 },
-            { ticker: 'CQP', pl: 16860.16, trades: 50, winRate: 74.00, avgReturn: 337.20, maxDrawdown: 690.87 },
-            { ticker: 'CRWD', pl: 14432.59, trades: 21, winRate: 61.90, avgReturn: 687.27, maxDrawdown: 2203.33 },
-            { ticker: 'CSCO', pl: 4380.35, trades: 11, winRate: 72.73, avgReturn: 398.21, maxDrawdown: 1043.44 },
-            { ticker: 'CTRA', pl: 9436.54, trades: 54, winRate: 68.52, avgReturn: 174.75, maxDrawdown: 1172.32 },
-            { ticker: 'CVNA', pl: 50020.99, trades: 29, winRate: 79.31, avgReturn: 1724.86, maxDrawdown: 1033.40 },
-            { ticker: 'CVX', pl: 3946.30, trades: 27, winRate: 77.78, avgReturn: 146.16, maxDrawdown: 524.89 },
-            { ticker: 'DE', pl: 5075.01, trades: 26, winRate: 65.38, avgReturn: 195.19, maxDrawdown: 1409.32 },
-            { ticker: 'DELL', pl: 12768.17, trades: 27, winRate: 62.96, avgReturn: 472.90, maxDrawdown: 3978.32 },
-            { ticker: 'DHI', pl: 1868.85, trades: 30, winRate: 53.33, avgReturn: 62.30, maxDrawdown: 798.61 },
-            { ticker: 'DHR', pl: 3211.08, trades: 22, winRate: 72.73, avgReturn: 145.96, maxDrawdown: 717.44 },
-            { ticker: 'DINO', pl: 4732.75, trades: 34, winRate: 55.88, avgReturn: 139.20, maxDrawdown: 1120.72 },
-            { ticker: 'DIS', pl: 5071.30, trades: 25, winRate: 52.00, avgReturn: 202.85, maxDrawdown: 1287.46 },
-            { ticker: 'DVN', pl: 4407.16, trades: 20, winRate: 55.00, avgReturn: 220.36, maxDrawdown: 1285.84 },
-            { ticker: 'EAT', pl: 36722.87, trades: 59, winRate: 62.71, avgReturn: 622.42, maxDrawdown: 1200.63 },
-            { ticker: 'EG', pl: 3848.19, trades: 39, winRate: 64.10, avgReturn: 98.67, maxDrawdown: 642.94 },
-            { ticker: 'ELV', pl: 4160.57, trades: 56, winRate: 51.79, avgReturn: 74.30, maxDrawdown: 1595.74 },
-            { ticker: 'EOG', pl: 3388.31, trades: 14, winRate: 92.86, avgReturn: 242.02, maxDrawdown: 13.85 },
-            { ticker: 'EPD', pl: 3971.79, trades: 41, winRate: 60.98, avgReturn: 96.87, maxDrawdown: 312.50 },
-            { ticker: 'EQT', pl: 17374.92, trades: 26, winRate: 88.46, avgReturn: 668.27, maxDrawdown: 43.99 },
-            { ticker: 'ESNT', pl: 5981.11, trades: 43, winRate: 69.77, avgReturn: 139.10, maxDrawdown: 173.07 },
-            { ticker: 'ET', pl: 10502.81, trades: 37, winRate: 75.68, avgReturn: 283.86, maxDrawdown: 690.44 },
-            { ticker: 'ETN', pl: 8622.97, trades: 27, winRate: 62.96, avgReturn: 319.37, maxDrawdown: 1534.82 },
-            { ticker: 'EWBC', pl: 5684.55, trades: 22, winRate: 63.64, avgReturn: 258.39, maxDrawdown: 3121.61 },
-            { ticker: 'EXEL', pl: 14834.44, trades: 36, winRate: 72.22, avgReturn: 412.07, maxDrawdown: 369.40 },
-            { ticker: 'F', pl: 4379.73, trades: 29, winRate: 65.52, avgReturn: 151.03, maxDrawdown: 676.04 },
-            { ticker: 'FTAI', pl: 73451.25, trades: 36, winRate: 77.78, avgReturn: 2040.31, maxDrawdown: 3264.25 },
-            { ticker: 'FTNT', pl: 7980.23, trades: 9, winRate: 66.67, avgReturn: 886.69, maxDrawdown: 1918.47 },
-            { ticker: 'GILD', pl: 7322.72, trades: 51, winRate: 72.55, avgReturn: 143.58, maxDrawdown: 949.93 },
-            { ticker: 'GOOG', pl: 8967.93, trades: 29, winRate: 89.66, avgReturn: 309.24, maxDrawdown: 74.01 },
-            { ticker: 'GS', pl: 4945.88, trades: 32, winRate: 75.00, avgReturn: 154.56, maxDrawdown: 246.23 },
-            { ticker: 'HCA', pl: 6136.60, trades: 42, winRate: 57.14, avgReturn: 146.11, maxDrawdown: 1290.93 },
-            { ticker: 'HES', pl: 6456.14, trades: 35, winRate: 60.00, avgReturn: 184.46, maxDrawdown: 380.00 },
-            { ticker: 'HIMS', pl: 213931.12, trades: 55, winRate: 67.27, avgReturn: 3889.66, maxDrawdown: 30017.89 },
-            { ticker: 'HON', pl: 4446.84, trades: 29, winRate: 65.52, avgReturn: 153.34, maxDrawdown: 540.75 },
-            { ticker: 'IBKR', pl: 11222.62, trades: 39, winRate: 56.41, avgReturn: 287.76, maxDrawdown: 2007.77 },
-            { ticker: 'IBM', pl: 3301.40, trades: 40, winRate: 60.00, avgReturn: 82.53, maxDrawdown: 994.40 },
-            { ticker: 'INSM', pl: 8311.55, trades: 35, winRate: 62.86, avgReturn: 237.47, maxDrawdown: 1713.15 },
-            { ticker: 'INTC', pl: 14596.76, trades: 42, winRate: 64.29, avgReturn: 347.54, maxDrawdown: 986.44 },
-            { ticker: 'INTU', pl: 8264.26, trades: 39, winRate: 64.10, avgReturn: 211.90, maxDrawdown: 1727.88 },
-            { ticker: 'ISRG', pl: 6956.81, trades: 20, winRate: 55.00, avgReturn: 347.84, maxDrawdown: 984.44 },
-            { ticker: 'JNJ', pl: 1457.85, trades: 39, winRate: 56.41, avgReturn: 37.38, maxDrawdown: 768.21 },
-            { ticker: 'JPM', pl: 4170.02, trades: 12, winRate: 75.00, avgReturn: 347.50, maxDrawdown: 671.52 },
-            { ticker: 'KKR', pl: 6634.72, trades: 38, winRate: 63.16, avgReturn: 174.60, maxDrawdown: 2109.37 },
-            { ticker: 'KLAC', pl: 5271.48, trades: 28, winRate: 75.00, avgReturn: 188.27, maxDrawdown: 1436.71 },
-            { ticker: 'KNSL', pl: 16969.52, trades: 45, winRate: 82.22, avgReturn: 377.10, maxDrawdown: 318.32 },
-            { ticker: 'KO', pl: 650.66, trades: 3, winRate: 66.67, avgReturn: 216.89, maxDrawdown: 0.00 },
-            { ticker: 'LBRDA', pl: 19815.72, trades: 49, winRate: 67.35, avgReturn: 404.40, maxDrawdown: 2161.34 },
-            { ticker: 'LEN', pl: 4365.62, trades: 38, winRate: 71.05, avgReturn: 114.88, maxDrawdown: 110.91 },
-            { ticker: 'LNTH', pl: 10595.80, trades: 39, winRate: 56.41, avgReturn: 271.69, maxDrawdown: 2169.18 },
-            { ticker: 'MCK', pl: 3923.68, trades: 41, winRate: 56.10, avgReturn: 95.70, maxDrawdown: 514.45 },
-            { ticker: 'MELI', pl: 11737.96, trades: 54, winRate: 61.11, avgReturn: 217.37, maxDrawdown: 1216.37 },
-            { ticker: 'META', pl: 11024.35, trades: 37, winRate: 67.57, avgReturn: 297.96, maxDrawdown: 1364.32 },
-            { ticker: 'MKTX', pl: 859.97, trades: 33, winRate: 51.52, avgReturn: 26.06, maxDrawdown: 1333.30 },
-            { ticker: 'MMC', pl: 3462.49, trades: 30, winRate: 56.67, avgReturn: 115.42, maxDrawdown: 339.12 },
-            { ticker: 'MO', pl: 4072.90, trades: 31, winRate: 74.19, avgReturn: 131.38, maxDrawdown: 459.54 },
-            { ticker: 'MPC', pl: 5188.59, trades: 16, winRate: 87.50, avgReturn: 324.29, maxDrawdown: 247.05 },
-            { ticker: 'MPLX', pl: 7282.95, trades: 39, winRate: 66.67, avgReturn: 186.74, maxDrawdown: 428.79 },
-            { ticker: 'MPWR', pl: 19174.83, trades: 30, winRate: 73.33, avgReturn: 639.16, maxDrawdown: 1773.06 },
-            { ticker: 'MRVL', pl: 24442.76, trades: 33, winRate: 66.67, avgReturn: 740.69, maxDrawdown: 1392.65 },
-            { ticker: 'MS', pl: 11012.51, trades: 55, winRate: 65.45, avgReturn: 200.23, maxDrawdown: 1610.21 },
-            { ticker: 'MSFT', pl: 2462.73, trades: 52, winRate: 44.23, avgReturn: 47.36, maxDrawdown: 814.99 },
-            { ticker: 'MSI', pl: 1346.68, trades: 8, winRate: 62.50, avgReturn: 168.34, maxDrawdown: 949.71 },
-            { ticker: 'MSTR', pl: 163774.06, trades: 30, winRate: 66.67, avgReturn: 5459.14, maxDrawdown: 8949.92 },
-            { ticker: 'MTG', pl: 3666.66, trades: 24, winRate: 79.17, avgReturn: 152.78, maxDrawdown: 570.56 },
-            { ticker: 'MU', pl: 22564.50, trades: 31, winRate: 67.74, avgReturn: 727.89, maxDrawdown: 3654.02 },
-            { ticker: 'NEE', pl: 3250.93, trades: 24, winRate: 50.00, avgReturn: 135.46, maxDrawdown: 672.93 },
-            { ticker: 'NFLX', pl: 13785.15, trades: 37, winRate: 64.86, avgReturn: 372.57, maxDrawdown: 822.73 },
-            { ticker: 'NKE', pl: 8560.87, trades: 44, winRate: 65.91, avgReturn: 194.57, maxDrawdown: 637.97 },
-            { ticker: 'NOW', pl: 7618.55, trades: 17, winRate: 64.71, avgReturn: 448.15, maxDrawdown: 336.94 },
-            { ticker: 'NVDA', pl: 20611.04, trades: 37, winRate: 81.08, avgReturn: 557.06, maxDrawdown: 1867.77 },
-            { ticker: 'OKE', pl: 3438.16, trades: 20, winRate: 60.00, avgReturn: 171.91, maxDrawdown: 447.68 },
-            { ticker: 'ORCL', pl: 8408.36, trades: 39, winRate: 64.10, avgReturn: 215.60, maxDrawdown: 1445.97 },
-            { ticker: 'ORLY', pl: 4826.94, trades: 38, winRate: 68.42, avgReturn: 127.02, maxDrawdown: 410.25 },
-            { ticker: 'OVV', pl: 12626.15, trades: 53, winRate: 67.92, avgReturn: 238.23, maxDrawdown: 809.52 },
-            { ticker: 'PAA', pl: 5832.30, trades: 39, winRate: 66.67, avgReturn: 149.55, maxDrawdown: 1021.33 },
-            { ticker: 'PANW', pl: 9166.60, trades: 37, winRate: 64.86, avgReturn: 247.75, maxDrawdown: 874.34 },
-            { ticker: 'PEP', pl: 2457.60, trades: 27, winRate: 62.96, avgReturn: 91.02, maxDrawdown: 206.85 }
+        // Data extracted from the user's report
+        const performanceData = [
+            { ticker: 'ABBV', pl: 11283.43, trades: 29, winRate: 79.31, avgReturn: 389.08, returnPct: 2.76, sortino: 6.77 },
+            { ticker: 'ACGL', pl: 2959.41, trades: 23, winRate: 65.22, avgReturn: 128.67, returnPct: 1.24, sortino: 1.11 },
+            { ticker: 'ACN', pl: 4550.97, trades: 49, winRate: 59.18, avgReturn: 92.88, returnPct: 0.81, sortino: 0.96 },
+            { ticker: 'ADBE', pl: 3617.68, trades: 33, winRate: 57.58, avgReturn: 109.63, returnPct: 1.03, sortino: 0.56 },
+            { ticker: 'ADMA', pl: 20964.51, trades: 63, winRate: 61.90, avgReturn: 332.77, returnPct: 2.04, sortino: 0.83 },
+            { ticker: 'ADSK', pl: 4302.06, trades: 21, winRate: 66.67, avgReturn: 204.86, returnPct: 1.88, sortino: 0.68 },
+            { ticker: 'AER', pl: 9774.51, trades: 44, winRate: 77.27, avgReturn: 222.15, returnPct: 1.77, sortino: 2.33 },
+            { ticker: 'AJG', pl: 4640.15, trades: 28, winRate: 67.86, avgReturn: 165.72, returnPct: 1.48, sortino: 0.91 },
+            { ticker: 'AM', pl: 11026.33, trades: 54, winRate: 68.52, avgReturn: 204.19, returnPct: 1.57, sortino: 1.65 },
+            { ticker: 'AMGN', pl: 5141.94, trades: 42, winRate: 71.43, avgReturn: 122.43, returnPct: 1.11, sortino: 0.98 },
+            { ticker: 'AMZN', pl: 10976.77, trades: 50, winRate: 68.00, avgReturn: 219.54, returnPct: 1.74, sortino: 1.44 },
+            { ticker: 'ANET', pl: 31407.24, trades: 33, winRate: 84.85, avgReturn: 951.73, returnPct: 5.34, sortino: 5.13 },
+            { ticker: 'APA', pl: 13610.98, trades: 29, winRate: 82.76, avgReturn: 469.34, returnPct: 3.20, sortino: 1.26 },
+            { ticker: 'APH', pl: 9760.16, trades: 25, winRate: 68.00, avgReturn: 390.41, returnPct: 3.37, sortino: 1.20 },
+            { ticker: 'APO', pl: 4886.64, trades: 13, winRate: 61.54, avgReturn: 375.90, returnPct: 3.17, sortino: 2.65 },
+            { ticker: 'AR', pl: 15979.85, trades: 28, winRate: 75.00, avgReturn: 570.71, returnPct: 4.18, sortino: 7.29 },
+            { ticker: 'ARCC', pl: 4364.51, trades: 26, winRate: 76.92, avgReturn: 167.87, returnPct: 1.53, sortino: 2.39 },
+            { ticker: 'ASTS', pl: 23420.07, trades: 36, winRate: 55.56, avgReturn: 650.56, returnPct: 3.28, sortino: 1.02 },
+            { ticker: 'AVGO', pl: 18574.78, trades: 44, winRate: 54.55, avgReturn: 422.15, returnPct: 2.75, sortino: 1.43 },
+            { ticker: 'AXP', pl: 8013.66, trades: 30, winRate: 70.00, avgReturn: 267.12, returnPct: 2.15, sortino: 2.10 },
+            { ticker: 'AXS', pl: 6311.46, trades: 24, winRate: 79.17, avgReturn: 262.98, returnPct: 2.23, sortino: 3.68 },
+            { ticker: 'BA', pl: 13097.54, trades: 25, winRate: 72.00, avgReturn: 523.90, returnPct: 4.66, sortino: 1.98 },
+            { ticker: 'BAC', pl: 7279.58, trades: 50, winRate: 62.00, avgReturn: 145.59, returnPct: 1.32, sortino: 1.46 },
+            { ticker: 'BKNG', pl: 3892.06, trades: 46, winRate: 60.87, avgReturn: 84.61, returnPct: 0.87, sortino: 0.38 },
+            { ticker: 'BLK', pl: 1649.61, trades: 5, winRate: 60.00, avgReturn: 329.92, returnPct: 3.68, sortino: 0.58 },
+            { ticker: 'BMY', pl: 4913.09, trades: 25, winRate: 72.00, avgReturn: 196.52, returnPct: 1.61, sortino: 0.80 },
+            { ticker: 'BSX', pl: 5131.67, trades: 19, winRate: 84.21, avgReturn: 270.09, returnPct: 2.35, sortino: 4.75 },
+            { ticker: 'BX', pl: 7005.76, trades: 23, winRate: 65.22, avgReturn: 304.60, returnPct: 2.64, sortino: 3.83 },
+            { ticker: 'CAT', pl: 5933.27, trades: 37, winRate: 59.46, avgReturn: 160.36, returnPct: 1.42, sortino: 1.12 },
+            { ticker: 'CB', pl: 5061.73, trades: 45, winRate: 66.67, avgReturn: 112.48, returnPct: 1.05, sortino: 3.37 },
+            { ticker: 'CBOE', pl: 6358.46, trades: 40, winRate: 70.00, avgReturn: 158.96, returnPct: 1.43, sortino: 1.92 },
+            { ticker: 'CDNS', pl: 7308.04, trades: 21, winRate: 57.14, avgReturn: 348.00, returnPct: 2.99, sortino: 3.25 },
+            { ticker: 'CF', pl: 8193.09, trades: 33, winRate: 63.64, avgReturn: 248.28, returnPct: 1.96, sortino: 1.64 },
+            { ticker: 'CG', pl: 22803.32, trades: 40, winRate: 72.50, avgReturn: 570.08, returnPct: 3.37, sortino: 1.94 },
+            { ticker: 'CHTR', pl: 14459.74, trades: 47, winRate: 61.70, avgReturn: 307.65, returnPct: 2.15, sortino: 1.27 },
+            { ticker: 'CMG', pl: 32914.16, trades: 22, winRate: 77.27, avgReturn: 1496.10, returnPct: 7.58, sortino: 2.31 },
+            { ticker: 'CNC', pl: 5940.13, trades: 36, winRate: 66.67, avgReturn: 165.00, returnPct: 1.45, sortino: 0.58 },
+            { ticker: 'COP', pl: 5564.52, trades: 26, winRate: 61.54, avgReturn: 214.02, returnPct: 1.79, sortino: 1.68 },
+            { ticker: 'COR', pl: 5658.71, trades: 30, winRate: 66.67, avgReturn: 188.62, returnPct: 1.69, sortino: 0.88 },
+            { ticker: 'CORT', pl: 16971.28, trades: 37, winRate: 59.46, avgReturn: 458.68, returnPct: 2.89, sortino: 1.15 },
+            { ticker: 'COST', pl: 4053.15, trades: 21, winRate: 71.43, avgReturn: 193.01, returnPct: 1.88, sortino: 0.89 },
+            { ticker: 'CQP', pl: 16860.16, trades: 50, winRate: 74.00, avgReturn: 337.20, returnPct: 2.16, sortino: 2.15 },
+            { ticker: 'CRWD', pl: 14432.59, trades: 21, winRate: 61.90, avgReturn: 687.27, returnPct: 5.41, sortino: 2.36 },
+            { ticker: 'CSCO', pl: 4380.35, trades: 11, winRate: 72.73, avgReturn: 398.21, returnPct: 3.38, sortino: 0.87 },
+            { ticker: 'CTRA', pl: 9436.54, trades: 54, winRate: 68.52, avgReturn: 174.75, returnPct: 1.34, sortino: 1.02 },
+            { ticker: 'CVNA', pl: 50020.99, trades: 29, winRate: 79.31, avgReturn: 1724.86, returnPct: 7.84, sortino: 5.56 },
+            { ticker: 'CVX', pl: 3946.30, trades: 27, winRate: 77.78, avgReturn: 146.16, returnPct: 1.34, sortino: 0.83 },
+            { ticker: 'DE', pl: 5075.01, trades: 26, winRate: 65.38, avgReturn: 195.19, returnPct: 1.68, sortino: 0.56 },
+            { ticker: 'DELL', pl: 12768.17, trades: 27, winRate: 62.96, avgReturn: 472.90, returnPct: 3.45, sortino: 1.00 },
+            { ticker: 'DHI', pl: 1868.85, trades: 30, winRate: 53.33, avgReturn: 62.30, returnPct: 0.62, sortino: 0.37 },
+            { ticker: 'DHR', pl: 3211.08, trades: 22, winRate: 72.73, avgReturn: 145.96, returnPct: 1.48, sortino: 0.68 },
+            { ticker: 'DINO', pl: 4732.75, trades: 34, winRate: 55.88, avgReturn: 139.20, returnPct: 1.47, sortino: 0.49 },
+            { ticker: 'DIS', pl: 5071.30, trades: 25, winRate: 52.00, avgReturn: 202.85, returnPct: 1.97, sortino: 0.96 },
+            { ticker: 'DVN', pl: 4407.16, trades: 20, winRate: 55.00, avgReturn: 220.36, returnPct: 2.27, sortino: 1.13 },
+            { ticker: 'EAT', pl: 36722.87, trades: 59, winRate: 62.71, avgReturn: 622.42, returnPct: 3.08, sortino: 2.39 },
+            { ticker: 'EG', pl: 3848.19, trades: 39, winRate: 64.10, avgReturn: 98.67, returnPct: 0.92, sortino: 0.52 },
+            { ticker: 'ELV', pl: 4160.57, trades: 56, winRate: 51.79, avgReturn: 74.30, returnPct: 0.70, sortino: 0.32 },
+            { ticker: 'EOG', pl: 3388.31, trades: 14, winRate: 92.86, avgReturn: 242.02, returnPct: 2.32, sortino: Infinity },
+            { ticker: 'EPD', pl: 3971.79, trades: 41, winRate: 60.98, avgReturn: 96.87, returnPct: 0.93, sortino: 1.45 },
+            { ticker: 'EQT', pl: 17374.92, trades: 26, winRate: 88.46, avgReturn: 668.27, returnPct: 4.49, sortino: 53.46 },
+            { ticker: 'ESNT', pl: 5981.11, trades: 43, winRate: 69.77, avgReturn: 139.10, returnPct: 1.24, sortino: 3.27 },
+            { ticker: 'ET', pl: 10502.81, trades: 37, winRate: 75.68, avgReturn: 283.86, returnPct: 2.20, sortino: 2.57 },
+            { ticker: 'ETN', pl: 8622.97, trades: 27, winRate: 62.96, avgReturn: 319.37, returnPct: 2.52, sortino: 0.89 },
+            { ticker: 'EWBC', pl: 5684.55, trades: 22, winRate: 63.64, avgReturn: 258.39, returnPct: 2.18, sortino: 0.75 },
+            { ticker: 'EXEL', pl: 14834.44, trades: 36, winRate: 72.22, avgReturn: 412.07, returnPct: 2.90, sortino: 3.98 },
+            { ticker: 'F', pl: 4379.73, trades: 29, winRate: 65.52, avgReturn: 151.03, returnPct: 1.57, sortino: 0.63 },
+            { ticker: 'FTAI', pl: 73451.25, trades: 36, winRate: 77.78, avgReturn: 2040.31, returnPct: 6.44, sortino: 2.22 },
+            { ticker: 'FTNT', pl: 7980.23, trades: 9, winRate: 66.67, avgReturn: 886.69, returnPct: 6.83, sortino: 1.90 },
+            { ticker: 'GILD', pl: 7322.72, trades: 51, winRate: 72.55, avgReturn: 143.58, returnPct: 1.20, sortino: 0.85 },
+            { ticker: 'GOOG', pl: 8967.93, trades: 29, winRate: 89.66, avgReturn: 309.24, returnPct: 2.47, sortino: 7.08 },
+            { ticker: 'GS', pl: 4945.88, trades: 32, winRate: 75.00, avgReturn: 154.56, returnPct: 1.40, sortino: 1.99 },
+            { ticker: 'HCA', pl: 6136.60, trades: 42, winRate: 57.14, avgReturn: 146.11, returnPct: 1.46, sortino: 0.78 },
+            { ticker: 'HES', pl: 6456.14, trades: 35, winRate: 60.00, avgReturn: 184.46, returnPct: 1.55, sortino: 2.24 },
+            { ticker: 'HIMS', pl: 213931.12, trades: 55, winRate: 67.27, avgReturn: 3889.66, returnPct: 6.19, sortino: 1.55 },
+            { ticker: 'HON', pl: 4446.84, trades: 29, winRate: 65.52, avgReturn: 153.34, returnPct: 1.43, sortino: 1.15 },
+            { ticker: 'IBKR', pl: 11222.62, trades: 39, winRate: 56.41, avgReturn: 287.76, returnPct: 2.29, sortino: 0.91 },
+            { ticker: 'IBM', pl: 3301.40, trades: 40, winRate: 60.00, avgReturn: 82.53, returnPct: 0.81, sortino: 0.52 },
+            { ticker: 'INSM', pl: 8311.55, trades: 35, winRate: 62.86, avgReturn: 237.47, returnPct: 1.79, sortino: 0.75 },
+            { ticker: 'INTC', pl: 14596.76, trades: 42, winRate: 64.29, avgReturn: 347.54, returnPct: 2.35, sortino: 1.26 },
+            { ticker: 'INTU', pl: 8264.26, trades: 39, winRate: 64.10, avgReturn: 211.90, returnPct: 1.81, sortino: 0.61 },
+            { ticker: 'ISRG', pl: 6956.81, trades: 20, winRate: 55.00, avgReturn: 347.84, returnPct: 2.99, sortino: 3.61 },
+            { ticker: 'JNJ', pl: 1457.85, trades: 39, winRate: 56.41, avgReturn: 37.38, returnPct: 0.40, sortino: 0.38 },
+            { ticker: 'JPM', pl: 4170.02, trades: 12, winRate: 75.00, avgReturn: 347.50, returnPct: 3.32, sortino: 1.02 },
+            { ticker: 'KKR', pl: 6634.72, trades: 38, winRate: 63.16, avgReturn: 174.60, returnPct: 1.45, sortino: 0.51 },
+            { ticker: 'KLAC', pl: 5271.48, trades: 28, winRate: 75.00, avgReturn: 188.27, returnPct: 1.64, sortino: 0.43 },
+            { ticker: 'KNSL', pl: 16969.52, trades: 45, winRate: 82.22, avgReturn: 377.10, returnPct: 2.59, sortino: 4.93 },
+            { ticker: 'KO', pl: 650.66, trades: 3, winRate: 66.67, avgReturn: 216.89, returnPct: 2.39, sortino: Infinity },
+            { ticker: 'LBRDA', pl: 19815.72, trades: 49, winRate: 67.35, avgReturn: 404.40, returnPct: 2.26, sortino: 1.03 },
+            { ticker: 'LEN', pl: 4365.62, trades: 38, winRate: 71.05, avgReturn: 114.88, returnPct: 1.09, sortino: 0.73 },
+            { ticker: 'LNTH', pl: 10595.80, trades: 39, winRate: 56.41, avgReturn: 271.69, returnPct: 1.91, sortino: 0.85 },
+            { ticker: 'MCK', pl: 3923.68, trades: 41, winRate: 56.10, avgReturn: 95.70, returnPct: 0.94, sortino: 1.15 },
+            { ticker: 'MELI', pl: 11737.96, trades: 54, winRate: 61.11, avgReturn: 217.37, returnPct: 1.80, sortino: 0.85 },
+            { ticker: 'META', pl: 11024.35, trades: 37, winRate: 67.57, avgReturn: 297.96, returnPct: 2.47, sortino: 1.50 },
+            { ticker: 'MKTX', pl: 859.97, trades: 33, winRate: 51.52, avgReturn: 26.06, returnPct: 0.27, sortino: 0.19 },
+            { ticker: 'MMC', pl: 3462.49, trades: 30, winRate: 56.67, avgReturn: 115.42, returnPct: 1.13, sortino: 1.02 },
+            { ticker: 'MO', pl: 4072.90, trades: 31, winRate: 74.19, avgReturn: 131.38, returnPct: 1.22, sortino: 0.72 },
+            { ticker: 'MPC', pl: 5188.59, trades: 16, winRate: 87.50, avgReturn: 324.29, returnPct: 2.89, sortino: 1.92 },
+            { ticker: 'MPLX', pl: 7282.95, trades: 39, winRate: 66.67, avgReturn: 186.74, returnPct: 1.51, sortino: 2.73 },
+            { ticker: 'MPWR', pl: 19174.83, trades: 30, winRate: 73.33, avgReturn: 639.16, returnPct: 4.91, sortino: 0.77 },
+            { ticker: 'MRVL', pl: 24442.76, trades: 33, winRate: 66.67, avgReturn: 740.69, returnPct: 4.30, sortino: 1.96 },
+            { ticker: 'MS', pl: 11012.51, trades: 55, winRate: 65.45, avgReturn: 200.23, returnPct: 1.48, sortino: 0.80 },
+            { ticker: 'MSFT', pl: 2462.73, trades: 52, winRate: 44.23, avgReturn: 47.36, returnPct: 0.49, sortino: 0.50 },
+            { ticker: 'MSI', pl: 1346.68, trades: 8, winRate: 62.50, avgReturn: 168.34, returnPct: 1.68, sortino: 1.00 },
+            { ticker: 'MSTR', pl: 163774.06, trades: 30, winRate: 66.67, avgReturn: 5459.14, returnPct: 7.69, sortino: 7.25 },
+            { ticker: 'MTG', pl: 3666.66, trades: 24, winRate: 79.17, avgReturn: 152.78, returnPct: 1.44, sortino: 1.02 },
+            { ticker: 'MU', pl: 22564.50, trades: 31, winRate: 67.74, avgReturn: 727.89, returnPct: 4.18, sortino: 2.28 },
+            { ticker: 'NEE', pl: 3250.93, trades: 24, winRate: 50.00, avgReturn: 135.46, returnPct: 1.33, sortino: 0.89 },
+            { ticker: 'NFLX', pl: 13785.15, trades: 37, winRate: 64.86, avgReturn: 372.57, returnPct: 2.90, sortino: 1.99 },
+            { ticker: 'NKE', pl: 8560.87, trades: 44, winRate: 65.91, avgReturn: 194.57, returnPct: 1.64, sortino: 1.51 },
+            { ticker: 'NOW', pl: 7618.55, trades: 17, winRate: 64.71, avgReturn: 448.15, returnPct: 3.56, sortino: 4.98 },
+            { ticker: 'NVDA', pl: 20611.04, trades: 37, winRate: 81.08, avgReturn: 557.06, returnPct: 3.61, sortino: 2.02 },
+            { ticker: 'OKE', pl: 3438.16, trades: 20, winRate: 60.00, avgReturn: 171.91, returnPct: 1.61, sortino: 2.44 },
+            { ticker: 'ORCL', pl: 8408.36, trades: 39, winRate: 64.10, avgReturn: 215.60, returnPct: 1.83, sortino: 0.91 },
+            { ticker: 'ORLY', pl: 4826.94, trades: 38, winRate: 68.42, avgReturn: 127.02, returnPct: 1.14, sortino: 2.24 },
+            { ticker: 'OVV', pl: 12626.15, trades: 53, winRate: 67.92, avgReturn: 238.23, returnPct: 1.64, sortino: 1.64 },
+            { ticker: 'PAA', pl: 5832.30, trades: 39, winRate: 66.67, avgReturn: 149.55, returnPct: 1.30, sortino: 0.55 },
+            { ticker: 'PANW', pl: 9166.60, trades: 37, winRate: 64.86, avgReturn: 247.75, returnPct: 2.01, sortino: 1.65 },
+            { ticker: 'PEP', pl: 2457.60, trades: 27, winRate: 62.96, avgReturn: 91.02, returnPct: 0.89, sortino: 1.85 },
         ];
-
-        const palette = {
-            blueDark: '#003459',
-            blueMid: '#007EA7',
-            blueLight: '#00A8E8',
-            white: '#FFFFFF',
-            black: '#232323'
-        };
-
-        const tooltipPlugin = {
-            tooltip: {
-                backgroundColor: 'rgba(0, 52, 89, 0.9)',
-                titleFont: { size: 16, weight: 'bold' },
-                bodyFont: { size: 14 },
-                padding: 12,
-                cornerRadius: 8,
-                callbacks: {
-                    title: function(tooltipItems) {
-                        const item = tooltipItems[0];
-                        let label = item.chart.data.labels[item.dataIndex];
-                        if (Array.isArray(label)) {
-                            return label.join(' ');
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- Chart Rendering ---
+            
+            // Helper function to create charts
+            function createBarChart(canvasId, labels, data, label, backgroundColor, borderColor) {
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                return new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: label,
+                            data: data,
+                            backgroundColor: backgroundColor,
+                            borderColor: borderColor,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { color: '#6b7280' },
+                                grid: { color: '#e5e7eb' }
+                            },
+                            x: {
+                                ticks: { color: '#6b7280' },
+                                grid: { display: false }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                backgroundColor: '#1f2937',
+                                titleFont: { size: 14 },
+                                bodyFont: { size: 12 },
+                                displayColors: false
+                            }
                         }
-                        return label;
                     }
-                }
-            }
-        };
-
-        function wrapLabels(labels, maxLength) {
-            return labels.map(label => {
-                if (label.length <= maxLength) {
-                    return label;
-                }
-                const words = label.split(' ');
-                const lines = [];
-                let currentLine = '';
-                words.forEach(word => {
-                    if ((currentLine + word).length > maxLength) {
-                        lines.push(currentLine.trim());
-                        currentLine = '';
-                    }
-                    currentLine += word + ' ';
                 });
-                lines.push(currentLine.trim());
-                return lines;
+            }
+
+            // Chart 1: Top 10 by P/L
+            const topPL = [...performanceData].sort((a, b) => b.pl - a.pl).slice(0, 10);
+            createBarChart(
+                'plChart', 
+                topPL.map(d => d.ticker), 
+                topPL.map(d => d.pl), 
+                'Total P/L ($)',
+                'rgba(16, 185, 129, 0.6)',
+                'rgba(16, 185, 129, 1)'
+            );
+
+            // Chart 2: Top 10 by Win Rate
+            const topWinRate = [...performanceData].sort((a, b) => b.winRate - a.winRate).slice(0, 10);
+            createBarChart(
+                'winRateChart',
+                topWinRate.map(d => d.ticker),
+                topWinRate.map(d => d.winRate),
+                'Win Rate (%)',
+                'rgba(59, 130, 246, 0.6)',
+                'rgba(59, 130, 246, 1)'
+            );
+
+            // Chart 3: Top 10 by Sortino Ratio
+            const topSortino = [...performanceData]
+                .filter(d => isFinite(d.sortino)) // Exclude 'inf' values
+                .sort((a, b) => b.sortino - a.sortino).slice(0, 10);
+            createBarChart(
+                'sortinoChart',
+                topSortino.map(d => d.ticker),
+                topSortino.map(d => d.sortino),
+                'Sortino Ratio',
+                'rgba(249, 115, 22, 0.6)',
+                'rgba(249, 115, 22, 1)'
+            );
+
+            // --- Table Population ---
+            renderTable(performanceData);
+        });
+
+        // --- Table Rendering and Sorting Logic ---
+        const tableBody = document.getElementById('performanceTable');
+        let currentSort = { column: 1, asc: false };
+
+        function renderTable(data) {
+            tableBody.innerHTML = ''; // Clear existing rows
+            data.forEach(item => {
+                const winRateClass = item.winRate > 70 ? 'text-green-600 font-semibold' : item.winRate < 55 ? 'text-red-600' : '';
+                const plClass = item.pl > 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold';
+
+                const row = document.createElement('tr');
+                row.className = 'bg-white border-b hover:bg-gray-50';
+                row.innerHTML = `
+                    <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">${item.ticker}</th>
+                    <td class="px-4 py-3 ${plClass}">$${item.pl.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td class="px-4 py-3">${item.trades}</td>
+                    <td class="px-4 py-3 ${winRateClass}">${item.winRate.toFixed(2)}%</td>
+                    <td class="px-4 py-3">$${item.avgReturn.toFixed(2)}</td>
+                    <td class="px-4 py-3">${item.returnPct.toFixed(2)}%</td>
+                    <td class="px-4 py-3">${isFinite(item.sortino) ? item.sortino.toFixed(2) : 'Inf'}</td>
+                `;
+                tableBody.appendChild(row);
             });
         }
         
-        document.addEventListener('DOMContentLoaded', function () {
+        function sortTable(columnIndex, type = 'string') {
+            const asc = currentSort.column === columnIndex ? !currentSort.asc : true;
+            currentSort = { column: columnIndex, asc: asc };
             
-            const sortedByProfit = [...tradingData].sort((a, b) => b.pl - a.pl).slice(0, 10);
-            const topProfitCtx = document.getElementById('topProfitChart').getContext('2d');
-            new Chart(topProfitCtx, {
-                type: 'bar',
-                data: {
-                    labels: sortedByProfit.map(d => d.ticker),
-                    datasets: [{
-                        label: 'Total Profit ($)',
-                        data: sortedByProfit.map(d => d.pl),
-                        backgroundColor: palette.blueLight,
-                        borderColor: palette.blueMid,
-                        borderWidth: 2,
-                        borderRadius: 5,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: tooltipPlugin,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { color: palette.blueDark, font: { weight: '600' } },
-                            grid: { color: '#e0e0e0' }
-                        },
-                        x: {
-                            ticks: { color: palette.blueDark, font: { weight: '600' } },
-                             grid: { display: false }
-                        }
-                    }
+            const sortedData = [...performanceData].sort((a, b) => {
+                const keys = ['ticker', 'pl', 'trades', 'winRate', 'avgReturn', 'returnPct', 'sortino'];
+                const key = keys[columnIndex];
+
+                let valA = a[key];
+                let valB = b[key];
+                
+                if(key === 'sortino') {
+                    valA = isFinite(valA) ? valA : asc ? Infinity : -Infinity;
+                    valB = isFinite(valB) ? valB : asc ? Infinity : -Infinity;
+                }
+
+                if (type === 'numeric') {
+                    return asc ? valA - valB : valB - valA;
+                } else {
+                    if (valA < valB) return asc ? -1 : 1;
+                    if (valA > valB) return asc ? 1 : -1;
+                    return 0;
                 }
             });
 
-            const sortedByWinRate = [...tradingData].sort((a, b) => b.winRate - a.winRate).slice(0, 10);
-            const topWinRateCtx = document.getElementById('topWinRateChart').getContext('2d');
-            new Chart(topWinRateCtx, {
-                type: 'bar',
-                data: {
-                    labels: sortedByWinRate.map(d => d.ticker),
-                    datasets: [{
-                        label: 'Win Rate (%)',
-                        data: sortedByWinRate.map(d => d.winRate),
-                        backgroundColor: palette.blueMid,
-                        borderColor: palette.blueDark,
-                        borderWidth: 2,
-                        borderRadius: 5
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: tooltipPlugin,
-                    scales: {
-                         y: {
-                            ticks: { color: palette.blueDark, font: { weight: '600' } },
-                             grid: { display: false }
-                        },
-                        x: {
-                           ticks: { color: palette.blueDark, font: { weight: '600' } },
-                           grid: { color: '#e0e0e0' }
-                        }
-                    }
-                }
-            });
-            
-            const winRateCtx = document.getElementById('winRateChart').getContext('2d');
-            new Chart(winRateCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Win Rate', 'Loss Rate'],
-                    datasets: [{
-                        data: [66.32, 100 - 66.32],
-                        backgroundColor: [palette.blueLight, '#E0F2FE'],
-                        borderColor: [palette.blueMid, '#BAE6FD'],
-                        borderWidth: 2,
-                        hoverOffset: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed !== null) {
-                                        label += context.parsed.toFixed(2) + '%';
-                                    }
-                                    return label;
-                                }
-                            }
-                        }
-                    },
-                    cutout: '70%'
-                }
-            });
-            
-            const scatterCtx = document.getElementById('riskRewardScatter').getContext('2d');
-            new Chart(scatterCtx, {
-                type: 'scatter',
-                data: {
-                    datasets: [{
-                        label: 'Ticker Performance',
-                        data: tradingData.map(d => ({ x: d.maxDrawdown, y: d.pl, label: d.ticker })),
-                        backgroundColor: 'rgba(0, 168, 232, 0.6)',
-                        borderColor: 'rgba(0, 126, 167, 1)',
-                        pointRadius: 6,
-                        pointHoverRadius: 9
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 52, 89, 0.9)',
-                            titleFont: { size: 16, weight: 'bold' },
-                            bodyFont: { size: 14 },
-                            padding: 12,
-                            cornerRadius: 8,
-                            callbacks: {
-                                title: function(tooltipItems) {
-                                     const item = tooltipItems[0];
-                                     const dataPoint = item.chart.data.datasets[item.datasetIndex].data[item.dataIndex];
-                                     return dataPoint.label;
-                                },
-                                label: function(context) {
-                                    return [
-                                        `Profit: $${context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`,
-                                        `Max Drawdown: $${context.parsed.x.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
-                                    ];
-                                }
-                            }
-                        },
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            title: { display: true, text: 'Total Profit ($)', color: palette.blueDark, font: { size: 14, weight: 'bold' } },
-                            ticks: { color: palette.blueDark, font: { weight: '600' } },
-                            grid: { color: '#e0e0e0' }
-                        },
-                        x: {
-                            type: 'logarithmic',
-                            title: { display: true, text: 'Max Drawdown ($) - Log Scale', color: palette.blueDark, font: { size: 14, weight: 'bold' } },
-                            ticks: { 
-                                color: palette.blueDark, 
-                                font: { weight: '600' },
-                                callback: function(value, index, values) {
-                                   if (value === 10 || value === 100 || value === 1000 || value === 10000 || value === 100000) {
-                                        return '$' + value.toLocaleString();
-                                   }
-                                }
-                            },
-                             grid: { color: '#e0e0e0' }
-                        }
-                    }
-                }
-            });
+            renderTable(sortedData);
+        }
 
-        });
+        // Initial sort by P/L descending
+        sortTable(1, 'numeric');
+        sortTable(1, 'numeric');
+
     </script>
 </body>
 </html>
