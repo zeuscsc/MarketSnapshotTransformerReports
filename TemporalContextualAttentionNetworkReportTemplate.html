@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Volatility Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            filter: invert(0.8) brightness(100%) sepia(0%) saturate(10000%) hue-rotate(0deg);
+        }
+        .apexcharts-tooltip {
+            background: #2d3748 !important;
+            color: #e2e8f0;
+            border: 1px solid #4a5568 !important;
+        }
+        .apexcharts-tooltip div {
+            padding: 2px 6px;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="w-full max-w-7xl mx-auto flex flex-col space-y-6 p-4">
+        
+        <header class="text-center">
+            <h1 class="text-4xl font-bold text-gray-100">Stock Volatility Analysis</h1>
+            <p id="subtitle" class="text-lg text-gray-400 mt-2">Predicted vs. Actual High/Low Range</p>
+        </header>
+
+        <div class="flex flex-wrap justify-center items-center gap-4">
+            <div class="flex items-center space-x-2 bg-gray-800 p-2 rounded-lg">
+                <label for="forecast-date-picker" class="font-semibold text-gray-300 text-sm">Forecast Date:</label>
+                <input type="date" id="forecast-date-picker" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <div class="flex items-center space-x-2 bg-gray-800 p-2 rounded-lg">
+                <span class="font-semibold text-gray-300 mr-2 text-sm">Ticker:</span>
+                <button data-ticker="INDEXHANGSENG-HSI" class="control-button ticker-btn px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200">HSI</button>
+                <button data-ticker="INDEXNASDAQ-_IXIC" class="control-button ticker-btn px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200">NASDAQ</button>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 p-6 rounded-xl shadow-2xl w-full h-[60vh]">
+            <div id="mergedChart" class="h-full"></div>
+        </div>
+
+    </div>
+    
+    <script>
+    // --- Sample Data (New Format) ---
+    // I've converted your new data format into a usable JavaScript object.
+    const forecastData = {
+        "2023-12-30": {
+            "INDEXHANGSENG-HSI": [
+                {
+                    "Date": "2023-12-31",
+                    "Ticker": "INDEXHANGSENG-HSI",
+                    "Pred_Open": 17014.4767580829,
+                    "Pred_High": 17069.64736537184,
+                    "Pred_Low": 16897.062329546192,
+                    "Pred_Close": 17012.509137909998,
+                    "Actual_Open": 17066.52000786512,
+                    "Actual_High": 17095.120008633134,
+                    "Actual_Low": 16950.899986771165,
+                    "Actual_Close": 17047.39001416345
+                },
+                {
+                    "Date": "2024-01-01",
+                    "Ticker": "INDEXHANGSENG-HSI",
+                    "Pred_Open": 17037.471609473218,
+                    "Pred_High": 17098.021981046113,
+                    "Pred_Low": 16914.78292169598,
+                    "Pred_Close": 17027.75884889349,
+                    "Actual_Open": 17066.51999864817,
+                    "Actual_High": 17095.120002091455,
+                    "Actual_Low": 16950.89998877441,
+                    "Actual_Close": 17047.38999845197
+                },
+                {
+                    "Date": "2024-01-02",
+                    "Ticker": "INDEXHANGSENG-HSI",
+                    "Pred_Open": 17111.575754888803,
+                    "Pred_High": 17148.14200250314,
+                    "Pred_Low": 16961.45411198474,
+                    "Pred_Close": 17051.968505692133,
+                    "Actual_Open": 17135.119993935554,
+                    "Actual_High": 17135.119978668252,
+                    "Actual_Low": 16725.27997468498,
+                    "Actual_Close": 16788.550000280582
+                },
+                {
+                    "Date": "2024-01-03",
+                    "Ticker": "INDEXHANGSENG-HSI",
+                    "Pred_Open": 17137.340477494326,
+                    "Pred_High": 17167.491866820576,
+                    "Pred_Low": 16949.53901615301,
+                    "Pred_Close": 17029.739253547115,
+                    "Actual_Open": 16624.91998132711,
+                    "Actual_High": 16657.50999269499,
+                    "Actual_Low": 16564.800012934797,
+                    "Actual_Close": 16646.40999301121
+                },
+                {
+                    "Date": "2024-01-04",
+                    "Ticker": "INDEXHANGSENG-HSI",
+                    "Pred_Open": 17203.2558709501,
+                    "Pred_High": 17255.31710045284,
+                    "Pred_Low": 16976.672034695406,
+                    "Pred_Close": 17061.44066306674,
+                    "Actual_Open": 16673.399978136127,
+                    "Actual_High": 16673.399980148264,
+                    "Actual_Low": 16516.329996495806,
+                    "Actual_Close": 16645.980008108854
+                }
+            ],
+            "INDEXNASDAQ-_IXIC": [
+                {
+                    "Date": "2023-12-31",
+                    "Ticker": "INDEXNASDAQ-_IXIC",
+                    "Pred_Open": 15049.995219738721,
+                    "Pred_High": 15076.171331932073,
+                    "Pred_Low": 14915.068560393993,
+                    "Pred_Close": 14969.085839492911,
+                    "Actual_Open": 15099.200062585416,
+                    "Actual_High": 15111.410030313684,
+                    "Actual_Low": 14955.370010683311,
+                    "Actual_Close": 15011.350007896412
+                },
+                {
+                    "Date": "2024-01-01",
+                    "Ticker": "INDEXNASDAQ-_IXIC",
+                    "Pred_Open": 15033.647056347929,
+                    "Pred_High": 15059.284051954397,
+                    "Pred_Low": 14900.206927528996,
+                    "Pred_Close": 14955.070506521392,
+                    "Actual_Open": 15099.200015795208,
+                    "Actual_High": 15111.410021043024,
+                    "Actual_Low": 14955.370028581441,
+                    "Actual_Close": 15011.349991406152
+                },
+                {
+                    "Date": "2024-01-02",
+                    "Ticker": "INDEXNASDAQ-_IXIC",
+                    "Pred_Open": 15014.953593291466,
+                    "Pred_High": 15044.004378293328,
+                    "Pred_Low": 14883.299605456607,
+                    "Pred_Close": 14933.78810945256,
+                    "Actual_Open": 14873.700004393331,
+                    "Actual_High": 14887.799992304957,
+                    "Actual_Low": 14682.380006450241,
+                    "Actual_Close": 14765.940012685556
+                },
+                {
+                    "Date": "2024-01-03",
+                    "Ticker": "INDEXNASDAQ-_IXIC",
+                    "Pred_Open": 14981.564186746124,
+                    "Pred_High": 15024.057309450101,
+                    "Pred_Low": 14863.38368156745,
+                    "Pred_Close": 14915.767973015621,
+                    "Actual_Open": 14641.469994909186,
+                    "Actual_High": 14694.580016130778,
+                    "Actual_Low": 14577.439982522063,
+                    "Actual_Close": 14592.210001727499
+                },
+                {
+                    "Date": "2024-01-04",
+                    "Ticker": "INDEXNASDAQ-_IXIC",
+                    "Pred_Open": 14941.527584710984,
+                    "Pred_High": 14988.900676286008,
+                    "Pred_Low": 14829.786449890105,
+                    "Pred_Close": 14882.035977065401,
+                    "Actual_Open": 14532.23001184864,
+                    "Actual_High": 14632.769988088714,
+                    "Actual_Low": 14504.779995234217,
+                    "Actual_Close": 14510.299998396547
+                }
+            ]
+        },
+        "2023-12-31": {
+        "INDEXHANGSENG-HSI": [
+            {
+                "Date": "2024-01-01",
+                "Ticker": "INDEXHANGSENG-HSI",
+                "Pred_Open": 17061.684010067464,
+                "Pred_High": 17101.41507629986,
+                "Pred_Low": 16942.240220655007,
+                "Pred_Close": 17041.052526597377,
+                "Actual_Open": 17066.51999864817,
+                "Actual_High": 17095.120002091455,
+                "Actual_Low": 16950.89998877441,
+                "Actual_Close": 17047.38999845197
+            },
+            {
+                "Date": "2024-01-02",
+                "Ticker": "INDEXHANGSENG-HSI",
+                "Pred_Open": 17124.82023892542,
+                "Pred_High": 17142.06505564595,
+                "Pred_Low": 16970.193617073408,
+                "Pred_Close": 17046.075143995404,
+                "Actual_Open": 17135.119993935554,
+                "Actual_High": 17135.119978668252,
+                "Actual_Low": 16725.27997468498,
+                "Actual_Close": 16788.550000280582
+            },
+            {
+                "Date": "2024-01-03",
+                "Ticker": "INDEXHANGSENG-HSI",
+                "Pred_Open": 17185.136716456385,
+                "Pred_High": 17192.818864031586,
+                "Pred_Low": 16988.992238061073,
+                "Pred_Close": 17057.112021421646,
+                "Actual_Open": 16624.91998132711,
+                "Actual_High": 16657.50999269499,
+                "Actual_Low": 16564.800012934797,
+                "Actual_Close": 16646.40999301121
+            },
+            {
+                "Date": "2024-01-04",
+                "Ticker": "INDEXHANGSENG-HSI",
+                "Pred_Open": 17190.204619379936,
+                "Pred_High": 17220.88887800093,
+                "Pred_Low": 16960.197237301196,
+                "Pred_Close": 17029.20068883585,
+                "Actual_Open": 16673.399978136127,
+                "Actual_High": 16673.399980148264,
+                "Actual_Low": 16516.329996495806,
+                "Actual_Close": 16645.980008108854
+            },
+            {
+                "Date": "2024-01-05",
+                "Ticker": "INDEXHANGSENG-HSI",
+                "Pred_Open": 17218.71595365688,
+                "Pred_High": 17261.39404975498,
+                "Pred_Low": 16976.8943256172,
+                "Pred_Close": 17039.97546334047,
+                "Actual_Open": 16573.120038320252,
+                "Actual_High": 16745.72999794655,
+                "Actual_Low": 16455.57002865079,
+                "Actual_Close": 16535.32999465663
+            }
+        ],
+        "INDEXNASDAQ-_IXIC": [
+            {
+                "Date": "2024-01-01",
+                "Ticker": "INDEXNASDAQ-_IXIC",
+                "Pred_Open": 15103.357998628819,
+                "Pred_High": 15117.169107091047,
+                "Pred_Low": 14962.777735415684,
+                "Pred_Close": 15017.00469289053,
+                "Actual_Open": 15099.200015795208,
+                "Actual_High": 15111.410021043024,
+                "Actual_Low": 14955.370028581441,
+                "Actual_Close": 15011.349991406152
+            },
+            {
+                "Date": "2024-01-02",
+                "Ticker": "INDEXNASDAQ-_IXIC",
+                "Pred_Open": 15085.52383784825,
+                "Pred_High": 15104.098072400633,
+                "Pred_Low": 14949.398398538146,
+                "Pred_Close": 14999.61625984628,
+                "Actual_Open": 14873.700004393331,
+                "Actual_High": 14887.799992304957,
+                "Actual_Low": 14682.380006450241,
+                "Actual_Close": 14765.940012685556
+            },
+            {
+                "Date": "2024-01-03",
+                "Ticker": "INDEXNASDAQ-_IXIC",
+                "Pred_Open": 15049.678585260353,
+                "Pred_High": 15079.85181980364,
+                "Pred_Low": 14925.087978114545,
+                "Pred_Close": 14978.135183897935,
+                "Actual_Open": 14641.469994909186,
+                "Actual_High": 14694.580016130778,
+                "Actual_Low": 14577.439982522063,
+                "Actual_Close": 14592.210001727499
+            },
+            {
+                "Date": "2024-01-04",
+                "Ticker": "INDEXNASDAQ-_IXIC",
+                "Pred_Open": 15035.427341131031,
+                "Pred_High": 15069.249609896315,
+                "Pred_Low": 14915.395678356788,
+                "Pred_Close": 14969.168979774822,
+                "Actual_Open": 14532.23001184864,
+                "Actual_High": 14632.769988088714,
+                "Actual_Low": 14504.779995234217,
+                "Actual_Close": 14510.299998396547
+            },
+            {
+                "Date": "2024-01-05",
+                "Ticker": "INDEXNASDAQ-_IXIC",
+                "Pred_Open": 14973.459001060579,
+                "Pred_High": 15011.306908955403,
+                "Pred_Low": 14856.460132876155,
+                "Pred_Close": 14907.299946552384,
+                "Actual_Open": 14500.109995035556,
+                "Actual_High": 14625.19001218498,
+                "Actual_Low": 14477.57000560425,
+                "Actual_Close": 14524.070005811238
+            }
+        ]
+    },
+    };
+    
+    // --- Global State ---
+    let activeForecastDate;
+    let activeTicker = 'INDEXNASDAQ-_IXIC';
+    let mergedChart = null;
+
+    // --- DOM Elements ---
+    const mergedContainer = document.querySelector("#mergedChart");
+    const subtitle = document.getElementById('subtitle');
+    const tickerButtons = document.querySelectorAll('.ticker-btn');
+    const forecastDatePicker = document.getElementById('forecast-date-picker');
+
+    // --- Chart Rendering Function ---
+    function renderCharts() {
+        const dataForForecastDate = forecastData[activeForecastDate] || {};
+        const chartData = dataForForecastDate[activeTicker] || [];
+
+        // Destroy chart if it exists
+        if (mergedChart) mergedChart.destroy();
+        
+        // Clear container and show "no data" message if needed
+        if (chartData.length === 0) {
+            mergedContainer.innerHTML = `<div class="flex items-center justify-center h-full"><p class="text-gray-400">No data available for ${activeTicker} on ${activeForecastDate}.</p></div>`;
+            return;
+        } else {
+            mergedContainer.innerHTML = '';
+        }
+
+        subtitle.textContent = `Analysis for ${activeTicker} (Last observation: ${activeForecastDate}, Predictions for subsequent days)`;
+
+        // --- Data Transformations ---
+        const actualCandleSeries = chartData.map(d => ({ x: new Date(d.Date), y: [d.Actual_Open, d.Actual_High, d.Actual_Low, d.Actual_Close] }));
+        const predictedCandleSeries = chartData.map(d => ({ x: new Date(d.Date), y: [d.Pred_Open, d.Pred_High, d.Pred_Low, d.Pred_Close] }));
+        const actualVolatilityBand = chartData.map(d => ({ x: new Date(d.Date), y: [d.Actual_Low, d.Actual_High] }));
+        const predictedVolatilityBand = chartData.map(d => ({ x: new Date(d.Date), y: [d.Pred_Low,d.Pred_High] }));
+
+        const allPrices = chartData.flatMap(d => [d.Actual_High, d.Actual_Low, d.Pred_High, d.Pred_Low]);
+        const minPrice = Math.min(...allPrices);
+        const maxPrice = Math.max(...allPrices);
+        const padding = (maxPrice - minPrice) * 0.0;
+
+        // --- Merged Chart Options ---
+        const mergedOptions = {
+            chart: {
+                height: '100%',
+                type: 'candlestick',
+                animations: { enabled: true },
+            },
+            series: [
+                { name: 'Actual Price', type: 'candlestick', data: actualCandleSeries },
+                { name: 'Predicted Price', type: 'candlestick', data: predictedCandleSeries },
+                { name: 'Predicted Range', type: 'rangeArea', data: predictedVolatilityBand }, 
+                { name: 'Actual Range', type: 'rangeArea', data: actualVolatilityBand }
+            ],
+            colors: ['#AAA', '#AAA', '#FFC107', '#007BFF'],  // Colors for actual and predicted candles and ranges
+            plotOptions: {
+                candlestick: {
+                    colors: {
+                        upward: '#00B746',  // Green for up candles
+                        downward: '#EF403C'  // Red for down candles
+                    }
+                }
+            },
+            fill: { opacity: [1, 0.75] },  // Full opacity for candlestick, alpha for ranges
+            stroke: { curve: 'straight', width: [2, 2] },  // Wick width for candlestick, 0 for predicted range
+            dataLabels: { enabled: false },
+            title: { text: `Actual Prices up to ${activeForecastDate} with Predicted Prices and Volatility Overlay: ${activeTicker}`, align: 'left' },
+            annotations: {
+                xaxis: [{
+                    x: new Date(activeForecastDate).getTime(),
+                    strokeDashArray: 0,
+                    borderColor: '#775DD0',
+                    label: {
+                        borderColor: '#775DD0',
+                        style: {
+                            color: '#fff',
+                            background: '#775DD0',
+                        },
+                        text: 'Last Observation Day',
+                    }
+                }]
+            },
+            xaxis: { 
+                type: 'datetime',
+                crosshairs: {
+                    show: true,
+                    stroke: {
+                        color: '#90A4AE',
+                        width: 1,
+                        dashArray: 4,
+                    }
+                },
+                tooltip: {
+                    enabled: true,
+                }
+            },
+            yaxis: {
+                labels: { formatter: (value) => value !== undefined && value !== null ? '$' + value.toFixed(2) : '' },
+                min: minPrice - padding,
+                max: maxPrice + padding,
+                tooltip: { enabled: true }
+            },
+            tooltip: {
+                shared: true,
+                intersect: false,
+                custom: function({ series, seriesIndex, dataPointIndex, w }) {
+                    if (dataPointIndex === undefined || dataPointIndex < 0) return ''; // Prevent errors on invalid hover
+
+                    const date = new Date(w.globals.seriesX[0][dataPointIndex]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                    const candle = w.globals.initialSeries[0].data[dataPointIndex].y;
+                    const pred = w.globals.initialSeries[1].data[dataPointIndex].y;
+
+                    const o = candle[0] !== undefined ? candle[0].toFixed(2) : 'N/A';
+                    const h = candle[1] !== undefined ? candle[1].toFixed(2) : 'N/A';
+                    const l = candle[2] !== undefined ? candle[2].toFixed(2) : 'N/A';
+                    const c = candle[3] !== undefined ? candle[3].toFixed(2) : 'N/A';
+
+                    const pred_o = pred[0] !== undefined ? pred[0].toFixed(2) : 'N/A';
+                    const pred_h = pred[1] !== undefined ? pred[1].toFixed(2) : 'N/A';
+                    const pred_l = pred[2] !== undefined ? pred[2].toFixed(2) : 'N/A';
+                    const pred_c = pred[3] !== undefined ? pred[3].toFixed(2) : 'N/A';
+
+                    return `
+                        <div class="apexcharts-tooltip-title" style="font-weight: bold; padding: 4px 8px; background: #1a202c; color: #fff;">${date}</div>
+                        <div style="padding: 4px 8px;">
+                            <strong>Actual:</strong><br>
+                            Open: $${o}<br>
+                            High: $${h}<br>
+                            Low: $${l}<br>
+                            Close: $${c}
+                        </div>
+                        <div style="padding: 4px 8px;">
+                            <strong>Predicted:</strong><br>
+                            Open: $${pred_o}<br>
+                            High: $${pred_h}<br>
+                            Low: $${pred_l}<br>
+                            Close: $${pred_c}
+                        </div>
+                    `;
+                }
+            },
+            legend: { horizontalAlign: 'center', position: 'top' },
+            theme: { mode: 'dark' }
+        };
+        mergedChart = new ApexCharts(mergedContainer, mergedOptions);
+        mergedChart.render();
+    }
+
+    // --- Button Styling Function ---
+    function updateButtonStyles() {
+        tickerButtons.forEach(button => {
+            const isActive = button.dataset.ticker === activeTicker;
+            button.classList.toggle('bg-blue-600', isActive);
+            button.classList.toggle('text-white', isActive);
+            button.classList.toggle('bg-gray-700', !isActive);
+            button.classList.toggle('text-gray-300', !isActive);
+        });
+    }
+
+    // --- Main Initialization Function ---
+    function initialize() {
+        const availableDates = Object.keys(forecastData).sort((a, b) => new Date(b) - new Date(a));
+        if (availableDates.length > 0) {
+            forecastDatePicker.min = availableDates[availableDates.length - 1];
+            forecastDatePicker.max = availableDates[0];
+            activeForecastDate = availableDates[availableDates.length - 1];
+            forecastDatePicker.value = activeForecastDate;
+        }
+        
+        forecastDatePicker.addEventListener('change', () => {
+            activeForecastDate = forecastDatePicker.value;
+            renderCharts();
+        });
+
+        tickerButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                activeTicker = button.dataset.ticker;
+                updateButtonStyles();
+                renderCharts();
+            });
+        });
+        
+        updateButtonStyles();
+        renderCharts();
+    }
+
+    // --- Run on page load ---
+    window.onload = initialize;
+    </script>
+</body>
+</html>
