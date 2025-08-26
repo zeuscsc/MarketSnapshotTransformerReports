@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Volatility Analysis</title>
+    <title>Dynamic Temporal Contextual Attention Network Predictions Preview</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -33,8 +32,8 @@
     <div class="w-full max-w-7xl mx-auto flex flex-col space-y-6 p-4">
         
         <header class="text-center">
-            <h1 class="text-4xl font-bold text-gray-100">Stock Volatility Analysis</h1>
-            <p id="subtitle" class="text-lg text-gray-400 mt-2">Predicted vs. Actual High/Low Range</p>
+            <h1 class="text-4xl font-bold text-gray-100">Dynamic Temporal Contextual Attention Network Predictions Preview</h1>
+            <p id="subtitle" class="text-lg text-gray-400 mt-2">Predicted vs. Actual</p>
         </header>
 
         <div class="flex flex-wrap justify-center items-center gap-4">
@@ -51,9 +50,7 @@
         </div>
 
         <div class="bg-gray-800 p-6 rounded-xl shadow-2xl w-full h-[60vh]">
-            <div id="mergedChart" class="h-full flex items-center justify-center">
-                <p class="text-gray-400">Loading data from Google Sheet...</p>
-            </div>
+            <div id="mergedChart" class="h-full"></div>
         </div>
 
     </div>
