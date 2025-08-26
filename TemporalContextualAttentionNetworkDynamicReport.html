@@ -23,6 +23,16 @@
         .apexcharts-tooltip div {
             padding: 2px 6px;
         }
+        .info-card {
+            background-color: #2d3748;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .info-card:hover {
+            transform: translateY(-5px);
+        }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,6 +44,7 @@
         <header class="text-center">
             <h1 class="text-4xl font-bold text-gray-100">Temporal Contextual Attention Network Predictions Preview</h1>
             <p id="subtitle" class="text-lg text-gray-400 mt-2">Predicted vs. Actual</p>
+            <p id="batch-type" class="text-lg text-gray-400 mt-2"></p>
         </header>
 
         <div class="flex flex-wrap justify-center items-center gap-4">
@@ -49,15 +60,19 @@
             </div>
         </div>
 
+        <div id="info-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
         <div class="bg-gray-800 p-6 rounded-xl shadow-2xl w-full h-[60vh]">
             <div id="mergedChart" class="h-full"></div>
         </div>
 
     </div>
     
-    <script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0"></script>
+<script>
     // --- Global State ---
     let forecastData = {}; // This will be populated from the CSV
+    let statsData = {}; // This will hold dynamically computed stats per ticker
     let activeForecastDate;
     let activeTicker = 'INDEXNASDAQ-_IXIC';
     let mergedChart = null;
@@ -65,8 +80,10 @@
     // --- DOM Elements ---
     const mergedContainer = document.querySelector("#mergedChart");
     const subtitle = document.getElementById('subtitle');
+    const batchTypeElement = document.getElementById('batch-type');
     const tickerButtons = document.querySelectorAll('.ticker-btn');
     const forecastDatePicker = document.getElementById('forecast-date-picker');
+    const infoCardsContainer = document.getElementById('info-cards');
     
     // --- Data Loading and Processing ---
     function loadAndProcessData() {
@@ -82,7 +99,6 @@
             complete: function(results) {
                 const processedData = {};
                 results.data.forEach(row => {
-                    // Skip empty rows if any
                     if (!row.Model_Date || !row.Ticker) {
                         return;
                     }
@@ -90,7 +106,6 @@
                     const modelDate = row.Model_Date;
                     const ticker = row.Ticker;
 
-                    // Ensure the nested structure exists
                     if (!processedData[modelDate]) {
                         processedData[modelDate] = {};
                     }
@@ -98,7 +113,6 @@
                         processedData[modelDate][ticker] = [];
                     }
                     
-                    // The chart expects specific property names, so we map them here.
                     const record = {
                         Date: row.Date,
                         Ticker: row.Ticker,
@@ -117,7 +131,9 @@
                 
                 forecastData = processedData;
                 console.log("✅ Data successfully loaded and processed:", forecastData);
-                initialize(); // Initialize the dashboard now that data is ready
+                statsData = simulateAndAnalyzeTrades(forecastData);
+                console.log("✅ Stats dynamically computed:", statsData);
+                initialize();
             },
             error: function(error) {
                 console.error("Error loading or parsing CSV data:", error);
@@ -126,25 +142,239 @@
         });
     }
 
+    // --- Trade Simulation and Analysis ---
+    function simulateAndAnalyzeTrades(data) {
+        let statsByTicker = {};
+        let totalBatchesByTicker = {};
+        let tradesByTicker = {};
+
+        for (let creationDate in data) {
+            for (let asset in data[creationDate]) {
+                if (!statsByTicker[asset]) {
+                    statsByTicker[asset] = {};
+                    totalBatchesByTicker[asset] = 0;
+                    tradesByTicker[asset] = [];
+                }
+
+                let predictions = data[creationDate][asset];
+                if (predictions.length !== 5) continue;
+                totalBatchesByTicker[asset] += 1;
+
+                // Compute predicted mids and check trend
+                let mids = predictions.map(p => (p.Pred_Low + p.Pred_High) / 2);
+                let sumY = mids.reduce((a, b) => a + b, 0);
+                let sumXY = 0 * mids[0] + 1 * mids[1] + 2 * mids[2] + 3 * mids[3] + 4 * mids[4];
+                let slope = (sumXY - 2 * sumY) / 10;
+                if (slope < 0) continue; // No action if trend is downward
+
+                let batchMinLow = Math.min(...predictions.map(p => p.Pred_Low));
+                let batchMaxHigh = Math.max(...predictions.map(p => p.Pred_High));
+
+                let dates = predictions.map(p => p.Date);
+                let actualLows = predictions.map(p => p.Actual_Low);
+                let actualHighs = predictions.map(p => p.Actual_High);
+                let actualCloses = predictions.map(p => p.Actual_Close);
+
+                let buyIndex = null;
+                for (let i = 0; i < 5; i++) {
+                    if (actualLows[i] <= batchMinLow) {
+                        buyIndex = i;
+                        break;
+                    }
+                }
+
+                if (buyIndex === null) continue;
+
+                let buyDate = dates[buyIndex];
+                let buyPrice = batchMinLow;
+
+                let sellIndex = null;
+                for (let i = buyIndex + 1; i < 5; i++) {
+                    if (actualHighs[i] >= batchMaxHigh) {
+                        sellIndex = i;
+                        break;
+                    }
+                }
+
+                let forced = false;
+                let sellDate, sellPrice;
+                if (sellIndex === null) {
+                    forced = true;
+                    sellIndex = 4;
+                    sellDate = dates[4];
+                    sellPrice = actualCloses[4];
+                } else {
+                    sellDate = dates[sellIndex];
+                    sellPrice = batchMaxHigh;
+                }
+
+                let profit = sellPrice - buyPrice;
+                let cutGain = forced && profit > 0;
+                let cutLoss = forced && profit < 0;
+
+                tradesByTicker[asset].push({
+                    creation_date: creationDate,
+                    asset: asset,
+                    buy_date: buyDate,
+                    buy_price: buyPrice,
+                    sell_date: sellDate,
+                    sell_price: sellPrice,
+                    profit: profit,
+                    forced: forced,
+                    cut_gain: cutGain,
+                    cut_loss: cutLoss
+                });
+            }
+        }
+
+        for (let asset in statsByTicker) {
+            let trades = tradesByTicker[asset];
+            let totalBatches = totalBatchesByTicker[asset];
+            let numTrades = trades.length;
+
+            let numGains = trades.filter(t => t.profit > 0).length;
+            let numLosses = trades.filter(t => t.profit < 0).length;
+            let pctGains = numTrades > 0 ? (numGains / numTrades * 100) : 0;
+            let pctLosses = numTrades > 0 ? (numLosses / numTrades * 100) : 0;
+
+            let forcedTrades = trades.filter(t => t.forced);
+            let numForced = forcedTrades.length;
+            let numCutGain = forcedTrades.filter(t => t.cut_gain).length;
+            let numCutLoss = forcedTrades.filter(t => t.cut_loss).length;
+            let pctCutGain = numForced > 0 ? (numCutGain / numForced * 100) : 0;
+            let pctCutLoss = numForced > 0 ? (numCutLoss / numForced * 100) : 0;
+
+            let numSuccessful = numTrades - numForced;
+            let pctSuccessful = numTrades > 0 ? (numSuccessful / numTrades * 100) : 0;
+
+            let numSuccessBatches = numSuccessful;
+            let numFailedBatches = numForced;
+            let numNoActionBatches = totalBatches - numTrades;
+            let pctSuccessBatches = totalBatches > 0 ? (numSuccessBatches / totalBatches * 100) : 0;
+            let pctFailedBatches = totalBatches > 0 ? (numFailedBatches / totalBatches * 100) : 0;
+            let pctNoActionBatches = totalBatches > 0 ? (numNoActionBatches / totalBatches * 100) : 0;
+
+            statsByTicker[asset] = {
+                total_batches: totalBatches,
+                num_trades: numTrades,
+                num_gains: numGains,
+                num_losses: numLosses,
+                pct_gains: pctGains,
+                pct_losses: pctLosses,
+                num_forced: numForced,
+                num_cut_gain: numCutGain,
+                num_cut_loss: numCutLoss,
+                pct_cut_gain: pctCutGain,
+                pct_cut_loss: pctCutLoss,
+                num_successful: numSuccessful,
+                pct_successful: pctSuccessful,
+                num_success_batches: numSuccessBatches,
+                num_failed_batches: numFailedBatches,
+                num_no_action_batches: numNoActionBatches,
+                pct_success_batches: pctSuccessBatches,
+                pct_failed_batches: pctFailedBatches,
+                pct_no_action_batches: pctNoActionBatches
+            };
+        }
+
+        return statsByTicker;
+    }
+    
+    // --- Batch Type Determination ---
+    function getBatchType(forecastDate, ticker) {
+        const predictions = forecastData[forecastDate]?.[ticker];
+        if (!predictions || predictions.length !== 5) return 'Invalid Batch';
+
+        // Compute predicted mids and check trend
+        let mids = predictions.map(p => (p.Pred_Low + p.Pred_High) / 2);
+        let sumY = mids.reduce((a, b) => a + b, 0);
+        let sumXY = 0 * mids[0] + 1 * mids[1] + 2 * mids[2] + 3 * mids[3] + 4 * mids[4];
+        let slope = (sumXY - 2 * sumY) / 10;
+        if (slope < 0) return 'No Action Batch (Predicted Downward Trend)';
+
+        let batchMinLow = Math.min(...predictions.map(p => p.Pred_Low));
+        let batchMaxHigh = Math.max(...predictions.map(p => p.Pred_High));
+
+        let actualLows = predictions.map(p => p.Actual_Low);
+        let actualHighs = predictions.map(p => p.Actual_High);
+
+        let buyIndex = null;
+        for (let i = 0; i < 5; i++) {
+            if (actualLows[i] <= batchMinLow) {
+                buyIndex = i;
+                break;
+            }
+        }
+
+        if (buyIndex === null) return 'No Action Batch (Buy Not Triggered)';
+
+        let sellIndex = null;
+        for (let i = buyIndex + 1; i < 5; i++) {
+            if (actualHighs[i] >= batchMaxHigh) {
+                sellIndex = i;
+                break;
+            }
+        }
+
+        if (sellIndex !== null) return 'Successful Batch';
+        return 'Failed Batch';
+    }
+    
+    // --- Infographics Rendering Function ---
+    function updateInfoCards(ticker) {
+        const tickerData = statsData[ticker];
+        if (!tickerData) return;
+
+        let cardsHtml = `
+            <div class="info-card">
+                <h3 class="text-lg font-semibold text-gray-300">Trades</h3>
+                <p class="text-2xl font-bold text-white">${tickerData.num_trades}</p>
+            </div>
+            <div class="info-card">
+                <h3 class="text-lg font-semibold text-gray-300">Win Rate</h3>
+                <p class="text-2xl font-bold text-green-400">${tickerData.pct_gains.toFixed(2)}%</p>
+            </div>
+            <div class="info-card">
+                <h3 class="text-lg font-semibold text-gray-300">Loss Rate</h3>
+                <p class="text-2xl font-bold text-red-400">${tickerData.pct_losses.toFixed(2)}%</p>
+            </div>
+            <div class="info-card">
+                <h3 class="text-lg font-semibold text-gray-300">Successful Batches</h3>
+                <p class="text-2xl font-bold text-white">${tickerData.pct_success_batches.toFixed(2)}%</p>
+            </div>
+            <div class="info-card">
+                <h3 class="text-lg font-semibold text-gray-300">Failed Batches</h3>
+                <p class="text-2xl font-bold text-white">${tickerData.pct_failed_batches.toFixed(2)}%</p>
+            </div>
+            <div class="info-card">
+                <h3 class="text-lg font-semibold text-gray-300">No Action Batches</h3>
+                <p class="text-2xl font-bold text-white">${tickerData.pct_no_action_batches.toFixed(2)}%</p>
+            </div>
+        `;
+
+        infoCardsContainer.innerHTML = cardsHtml;
+    }
+
     // --- Chart Rendering Function ---
     function renderCharts() {
         const dataForForecastDate = forecastData[activeForecastDate] || {};
         const chartData = dataForForecastDate[activeTicker] || [];
 
-        // Destroy chart if it exists
         if (mergedChart) mergedChart.destroy();
         
-        // Clear container and show "no data" message if needed
         if (chartData.length === 0) {
             mergedContainer.innerHTML = `<div class="flex items-center justify-center h-full"><p class="text-gray-400">No data available for ${activeTicker} on ${activeForecastDate}.</p></div>`;
+            batchTypeElement.textContent = '';
             return;
         } else {
             mergedContainer.innerHTML = '';
         }
 
+        const batchType = getBatchType(activeForecastDate, activeTicker);
+        batchTypeElement.textContent = `Batch Type: ${batchType}`;
+
         subtitle.textContent = `Analysis for ${activeTicker} (Last observation: ${activeForecastDate}, Predictions for subsequent days)`;
 
-        // --- Data Transformations ---
         const actualCandleSeries = chartData.map(d => ({ x: new Date(d.Date), y: [d.Actual_Open, d.Actual_High, d.Actual_Low, d.Actual_Close] }));
         const predictedCandleSeries = chartData.map(d => ({ x: new Date(d.Date), y: [d.Pred_Open, d.Pred_High, d.Pred_Low, d.Pred_Close] }));
         const actualVolatilityBand = chartData.map(d => ({ x: new Date(d.Date), y: [d.Actual_Low, d.Actual_High] }));
@@ -155,7 +385,6 @@
         const maxPrice = Math.max(...allPrices);
         const padding = (maxPrice - minPrice) * 0.0;
 
-        // --- Merged Chart Options ---
         const mergedOptions = {
             chart: {
                 height: '100%',
@@ -168,17 +397,17 @@
                 { name: 'Predicted Range', type: 'rangeArea', data: predictedVolatilityBand }, 
                 { name: 'Actual Range', type: 'rangeArea', data: actualVolatilityBand }
             ],
-            colors: ['#AAA', '#AAA', '#FFC107', '#007BFF'],  // Colors for actual and predicted candles and ranges
+            colors: ['#AAA', '#AAA', '#FFC107', '#007BFF'],
             plotOptions: {
                 candlestick: {
                     colors: {
-                        upward: '#00B746',  // Green for up candles
-                        downward: '#EF403C'  // Red for down candles
+                        upward: '#00B746',
+                        downward: '#EF403C'
                     }
                 }
             },
-            fill: { opacity: [1, 0.75] },  // Full opacity for candlestick, alpha for ranges
-            stroke: { curve: 'straight', width: [2, 2] },  // Wick width for candlestick, 0 for predicted range
+            fill: { opacity: [1, 0.75] },
+            stroke: { curve: 'straight', width: [2, 2] },
             dataLabels: { enabled: false },
             title: { text: `Actual Prices up to ${activeForecastDate} with Predicted Prices and Volatility Overlay: ${activeTicker}`, align: 'left' },
             annotations: {
@@ -220,7 +449,7 @@
                 shared: true,
                 intersect: false,
                 custom: function({ series, seriesIndex, dataPointIndex, w }) {
-                    if (dataPointIndex === undefined || dataPointIndex < 0) return ''; // Prevent errors on invalid hover
+                    if (dataPointIndex === undefined || dataPointIndex < 0) return '';
 
                     const date = new Date(w.globals.seriesX[0][dataPointIndex]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
                     const candle = w.globals.initialSeries[0].data[dataPointIndex].y;
@@ -280,7 +509,7 @@
         if (availableDates.length > 0) {
             forecastDatePicker.min = availableDates[availableDates.length - 1];
             forecastDatePicker.max = availableDates[0];
-            activeForecastDate = availableDates[availableDates.length - 1]; // Default to the latest date
+            activeForecastDate = availableDates[availableDates.length - 1];
             forecastDatePicker.value = activeForecastDate;
         }
         
@@ -293,11 +522,13 @@
             button.addEventListener('click', () => {
                 activeTicker = button.dataset.ticker;
                 updateButtonStyles();
+                updateInfoCards(activeTicker);
                 renderCharts();
             });
         });
         
         updateButtonStyles();
+        updateInfoCards(activeTicker);
         renderCharts();
     }
 
