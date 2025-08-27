@@ -121,7 +121,8 @@
     function loadAndProcessData() {
         const originalUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQNyFHcXEzmZ3lp6ciRqJYHBOOwieiAgUP_TOgxuQN22tA9XVCmYjsMxmnF6cBnxP2kCSCGnwQ1Q9L8/pub?gid=0&single=true&output=csv";
         
-        const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(originalUrl);
+        // const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(originalUrl);
+        const proxyUrl = "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(originalUrl);
         const csvUrl = proxyUrl;
 
         Papa.parse(csvUrl, {
