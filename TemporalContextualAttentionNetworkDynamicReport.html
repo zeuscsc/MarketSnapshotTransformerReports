@@ -85,6 +85,16 @@
             </div>
 
             <div class="flex items-center space-x-2 bg-gray-800 p-2 rounded-lg">
+                <label for="start-date-picker" class="font-semibold text-gray-300 text-sm">Start Date:</label>
+                <input type="date" id="start-date-picker" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <div class="flex items-center space-x-2 bg-gray-800 p-2 rounded-lg">
+                <label for="end-date-picker" class="font-semibold text-gray-300 text-sm">End Date:</label>
+                <input type="date" id="end-date-picker" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <div class="flex items-center space-x-2 bg-gray-800 p-2 rounded-lg">
                 <span class="font-semibold text-gray-300 mr-2 text-sm">Ticker:</span>
                 <button data-ticker="INDEXHANGSENG-HSI" class="control-button ticker-btn px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200">HSI</button>
                 <button data-ticker="INDEXNASDAQ-_IXIC" class="control-button ticker-btn px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200">NASDAQ</button>
@@ -106,6 +116,8 @@
     let forecastData = {}; // This will be populated from the CSV
     let statsData = {}; // This will hold dynamically computed stats per ticker
     let activeForecastDate;
+    let activeStartDate;
+    let activeEndDate;
     let activeTicker = 'INDEXNASDAQ-_IXIC';
     let mergedChart = null;
 
@@ -115,6 +127,8 @@
     const batchTypeElement = document.getElementById('batch-type');
     const tickerButtons = document.querySelectorAll('.ticker-btn');
     const forecastDatePicker = document.getElementById('forecast-date-picker');
+    const startDatePicker = document.getElementById('start-date-picker');
+    const endDatePicker = document.getElementById('end-date-picker');
     const infoCardsContainer = document.getElementById('info-cards');
     
     // --- Data Loading and Processing ---
@@ -164,8 +178,6 @@
                 
                 forecastData = processedData;
                 console.log("✅ Data successfully loaded and processed:", forecastData);
-                statsData = simulateAndAnalyzeTrades(forecastData);
-                console.log("✅ Stats dynamically computed:", statsData);
                 initialize();
                 loaderOverlay.style.display = 'none'; // Hide loader
             },
@@ -178,12 +190,13 @@
     }
 
     // --- Trade Simulation and Analysis ---
-    function simulateAndAnalyzeTrades(data) {
+    function simulateAndAnalyzeTrades(data, startDate, endDate) {
         let statsByTicker = {};
         let totalBatchesByTicker = {};
         let tradesByTicker = {};
 
         for (let creationDate in data) {
+            if (new Date(creationDate) < new Date(startDate) || new Date(creationDate) > new Date(endDate)) continue;
             for (let asset in data[creationDate]) {
                 if (!statsByTicker[asset]) {
                     statsByTicker[asset] = {};
@@ -538,19 +551,45 @@
         });
     }
 
+    function updateStats() {
+        statsData = simulateAndAnalyzeTrades(forecastData, activeStartDate, activeEndDate);
+        console.log("✅ Stats dynamically computed for range:", statsData);
+        updateInfoCards(activeTicker);
+    }
+
     // --- Main Initialization Function (called AFTER data is loaded) ---
     function initialize() {
         const availableDates = Object.keys(forecastData).sort((a, b) => new Date(b) - new Date(a));
         if (availableDates.length > 0) {
-            forecastDatePicker.min = availableDates[availableDates.length - 1];
-            forecastDatePicker.max = availableDates[0];
-            activeForecastDate = availableDates[availableDates.length - 1];
+            const minDate = availableDates[availableDates.length - 1];
+            const maxDate = availableDates[0];
+            forecastDatePicker.min = minDate;
+            forecastDatePicker.max = maxDate;
+            startDatePicker.min = minDate;
+            startDatePicker.max = maxDate;
+            endDatePicker.min = minDate;
+            endDatePicker.max = maxDate;
+            activeForecastDate = minDate;
+            activeStartDate = minDate;
+            activeEndDate = maxDate;
             forecastDatePicker.value = activeForecastDate;
+            startDatePicker.value = activeStartDate;
+            endDatePicker.value = activeEndDate;
         }
         
         forecastDatePicker.addEventListener('change', () => {
             activeForecastDate = forecastDatePicker.value;
             renderCharts();
+        });
+
+        startDatePicker.addEventListener('change', () => {
+            activeStartDate = startDatePicker.value;
+            updateStats();
+        });
+
+        endDatePicker.addEventListener('change', () => {
+            activeEndDate = endDatePicker.value;
+            updateStats();
         });
 
         tickerButtons.forEach(button => {
@@ -562,8 +601,8 @@
             });
         });
         
+        updateStats();
         updateButtonStyles();
-        updateInfoCards(activeTicker);
         renderCharts();
     }
 
