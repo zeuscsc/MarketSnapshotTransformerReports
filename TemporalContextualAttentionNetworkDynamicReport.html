@@ -95,10 +95,16 @@
             </div>
 
             <div class="flex items-center space-x-2 bg-gray-800 p-2 rounded-lg">
-                <span class="font-semibold text-gray-300 mr-2 text-sm">Ticker:</span>
+                <span class="font-semibold text-gray-300 mr-2 text-sm">Assets:</span>
+                <div id="ticker-buttons" class="flex space-x-2"></div>
+            </div>
+
+            <!-- <div class="flex items-center space-x-2 bg-gray-800 p-2 rounded-lg">
+                <span class="font-semibold text-gray-300 mr-2 text-sm">Assets:</span>
+                <button data-ticker="INDEXCBOE-VIX" class="control-button ticker-btn px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200">CBOE-VIX</button>
                 <button data-ticker="INDEXHANGSENG-HSI" class="control-button ticker-btn px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200">HSI</button>
                 <button data-ticker="INDEXNASDAQ-_IXIC" class="control-button ticker-btn px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200">NASDAQ</button>
-            </div>
+            </div> -->
         </div>
 
         <div id="info-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
@@ -111,6 +117,8 @@
     
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0"></script>
 <script>
+    let uniqueTickers = new Set();
+
     const loaderOverlay = document.getElementById('loader-overlay');
     // --- Global State ---
     let forecastData = {}; // This will be populated from the CSV
@@ -125,7 +133,7 @@
     const mergedContainer = document.querySelector("#mergedChart");
     const subtitle = document.getElementById('subtitle');
     const batchTypeElement = document.getElementById('batch-type');
-    const tickerButtons = document.querySelectorAll('.ticker-btn');
+    let tickerButtons = document.querySelectorAll('.ticker-btn');
     const forecastDatePicker = document.getElementById('forecast-date-picker');
     const startDatePicker = document.getElementById('start-date-picker');
     const endDatePicker = document.getElementById('end-date-picker');
@@ -152,6 +160,8 @@
 
                     const modelDate = row.Model_Date;
                     const ticker = row.Ticker;
+
+                    uniqueTickers.add(ticker);
 
                     if (!processedData[modelDate]) {
                         processedData[modelDate] = {};
@@ -187,6 +197,15 @@
                 loaderOverlay.style.display = 'none'; // Hide loader
             }
         });
+    }
+
+    function getTickerLabel(ticker) {
+        const labels = {
+            'INDEXHANGSENG-HSI': 'HSI',
+            'INDEXNASDAQ-_IXIC': 'NASDAQ'
+            // Add more mappings if known
+        };
+        return labels[ticker] || ticker.split(/[-_]/).pop().toUpperCase(); // Fallback to last part
     }
 
     // --- Trade Simulation and Analysis ---
@@ -592,6 +611,38 @@
             updateStats();
         });
 
+        const tickerButtonsContainer = document.getElementById('ticker-buttons');
+        ['INDEXHANGSENG-HSI', 'INDEXNASDAQ-_IXIC'].forEach(fixedTicker => {
+            if (uniqueTickers.has(fixedTicker)) {
+                const button = document.createElement('button');
+                button.dataset.ticker = fixedTicker;
+                button.textContent = getTickerLabel(fixedTicker);
+                button.classList.add('control-button', 'ticker-btn', 'px-4', 'py-2', 'text-sm', 'font-medium', 'rounded-md', 'transition-colors', 'duration-200');
+                tickerButtonsContainer.appendChild(button);
+            }
+        });
+
+        updateStats();
+        let maxWinRate = -1;
+        let bestTicker = null;
+        for (let t in statsData) {
+            if (statsData[t].pct_gains > maxWinRate) {
+                maxWinRate = statsData[t].pct_gains;
+                bestTicker = t;
+            }
+        }
+        if (bestTicker && !Array.from(tickerButtonsContainer.children).some(b => b.dataset.ticker === bestTicker)) {
+            const button = document.createElement('button');
+            button.dataset.ticker = bestTicker;
+            button.textContent = `Best: ${getTickerLabel(bestTicker)}`;
+            button.classList.add('control-button', 'ticker-btn', 'px-4', 'py-2', 'text-sm', 'font-medium', 'rounded-md', 'transition-colors', 'duration-200');
+            tickerButtonsContainer.appendChild(button);
+        }
+
+        // Re-query after all buttons are added
+        tickerButtons = document.querySelectorAll('.ticker-btn');
+
+        // Attach event listeners after re-query
         tickerButtons.forEach(button => {
             button.addEventListener('click', () => {
                 activeTicker = button.dataset.ticker;
@@ -601,11 +652,15 @@
             });
         });
         
-        updateStats();
+        // Optional: Ensure activeTicker is valid (set to best or first if not)
+        if (!Array.from(tickerButtons).some(b => b.dataset.ticker === activeTicker)) {
+            activeTicker = bestTicker || tickerButtons[0]?.dataset.ticker;
+        }
+
         updateButtonStyles();
         renderCharts();
     }
-
+    
     // --- Start the process on page load ---
     window.onload = loadAndProcessData;
 </script>
