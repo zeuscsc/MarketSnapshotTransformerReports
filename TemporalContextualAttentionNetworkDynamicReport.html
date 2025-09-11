@@ -136,6 +136,14 @@
                     <label for="cutloss-pct" class="font-semibold text-gray-300 text-sm">Cut Loss % below buy:</label>
                     <input type="number" id="cutloss-pct" min="0" step="0.1" value="0" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 w-20">
                 </div>
+                <div class="flex items-center space-x-2">
+                    <label for="fee-pct" class="font-semibold text-gray-300 text-sm">Transaction Fee %:</label>
+                    <input type="number" id="fee-pct" min="0" step="0.01" value="0" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 w-20">
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label for="fixed-fee" class="font-semibold text-gray-300 text-sm">+ Fixed Fee:</label>
+                    <input type="number" id="fixed-fee" min="0" step="0.1" value="0" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 w-20">
+                </div>
                 <button id="share-button" class="bg-blue-600 text-white px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 hover:bg-blue-500">Share</button>
             </div>
         </div>
@@ -162,6 +170,8 @@
     let activeTicker = 'INDEXNASDAQ-_IXIC';
     let cutLossPct = 0;
     let fixedAmount = 10000;
+    let feePerc = 0;
+    let fixedFee = 0;
     let mergedChart = null;
 
     // --- DOM Elements ---
@@ -174,6 +184,8 @@
     const endDatePicker = document.getElementById('end-date-picker');
     const cutLossInput = document.getElementById('cutloss-pct');
     const initialCapitalInput = document.getElementById('initial-capital');
+    const feePctInput = document.getElementById('fee-pct');
+    const fixedFeeInput = document.getElementById('fixed-fee');
     const infoCardsContainer = document.getElementById('info-cards');
     const shareButton = document.getElementById('share-button');
     
@@ -247,7 +259,7 @@
     }
 
     // --- Trade Simulation and Analysis ---
-    function simulateAndAnalyzeTrades(data, startDate, endDate, cutLossPct = 0, fixedAmount = 10000) {
+    function simulateAndAnalyzeTrades(data, startDate, endDate, cutLossPct = 0, fixedAmount = 10000, feePerc = 0, fixedFee = 0) {
         let statsByTicker = {};
         let totalBatchesByTicker = {};
         let tradesByTicker = {};
@@ -387,30 +399,72 @@
             let pctFailedBatches = totalBatches > 0 ? (numFailedBatches / totalBatches * 100) : 0;
             let pctNoActionBatches = totalBatches > 0 ? (numNoActionBatches / totalBatches * 100) : 0;
 
-            // Simulated earnings calculations with fixed amount per trade
-            const tradeProfits = trades.map(t => (fixedAmount / t.buy_price) * t.profit);
+            // Simulated earnings calculations with fixed amount per trade, including transaction fees
+            const tradeProfits = trades.map(t => {
+                const shares = fixedAmount / t.buy_price;
+                const gross = shares * t.profit;
+                const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                const sellValue = shares * t.sell_price;
+                const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                return gross - feeBuy - feeSell;
+            });
             const totalProfit = tradeProfits.reduce((sum, p) => sum + p, 0);
             const totalInvested = numTrades * fixedAmount;
             const roi = numTrades > 0 ? (totalProfit / totalInvested * 100) : 0;
 
             let successfulTrades = trades.filter(t => !t.forced);
-            let successfulProfits = successfulTrades.map(t => (fixedAmount / t.buy_price) * t.profit);
+            let successfulProfits = successfulTrades.map(t => {
+                const shares = fixedAmount / t.buy_price;
+                const gross = shares * t.profit;
+                const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                const sellValue = shares * t.sell_price;
+                const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                return gross - feeBuy - feeSell;
+            });
             let avgSuccessfulEarning = successfulProfits.length > 0 ? successfulProfits.reduce((sum, p) => sum + p, 0) / successfulProfits.length : 0;
 
             let failedWins = trades.filter(t => t.forced && t.profit > 0);
-            let failedWinProfits = failedWins.map(t => (fixedAmount / t.buy_price) * t.profit);
+            let failedWinProfits = failedWins.map(t => {
+                const shares = fixedAmount / t.buy_price;
+                const gross = shares * t.profit;
+                const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                const sellValue = shares * t.sell_price;
+                const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                return gross - feeBuy - feeSell;
+            });
             let avgFailedWin = failedWinProfits.length > 0 ? failedWinProfits.reduce((sum, p) => sum + p, 0) / failedWinProfits.length : 0;
 
             let failedLosses = trades.filter(t => t.forced && t.profit < 0);
-            let failedLossProfits = failedLosses.map(t => (fixedAmount / t.buy_price) * t.profit);
+            let failedLossProfits = failedLosses.map(t => {
+                const shares = fixedAmount / t.buy_price;
+                const gross = shares * t.profit;
+                const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                const sellValue = shares * t.sell_price;
+                const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                return gross - feeBuy - feeSell;
+            });
             let avgFailedLoss = failedLossProfits.length > 0 ? failedLossProfits.reduce((sum, p) => sum + p, 0) / failedLossProfits.length : 0;
 
             let allWins = trades.filter(t => t.profit > 0);
-            let allWinProfits = allWins.map(t => (fixedAmount / t.buy_price) * t.profit);
+            let allWinProfits = allWins.map(t => {
+                const shares = fixedAmount / t.buy_price;
+                const gross = shares * t.profit;
+                const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                const sellValue = shares * t.sell_price;
+                const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                return gross - feeBuy - feeSell;
+            });
             let avgOverallWin = allWinProfits.length > 0 ? allWinProfits.reduce((sum, p) => sum + p, 0) / allWinProfits.length : 0;
 
             let allLosses = trades.filter(t => t.profit < 0);
-            let allLossProfits = allLosses.map(t => (fixedAmount / t.buy_price) * t.profit);
+            let allLossProfits = allLosses.map(t => {
+                const shares = fixedAmount / t.buy_price;
+                const gross = shares * t.profit;
+                const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                const sellValue = shares * t.sell_price;
+                const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                return gross - feeBuy - feeSell;
+            });
             let avgOverallLoss = allLossProfits.length > 0 ? allLossProfits.reduce((sum, p) => sum + p, 0) / allLossProfits.length : 0;
 
             statsByTicker[asset] = {
@@ -708,7 +762,7 @@
     }
 
     function updateStats() {
-        statsData = simulateAndAnalyzeTrades(forecastData, activeStartDate, activeEndDate, cutLossPct, fixedAmount);
+        statsData = simulateAndAnalyzeTrades(forecastData, activeStartDate, activeEndDate, cutLossPct, fixedAmount, feePerc, fixedFee);
         console.log("✅ Stats dynamically computed for range:", statsData);
         updateInfoCards(activeTicker);
     }
@@ -722,6 +776,8 @@
         params.set('ticker', activeTicker);
         params.set('initial_capital', fixedAmount);
         params.set('cutloss_pct', cutLossPct);
+        params.set('fee_perc', feePerc);
+        params.set('fixed_fee', fixedFee);
         history.pushState({}, '', `${location.pathname}?${params.toString()}`);
     }
 
@@ -791,11 +847,19 @@
             fixedAmount = parseFloat(urlParams.get('initial_capital')) || 10000;
             if (isNaN(fixedAmount) || fixedAmount < 1) fixedAmount = 10000;
 
+            feePerc = parseFloat(urlParams.get('fee_perc')) || 0;
+            if (isNaN(feePerc) || feePerc < 0) feePerc = 0;
+
+            fixedFee = parseFloat(urlParams.get('fixed_fee')) || 0;
+            if (isNaN(fixedFee) || fixedFee < 0) fixedFee = 0;
+
             forecastDatePicker.value = activeForecastDate;
             startDatePicker.value = activeStartDate;
             endDatePicker.value = activeEndDate;
             cutLossInput.value = cutLossPct;
             initialCapitalInput.value = fixedAmount;
+            feePctInput.value = feePerc;
+            fixedFeeInput.value = fixedFee;
         }
         
         forecastDatePicker.addEventListener('change', () => {
@@ -825,6 +889,18 @@
 
         initialCapitalInput.addEventListener('input', () => {
             fixedAmount = parseFloat(initialCapitalInput.value) || 10000;
+            updateURLParams();
+            updateStats();
+        });
+
+        feePctInput.addEventListener('input', () => {
+            feePerc = parseFloat(feePctInput.value) || 0;
+            updateURLParams();
+            updateStats();
+        });
+
+        fixedFeeInput.addEventListener('input', () => {
+            fixedFee = parseFloat(fixedFeeInput.value) || 0;
             updateURLParams();
             updateStats();
         });
