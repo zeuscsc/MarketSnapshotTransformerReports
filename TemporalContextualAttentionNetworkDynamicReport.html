@@ -136,6 +136,7 @@
                     <label for="cutloss-pct" class="font-semibold text-gray-300 text-sm">Cut Loss % below buy:</label>
                     <input type="number" id="cutloss-pct" min="0" step="0.1" value="0" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 w-20">
                 </div>
+                <button id="share-button" class="bg-blue-600 text-white px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 hover:bg-blue-500">Share</button>
             </div>
         </div>
 
@@ -174,6 +175,7 @@
     const cutLossInput = document.getElementById('cutloss-pct');
     const initialCapitalInput = document.getElementById('initial-capital');
     const infoCardsContainer = document.getElementById('info-cards');
+    const shareButton = document.getElementById('share-button');
     
     // --- Data Loading and Processing ---
     function loadAndProcessData() {
@@ -723,6 +725,36 @@
         history.pushState({}, '', `${location.pathname}?${params.toString()}`);
     }
 
+    // --- Share Function ---
+    async function shareCurrentView() {
+        const shareData = {
+            title: 'Temporal Contextual Attention Network View',
+            text: 'Check out this prediction analysis!',
+            url: window.location.href
+        };
+
+        if (navigator.canShare && navigator.canShare(shareData)) {
+            try {
+                await navigator.share(shareData);
+            } catch (err) {
+                console.error('Share failed:', err);
+                fallbackCopyToClipboard();
+            }
+        } else {
+            fallbackCopyToClipboard();
+        }
+    }
+
+    function fallbackCopyToClipboard() {
+        const url = window.location.href;
+        navigator.clipboard.writeText(url).then(() => {
+            alert('URL copied to clipboard!');
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+            alert('Failed to copy URL. Please copy manually: ' + url);
+        });
+    }
+
     // --- Main Initialization Function (called AFTER data is loaded) ---
     function initialize() {
         const availableDates = Object.keys(forecastData).sort((a, b) => new Date(b) - new Date(a));
@@ -796,6 +828,8 @@
             updateURLParams();
             updateStats();
         });
+
+        shareButton.addEventListener('click', shareCurrentView);
 
         const tickerButtonsContainer = document.getElementById('ticker-buttons');
         ['INDEXHANGSENG-HSI', 'INDEXNASDAQ-_IXIC'].forEach(fixedTicker => {
