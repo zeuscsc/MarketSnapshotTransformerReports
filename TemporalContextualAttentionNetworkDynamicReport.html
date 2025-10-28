@@ -113,6 +113,7 @@
             <h1 class="text-4xl font-bold text-gray-100">Temporal Contextual Attention Network</h1>
             <p id="subtitle" class="text-lg text-gray-400 mt-2">Predicted vs. Actual</p>
             <p id="batch-type" class="text-lg text-gray-400 mt-2"></p>
+            <p id="suggested-prices" class="text-lg text-gray-400 mt-2"></p>
         </header>
 
         <div class="bg-gray-800 p-4 rounded-lg shadow-md">
@@ -130,6 +131,10 @@
                 <div class="flex items-center space-x-2">
                     <label for="end-date-picker" class="font-semibold text-gray-300 text-sm">End Date:</label>
                     <input type="date" id="end-date-picker" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <button id="jump-to-latest" class="bg-blue-600 text-white px-4 py-1.5 text-sm font-medium rounded-md transition-colors duration-200 hover:bg-blue-500">Jump to Latest</button>
                 </div>
 
                 <div class="flex items-center space-x-2">
@@ -156,6 +161,10 @@
                 <div class="flex items-center space-x-2">
                     <label for="fixed-fee" class="font-semibold text-gray-300 text-sm">+ Fixed Fee:</label>
                     <input type="number" id="fixed-fee" min="0" step="0.1" value="0" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 w-20">
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label for="min-gain-pct" class="font-semibold text-gray-300 text-sm">Min Cut Gain %:</label>
+                    <input type="number" id="min-gain-pct" min="0" step="0.1" value="0" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 w-20">
                 </div>
                 <button id="share-button" class="bg-blue-600 text-white px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 hover:bg-blue-500">Share</button>
             </div>
@@ -185,12 +194,14 @@
     let fixedAmount = 10000;
     let feePerc = 0;
     let fixedFee = 0;
+    let minGainPct = 0;
     let mergedChart = null;
 
     // --- DOM Elements ---
     const mergedContainer = document.querySelector("#mergedChart");
     const subtitle = document.getElementById('subtitle');
     const batchTypeElement = document.getElementById('batch-type');
+    const suggestedPricesElement = document.getElementById('suggested-prices');
     let assetButtons = document.querySelectorAll('.asset-btn');
     const forecastDatePicker = document.getElementById('forecast-date-picker');
     const startDatePicker = document.getElementById('start-date-picker');
@@ -199,8 +210,10 @@
     const initialCapitalInput = document.getElementById('initial-capital');
     const feePctInput = document.getElementById('fee-pct');
     const fixedFeeInput = document.getElementById('fixed-fee');
+    const minGainInput = document.getElementById('min-gain-pct');
     const infoCardsContainer = document.getElementById('info-cards');
     const shareButton = document.getElementById('share-button');
+    const jumpToLatestButton = document.getElementById('jump-to-latest');
     
     // --- Data Loading and Processing ---
     function loadAndProcessData() {
@@ -264,15 +277,21 @@
 
     function getAssetLabel(asset) {
         const labels = {
+            'GLD': 'GLD',
+            'INDEXCBOE-VIX': 'VIX',
+            'INDEXDJX-_DJI': 'DJI',
             'INDEXHANGSENG-HSI': 'HSI',
-            'INDEXNASDAQ-_IXIC': 'NASDAQ'
+            'INDEXNASDAQ-_IXIC': 'NASDAQ',
+            'INDEXSP-_INX': 'S&P500',
+            'TQQQ': 'TQQQ',
+            'USO': 'USO'
             // Add more mappings if known
         };
         return labels[asset] || asset.split(/[-_]/).pop().toUpperCase(); // Fallback to last part
     }
 
     // --- Trade Simulation and Analysis ---
-    function simulateAndAnalyzeTrades(data, startDate, endDate, cutLossPct = 0, fixedAmount = 10000, feePerc = 0, fixedFee = 0) {
+    function simulateAndAnalyzeTrades(data, startDate, endDate, cutLossPct = 0, fixedAmount = 10000, feePerc = 0, fixedFee = 0, minGainPct = 0) {
         let statsByAsset = {};
         let totalBatchesByAsset = {};
         let tradesByAsset = {};
@@ -290,15 +309,10 @@
                 if (predictions.length !== 5) continue;
                 totalBatchesByAsset[asset] += 1;
 
-                // Compute predicted mids and check trend
-                let mids = predictions.map(p => (p.predicted_low + p.predicted_high) / 2);
-                let sumY = mids.reduce((a, b) => a + b, 0);
-                let sumXY = 0 * mids[0] + 1 * mids[1] + 2 * mids[2] + 3 * mids[3] + 4 * mids[4];
-                let slope = (sumXY - 2 * sumY) / 10;
-                if (slope < 0) continue; // No action if trend is downward
-
                 let batchMinLow = Math.min(...predictions.map(p => p.predicted_low));
                 let batchMaxHigh = Math.max(...predictions.map(p => p.predicted_high));
+
+                if (batchMaxHigh < batchMinLow * (1 + minGainPct / 100)) continue;
 
                 let dates = predictions.map(p => p.prediction_date);
                 let actualLows = predictions.map(p => p.actual_low);
@@ -346,9 +360,20 @@
                     cutLoss_flag = true;
                 } else {
                     for (let i = buyIndex + 1; i < 5; i++) {
-                        if (actualHighs[i] >= batchMaxHigh) {
-                            sellIndex = i;
-                            break;
+                        if (i >= buyIndex + 2 && actualHighs[i] > predictions[i].predicted_high) {
+                            let potentialSellPrice = predictions[i].predicted_high;
+                            if (potentialSellPrice < buyPrice * (1 + minGainPct / 100)) continue;
+                            const shares = fixedAmount / buyPrice;
+                            const gross = shares * (potentialSellPrice - buyPrice);
+                            const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                            const sellValue = shares * potentialSellPrice;
+                            const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                            const net = gross - feeBuy - feeSell;
+                            if (net > 0) {
+                                sellIndex = i;
+                                sellPrice = potentialSellPrice;
+                                break;
+                            }
                         }
                     }
 
@@ -362,7 +387,6 @@
                         cutLoss_flag = profit < 0;
                     } else {
                         sellDate = dates[sellIndex];
-                        sellPrice = batchMaxHigh;
                         profit = sellPrice - buyPrice;
                         cutGain = false;
                         cutLoss_flag = false;
@@ -512,21 +536,15 @@
 
         return statsByAsset;
     }
-    
+
     // --- Batch Type Determination ---
-    function getBatchType(forecastDate, asset, cutLossPct = 0) {
+    function getBatchType(forecastDate, asset, cutLossPct = 0, fixedAmount = 10000, feePerc = 0, fixedFee = 0, minGainPct = 0) {
         const predictions = forecastData[forecastDate]?.[asset];
         if (!predictions || predictions.length !== 5) return 'Invalid Batch';
 
-        // Compute predicted mids and check trend
-        let mids = predictions.map(p => (p.predicted_low + p.predicted_high) / 2);
-        let sumY = mids.reduce((a, b) => a + b, 0);
-        let sumXY = 0 * mids[0] + 1 * mids[1] + 2 * mids[2] + 3 * mids[3] + 4 * mids[4];
-        let slope = (sumXY - 2 * sumY) / 10;
-        if (slope < 0) return 'No Action Batch (Predicted Downward Trend)';
-
         let batchMinLow = Math.min(...predictions.map(p => p.predicted_low));
         let batchMaxHigh = Math.max(...predictions.map(p => p.predicted_high));
+        if (batchMaxHigh < batchMinLow * (1 + minGainPct / 100)) return 'No Action Batch (Insufficient Predicted Gain)';
 
         let actualLows = predictions.map(p => p.actual_low);
         let actualHighs = predictions.map(p => p.actual_high);
@@ -555,10 +573,21 @@
         if (cutLossTriggerIndex !== null) return 'Failed Batch (Cut Loss Triggered)';
 
         let sellIndex = null;
+        let buyPrice = batchMinLow;
         for (let i = buyIndex + 1; i < 5; i++) {
-            if (actualHighs[i] >= batchMaxHigh) {
-                sellIndex = i;
-                break;
+            if (i >= buyIndex + 2 && actualHighs[i] > predictions[i].predicted_high) {
+                let potentialSellPrice = predictions[i].predicted_high;
+                if (potentialSellPrice < buyPrice * (1 + minGainPct / 100)) continue;
+                const shares = fixedAmount / buyPrice;
+                const gross = shares * (potentialSellPrice - buyPrice);
+                const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                const sellValue = shares * potentialSellPrice;
+                const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                const net = gross - feeBuy - feeSell;
+                if (net > 0) {
+                    sellIndex = i;
+                    break;
+                }
             }
         }
 
@@ -636,12 +665,13 @@
         if (chartData.length === 0) {
             mergedContainer.innerHTML = `<div class="flex items-center justify-center h-full"><p class="text-gray-400">No data available for ${activeAsset} on ${activeForecastDate}.</p></div>`;
             batchTypeElement.textContent = '';
+            suggestedPricesElement.textContent = '';
             return;
         } else {
             mergedContainer.innerHTML = '';
         }
 
-        const batchType = getBatchType(activeForecastDate, activeAsset, cutLossPct);
+        const batchType = getBatchType(activeForecastDate, activeAsset, cutLossPct, fixedAmount, feePerc, fixedFee, minGainPct);
         batchTypeElement.textContent = `Batch Type: ${batchType}`;
 
         subtitle.textContent = `Analysis for ${activeAsset} (Last observation: ${activeForecastDate}, Predictions for subsequent days)`;
@@ -760,6 +790,42 @@
         };
         mergedChart = new ApexCharts(mergedContainer, mergedOptions);
         mergedChart.render();
+
+        // Compute and display suggested prices based on predictions
+        const predictions = chartData;
+        let batchMinLow = Math.min(...predictions.map(p => p.predicted_low));
+        let batchMaxHigh = Math.max(...predictions.map(p => p.predicted_high));
+        let suggestedText = '';
+        if (batchMaxHigh < batchMinLow * (1 + minGainPct / 100)) {
+            suggestedText = 'Insufficient Predicted Gain - No Buy Suggested';
+        } else {
+            let buyPrice = batchMinLow;
+            let cutLossPrice = buyPrice * (1 - cutLossPct / 100);
+            let sellPrice = null;
+            let sellDay = null;
+            for (let i = 1; i < 5; i++) {
+                if (i >= 2) {
+                    let potentialSellPrice = predictions[i].predicted_high;
+                    if (potentialSellPrice < buyPrice * (1 + minGainPct / 100)) continue;
+                    const shares = fixedAmount / buyPrice;
+                    const gross = shares * (potentialSellPrice - buyPrice);
+                    const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                    const sellValue = shares * potentialSellPrice;
+                    const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                    const net = gross - feeBuy - feeSell;
+                    if (net > 0) {
+                        sellPrice = potentialSellPrice;
+                        sellDay = i;
+                        break;
+                    }
+                }
+            }
+            let buyText = `Suggested Buy Price: $${buyPrice.toFixed(2)}`;
+            let sellText = sellPrice ? `Suggested Sell Price: $${sellPrice.toFixed(2)} (on day ${sellDay + 1})` : 'No profitable sell within period meeting min gain - Hold to end';
+            let cutText = cutLossPct > 0 ? `Cut Loss Price: $${cutLossPrice.toFixed(2)}` : '';
+            suggestedText = `${buyText}, ${sellText}${cutText ? ', ' + cutText : ''}`;
+        }
+        suggestedPricesElement.textContent = suggestedText;
     }
 
     // --- Button Styling Function ---
@@ -775,7 +841,7 @@
     }
 
     function updateStats() {
-        statsData = simulateAndAnalyzeTrades(forecastData, activeStartDate, activeEndDate, cutLossPct, fixedAmount, feePerc, fixedFee);
+        statsData = simulateAndAnalyzeTrades(forecastData, activeStartDate, activeEndDate, cutLossPct, fixedAmount, feePerc, fixedFee, minGainPct);
         console.log("✅ Stats dynamically computed for range:", statsData);
         updateInfoCards(activeAsset);
     }
@@ -791,6 +857,7 @@
         params.set('cutloss_pct', cutLossPct);
         params.set('fee_perc', feePerc);
         params.set('fixed_fee', fixedFee);
+        params.set('min_gain_pct', minGainPct);
         history.pushState({}, '', `${location.pathname}?${params.toString()}`);
     }
 
@@ -866,6 +933,9 @@
             fixedFee = parseFloat(urlParams.get('fixed_fee')) || 0;
             if (isNaN(fixedFee) || fixedFee < 0) fixedFee = 0;
 
+            minGainPct = parseFloat(urlParams.get('min_gain_pct')) || 0;
+            if (isNaN(minGainPct) || minGainPct < 0) minGainPct = 0;
+
             forecastDatePicker.value = activeForecastDate;
             startDatePicker.value = activeStartDate;
             endDatePicker.value = activeEndDate;
@@ -873,6 +943,7 @@
             initialCapitalInput.value = fixedAmount;
             feePctInput.value = feePerc;
             fixedFeeInput.value = fixedFee;
+            minGainInput.value = minGainPct;
         }
         
         forecastDatePicker.addEventListener('change', () => {
@@ -918,17 +989,31 @@
             updateStats();
         });
 
+        minGainInput.addEventListener('input', () => {
+            minGainPct = parseFloat(minGainInput.value) || 0;
+            updateURLParams();
+            updateStats();
+            renderCharts();
+        });
+
         shareButton.addEventListener('click', shareCurrentView);
 
+        jumpToLatestButton.addEventListener('click', () => {
+            const availableDates = Object.keys(forecastData).sort((a, b) => new Date(b) - new Date(a));
+            const maxDate = availableDates[0];
+            forecastDatePicker.value = maxDate;
+            activeForecastDate = maxDate;
+            updateURLParams();
+            renderCharts();
+        });
+
         const assetButtonsContainer = document.getElementById('asset-buttons');
-        ['INDEXHANGSENG-HSI', 'INDEXNASDAQ-_IXIC'].forEach(fixedAsset => {
-            if (uniqueAssets.has(fixedAsset)) {
-                const button = document.createElement('button');
-                button.dataset.asset = fixedAsset;
-                button.textContent = getAssetLabel(fixedAsset);
-                button.classList.add('control-button', 'asset-btn', 'px-4', 'py-2', 'text-sm', 'font-medium', 'rounded-md', 'transition-colors', 'duration-200');
-                assetButtonsContainer.appendChild(button);
-            }
+        Array.from(uniqueAssets).sort().forEach(asset => {
+            const button = document.createElement('button');
+            button.dataset.asset = asset;
+            button.textContent = getAssetLabel(asset);
+            button.classList.add('control-button', 'asset-btn', 'px-4', 'py-2', 'text-sm', 'font-medium', 'rounded-md', 'transition-colors', 'duration-200');
+            assetButtonsContainer.appendChild(button);
         });
 
         updateStats();
@@ -940,12 +1025,8 @@
                 bestAsset = t;
             }
         }
-        if (bestAsset && !Array.from(assetButtonsContainer.children).some(b => b.dataset.asset === bestAsset)) {
-            const button = document.createElement('button');
-            button.dataset.asset = bestAsset;
-            button.textContent = `Best: ${getAssetLabel(bestAsset)}`;
-            button.classList.add('control-button', 'asset-btn', 'px-4', 'py-2', 'text-sm', 'font-medium', 'rounded-md', 'transition-colors', 'duration-200');
-            assetButtonsContainer.appendChild(button);
+        if (bestAsset) {
+            activeAsset = bestAsset; // Default to best asset
         }
 
         // Re-query after all buttons are added
