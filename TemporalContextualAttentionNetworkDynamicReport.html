@@ -330,13 +330,21 @@
                 if (buyIndex === null) continue;
 
                 let buyDate = dates[buyIndex];
-                let buyPrice = batchMinLow;
+                let buyPrice = batchMinLow; // Reverted to original for conservative fill
+
+                let cutLossPrice = buyPrice * (1 - cutLossPct / 100);
+                let sameDayCutLoss = false;
+                if (cutLossPct > 0 && actualLows[buyIndex] <= cutLossPrice) {
+                    sameDayCutLoss = true;
+                }
 
                 let cutLossTriggerIndex = null;
                 let cutLossSellPrice = null;
-                if (cutLossPct > 0) {
-                    let cutLossPrice = buyPrice * (1 - cutLossPct / 100);
+                let highestHigh = actualHighs[buyIndex]; // For trailing stop
+                if (!sameDayCutLoss && cutLossPct > 0) {
                     for (let i = buyIndex + 1; i < 5; i++) {
+                        highestHigh = Math.max(highestHigh, actualHighs[i - 1]);
+                        cutLossPrice = highestHigh * (1 - cutLossPct / 100); // Trailing stop
                         if (actualLows[i] <= cutLossPrice) {
                             cutLossTriggerIndex = i;
                             cutLossSellPrice = cutLossPrice;
@@ -350,7 +358,15 @@
                 let sellDate, sellPrice;
                 let profit, cutGain, cutLoss_flag;
 
-                if (cutLossTriggerIndex !== null) {
+                if (sameDayCutLoss) {
+                    sellIndex = buyIndex;
+                    sellDate = dates[sellIndex];
+                    sellPrice = cutLossPrice;
+                    forced = true;
+                    profit = sellPrice - buyPrice;
+                    cutGain = false;
+                    cutLoss_flag = true;
+                } else if (cutLossTriggerIndex !== null) {
                     sellIndex = cutLossTriggerIndex;
                     sellDate = dates[sellIndex];
                     sellPrice = cutLossSellPrice;
@@ -360,8 +376,9 @@
                     cutLoss_flag = true;
                 } else {
                     for (let i = buyIndex + 1; i < 5; i++) {
-                        if (i >= buyIndex + 2 && actualHighs[i] > predictions[i].predicted_high) {
-                            let potentialSellPrice = predictions[i].predicted_high;
+                        highestHigh = Math.max(highestHigh, actualHighs[i - 1]);
+                        if (actualHighs[i] > predictions[i].predicted_high) {
+                            let potentialSellPrice = predictions[i].predicted_high; // Reverted to original for conservative fill
                             if (potentialSellPrice < buyPrice * (1 + minGainPct / 100)) continue;
                             const shares = fixedAmount / buyPrice;
                             const gross = shares * (potentialSellPrice - buyPrice);
@@ -559,10 +576,19 @@
 
         if (buyIndex === null) return 'No Action Batch (Buy Not Triggered)';
 
+        let buyPrice = batchMinLow; // Reverted to original for conservative fill
+        let cutLossPrice = buyPrice * (1 - cutLossPct / 100);
+
+        if (cutLossPct > 0 && actualLows[buyIndex] <= cutLossPrice) {
+            return 'Failed Batch (Cut Loss Triggered on Buy Day)';
+        }
+
         let cutLossTriggerIndex = null;
+        let highestHigh = actualHighs[buyIndex]; // For trailing stop
         if (cutLossPct > 0) {
-            let cutLossPrice = batchMinLow * (1 - cutLossPct / 100);
             for (let i = buyIndex + 1; i < 5; i++) {
+                highestHigh = Math.max(highestHigh, actualHighs[i - 1]);
+                cutLossPrice = highestHigh * (1 - cutLossPct / 100); // Trailing stop
                 if (actualLows[i] <= cutLossPrice) {
                     cutLossTriggerIndex = i;
                     break;
@@ -573,10 +599,10 @@
         if (cutLossTriggerIndex !== null) return 'Failed Batch (Cut Loss Triggered)';
 
         let sellIndex = null;
-        let buyPrice = batchMinLow;
         for (let i = buyIndex + 1; i < 5; i++) {
-            if (i >= buyIndex + 2 && actualHighs[i] > predictions[i].predicted_high) {
-                let potentialSellPrice = predictions[i].predicted_high;
+            highestHigh = Math.max(highestHigh, actualHighs[i - 1]);
+            if (actualHighs[i] > predictions[i].predicted_high) {
+                let potentialSellPrice = predictions[i].predicted_high; // Reverted to original for conservative fill
                 if (potentialSellPrice < buyPrice * (1 + minGainPct / 100)) continue;
                 const shares = fixedAmount / buyPrice;
                 const gross = shares * (potentialSellPrice - buyPrice);
@@ -804,7 +830,7 @@
             let sellPrice = null;
             let sellDay = null;
             for (let i = 1; i < 5; i++) {
-                if (i >= 2) {
+                if (i >= 1) {
                     let potentialSellPrice = predictions[i].predicted_high;
                     if (potentialSellPrice < buyPrice * (1 + minGainPct / 100)) continue;
                     const shares = fixedAmount / buyPrice;

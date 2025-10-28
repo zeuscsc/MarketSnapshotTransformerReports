@@ -325,7 +325,7 @@
                 if (buyIndex === null) continue;
 
                 let buyDate = dates[buyIndex];
-                let buyPrice = batchMinLow; // Reverted to original for conservative fill
+                let buyPrice = batchMinLow;
 
                 let cutLossPrice = buyPrice * (1 - cutLossPct / 100);
                 let sameDayCutLoss = false;
@@ -335,11 +335,8 @@
 
                 let cutLossTriggerIndex = null;
                 let cutLossSellPrice = null;
-                let highestHigh = actualHighs[buyIndex]; // For trailing stop
                 if (!sameDayCutLoss && cutLossPct > 0) {
                     for (let i = buyIndex + 1; i < 5; i++) {
-                        highestHigh = Math.max(highestHigh, actualHighs[i - 1]);
-                        cutLossPrice = highestHigh * (1 - cutLossPct / 100); // Trailing stop
                         if (actualLows[i] <= cutLossPrice) {
                             cutLossTriggerIndex = i;
                             cutLossSellPrice = cutLossPrice;
@@ -371,9 +368,8 @@
                     cutLoss_flag = true;
                 } else {
                     for (let i = buyIndex + 1; i < 5; i++) {
-                        highestHigh = Math.max(highestHigh, actualHighs[i - 1]);
                         if (actualHighs[i] > predictions[i].predicted_high) {
-                            let potentialSellPrice = predictions[i].predicted_high; // Reverted to original for conservative fill
+                            let potentialSellPrice = predictions[i].predicted_high;
                             if (potentialSellPrice < buyPrice * (1 + minGainPct / 100)) continue;
                             const shares = fixedAmount / buyPrice;
                             const gross = shares * (potentialSellPrice - buyPrice);
@@ -551,7 +547,7 @@
 
         return statsByAsset;
     }
-
+    
     // --- Chart Rendering Function ---
     function renderRollingCharts() {
         const assetData = statsData[activeAsset] || {};

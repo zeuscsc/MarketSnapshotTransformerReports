@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Temporal Contextual Attention Network Rolling Backtest</title>
+    <title>Temporal Contextual Attention Network Predictions Preview</title>
 
-    <meta name="description" content="A dashboard to visualize and analyze the rolling backtest performance of a Temporal Contextual Attention Network for financial predictions.">
+    <meta name="description" content="A dashboard to visualize and analyze the performance of a Temporal Contextual Attention Network for financial predictions.">
 
     <link rel="icon" href="logo.png" type="image/png">
     <link rel="apple-touch-icon" href="logo.png">
 
     <meta property="og:type" content="website">
-    <meta property="og:title" content="TCAN Rolling Backtest">
-    <meta property="og:description" content="Visualize and analyze the rolling backtest performance of a Temporal Contextual Attention Network.">
+    <meta property="og:title" content="TCAN Predictions Preview">
+    <meta property="og:description" content="Visualize and analyze the performance of a Temporal Contextual Attention Network.">
     <meta property="og:image" content="preview.png"> <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:title" content="TCAN Rolling Backtest">
-    <meta property="twitter:description" content="Visualize and analyze the rolling backtest performance of a Temporal Contextual Attention Network.">
+    <meta property="twitter:title" content="TCAN Predictions Preview">
+    <meta property="twitter:description" content="Visualize and analyze the performance of a Temporal Contextual Attention Network.">
     <meta property="twitter:image" content="preview.png"> <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <style>
         body {
@@ -104,17 +105,24 @@
 <body class="bg-gray-900 text-white">
     <div id="loader-overlay">
         <div class="spinner"></div>
-        <p class="text-lg text-gray-300 mt-4">Loading data...</p>
+        <p class="text-lg text-gray-300 mt-4">Loading prediction data...</p>
     </div>
     <div class="w-full max-w-7xl mx-auto flex flex-col space-y-6 p-4">
         
         <header class="text-center">
-            <h1 class="text-4xl font-bold text-gray-100">Temporal Contextual Attention Network Rolling Backtest</h1>
-            <div id="info-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-4"></div>
+            <h1 class="text-4xl font-bold text-gray-100">Temporal Contextual Attention Network</h1>
+            <p id="subtitle" class="text-lg text-gray-400 mt-2">Predicted vs. Actual</p>
+            <p id="batch-type" class="text-lg text-gray-400 mt-2"></p>
+            <p id="suggested-prices" class="text-lg text-gray-400 mt-2"></p>
         </header>
 
         <div class="bg-gray-800 p-4 rounded-lg shadow-md">
             <div class="flex flex-wrap justify-center items-center gap-4">
+                <div class="flex items-center space-x-2">
+                    <label for="forecast-date-picker" class="font-semibold text-gray-300 text-sm">Forecast Date:</label>
+                    <input type="date" id="forecast-date-picker" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
                 <div class="flex items-center space-x-2">
                     <label for="start-date-picker" class="font-semibold text-gray-300 text-sm">Start Date:</label>
                     <input type="date" id="start-date-picker" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500">
@@ -126,7 +134,7 @@
                 </div>
 
                 <div class="flex items-center space-x-2">
-                    <button id="jump-to-latest" class="bg-blue-600 text-white px-4 py-1.5 text-sm font-medium rounded-md transition-colors duration-200 hover:bg-blue-500">Full Period</button>
+                    <button id="jump-to-latest" class="bg-blue-600 text-white px-4 py-1.5 text-sm font-medium rounded-md transition-colors duration-200 hover:bg-blue-500">Jump to Latest</button>
                 </div>
 
                 <div class="flex items-center space-x-2">
@@ -162,11 +170,10 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div id="profitChart" class="bg-gray-800 p-6 rounded-xl shadow-2xl w-full"></div>
-            <div id="successfulChart" class="bg-gray-800 p-6 rounded-xl shadow-2xl w-full"></div>
-            <div id="roiChart" class="bg-gray-800 p-6 rounded-xl shadow-2xl w-full"></div>
-            <div id="tradesChart" class="bg-gray-800 p-6 rounded-xl shadow-2xl w-full"></div>
+        <div id="info-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+
+        <div class="bg-gray-800 p-6 rounded-xl shadow-2xl w-full h-[60vh]">
+            <div id="mergedChart" class="h-full"></div>
         </div>
 
     </div>
@@ -178,7 +185,8 @@
     const loaderOverlay = document.getElementById('loader-overlay');
     // --- Global State ---
     let forecastData = {}; // This will be populated from the CSV
-    let statsData = {}; // This will hold dynamically computed stats per asset per month
+    let statsData = {}; // This will hold dynamically computed stats per asset
+    let activeForecastDate;
     let activeStartDate;
     let activeEndDate;
     let activeAsset = 'INDEXNASDAQ-_IXIC';
@@ -187,14 +195,15 @@
     let feePerc = 0;
     let fixedFee = 0;
     let minGainPct = 0;
-    let profitChart = null;
-    let successfulChart = null;
-    let roiChart = null;
-    let tradesChart = null;
+    let mergedChart = null;
 
     // --- DOM Elements ---
-    const infoCardsContainer = document.getElementById('info-cards');
+    const mergedContainer = document.querySelector("#mergedChart");
+    const subtitle = document.getElementById('subtitle');
+    const batchTypeElement = document.getElementById('batch-type');
+    const suggestedPricesElement = document.getElementById('suggested-prices');
     let assetButtons = document.querySelectorAll('.asset-btn');
+    const forecastDatePicker = document.getElementById('forecast-date-picker');
     const startDatePicker = document.getElementById('start-date-picker');
     const endDatePicker = document.getElementById('end-date-picker');
     const cutLossInput = document.getElementById('cutloss-pct');
@@ -202,6 +211,7 @@
     const feePctInput = document.getElementById('fee-pct');
     const fixedFeeInput = document.getElementById('fixed-fee');
     const minGainInput = document.getElementById('min-gain-pct');
+    const infoCardsContainer = document.getElementById('info-cards');
     const shareButton = document.getElementById('share-button');
     const jumpToLatestButton = document.getElementById('jump-to-latest');
     
@@ -259,6 +269,7 @@
             },
             error: function(error) {
                 console.error("Error loading or parsing CSV data:", error);
+                mergedContainer.innerHTML = `<div class="flex items-center justify-center h-full"><p class="text-red-400">Failed to load data. The CORS proxy may be down.</p></div>`;
                 loaderOverlay.style.display = 'none'; // Hide loader
             }
         });
@@ -280,29 +291,23 @@
     }
 
     // --- Trade Simulation and Analysis ---
-    function computeRollingStats(data, startDate, endDate, cutLossPct = 0, fixedAmount = 10000, feePerc = 0, fixedFee = 0, minGainPct = 0) {
+    function simulateAndAnalyzeTrades(data, startDate, endDate, cutLossPct = 0, fixedAmount = 10000, feePerc = 0, fixedFee = 0, minGainPct = 0) {
         let statsByAsset = {};
-        let monthBatchesByAsset = {};
+        let totalBatchesByAsset = {};
         let tradesByAsset = {};
 
         for (let creationDate in data) {
             if (new Date(creationDate) < new Date(startDate) || new Date(creationDate) > new Date(endDate)) continue;
-            const month = creationDate.slice(0, 7); // YYYY-MM
             for (let asset in data[creationDate]) {
-                if (!monthBatchesByAsset[asset]) {
-                    monthBatchesByAsset[asset] = {};
-                    tradesByAsset[asset] = {};
-                }
-                if (!monthBatchesByAsset[asset][month]) {
-                    monthBatchesByAsset[asset][month] = 0;
-                }
-                if (!tradesByAsset[asset][month]) {
-                    tradesByAsset[asset][month] = [];
+                if (!statsByAsset[asset]) {
+                    statsByAsset[asset] = {};
+                    totalBatchesByAsset[asset] = 0;
+                    tradesByAsset[asset] = [];
                 }
 
                 let predictions = data[creationDate][asset];
                 if (predictions.length !== 5) continue;
-                monthBatchesByAsset[asset][month] += 1;
+                totalBatchesByAsset[asset] += 1;
 
                 let batchMinLow = Math.min(...predictions.map(p => p.predicted_low));
                 let batchMaxHigh = Math.max(...predictions.map(p => p.predicted_high));
@@ -325,7 +330,7 @@
                 if (buyIndex === null) continue;
 
                 let buyDate = dates[buyIndex];
-                let buyPrice = batchMinLow; // Reverted to original for conservative fill
+                let buyPrice = batchMinLow;
 
                 let cutLossPrice = buyPrice * (1 - cutLossPct / 100);
                 let sameDayCutLoss = false;
@@ -335,11 +340,8 @@
 
                 let cutLossTriggerIndex = null;
                 let cutLossSellPrice = null;
-                let highestHigh = actualHighs[buyIndex]; // For trailing stop
                 if (!sameDayCutLoss && cutLossPct > 0) {
                     for (let i = buyIndex + 1; i < 5; i++) {
-                        highestHigh = Math.max(highestHigh, actualHighs[i - 1]);
-                        cutLossPrice = highestHigh * (1 - cutLossPct / 100); // Trailing stop
                         if (actualLows[i] <= cutLossPrice) {
                             cutLossTriggerIndex = i;
                             cutLossSellPrice = cutLossPrice;
@@ -371,9 +373,8 @@
                     cutLoss_flag = true;
                 } else {
                     for (let i = buyIndex + 1; i < 5; i++) {
-                        highestHigh = Math.max(highestHigh, actualHighs[i - 1]);
                         if (actualHighs[i] > predictions[i].predicted_high) {
-                            let potentialSellPrice = predictions[i].predicted_high; // Reverted to original for conservative fill
+                            let potentialSellPrice = predictions[i].predicted_high;
                             if (potentialSellPrice < buyPrice * (1 + minGainPct / 100)) continue;
                             const shares = fixedAmount / buyPrice;
                             const gross = shares * (potentialSellPrice - buyPrice);
@@ -406,7 +407,7 @@
                     }
                 }
 
-                tradesByAsset[asset][month].push({
+                tradesByAsset[asset].push({
                     creation_date: creationDate,
                     asset: asset,
                     buy_date: buyDate,
@@ -421,289 +422,428 @@
             }
         }
 
-        for (let asset in monthBatchesByAsset) {
-            statsByAsset[asset] = {};
-            for (let month in monthBatchesByAsset[asset]) {
-                let trades = tradesByAsset[asset][month];
-                let totalBatches = monthBatchesByAsset[asset][month];
-                let numTrades = trades.length;
+        for (let asset in statsByAsset) {
+            let trades = tradesByAsset[asset];
+            let totalBatches = totalBatchesByAsset[asset];
+            let numTrades = trades.length;
 
-                let numGains = trades.filter(t => t.profit > 0).length;
-                let numLosses = trades.filter(t => t.profit < 0).length;
-                let pctGains = numTrades > 0 ? (numGains / numTrades * 100) : 0;
-                let pctLosses = numTrades > 0 ? (numLosses / numTrades * 100) : 0;
+            let numGains = trades.filter(t => t.profit > 0).length;
+            let numLosses = trades.filter(t => t.profit < 0).length;
+            let pctGains = numTrades > 0 ? (numGains / numTrades * 100) : 0;
+            let pctLosses = numTrades > 0 ? (numLosses / numTrades * 100) : 0;
 
-                let forcedTrades = trades.filter(t => t.forced);
-                let numForced = forcedTrades.length;
-                let numCutGain = forcedTrades.filter(t => t.cut_gain).length;
-                let numCutLoss = forcedTrades.filter(t => t.cut_loss).length;
-                let pctCutGain = numForced > 0 ? (numCutGain / numForced * 100) : 0;
-                let pctCutLoss = numForced > 0 ? (numCutLoss / numForced * 100) : 0;
+            let forcedTrades = trades.filter(t => t.forced);
+            let numForced = forcedTrades.length;
+            let numCutGain = forcedTrades.filter(t => t.cut_gain).length;
+            let numCutLoss = forcedTrades.filter(t => t.cut_loss).length;
+            let pctCutGain = numForced > 0 ? (numCutGain / numForced * 100) : 0;
+            let pctCutLoss = numForced > 0 ? (numCutLoss / numForced * 100) : 0;
 
-                let numSuccessful = numTrades - numForced;
-                let pctSuccessful = numTrades > 0 ? (numSuccessful / numTrades * 100) : 0;
+            let numSuccessful = numTrades - numForced;
+            let pctSuccessful = numTrades > 0 ? (numSuccessful / numTrades * 100) : 0;
 
-                let numSuccessBatches = numSuccessful;
-                let numFailedBatches = numForced;
-                let numNoActionBatches = totalBatches - numTrades;
-                let pctSuccessBatches = totalBatches > 0 ? (numSuccessBatches / totalBatches * 100) : 0;
-                let pctFailedBatches = totalBatches > 0 ? (numFailedBatches / totalBatches * 100) : 0;
-                let pctNoActionBatches = totalBatches > 0 ? (numNoActionBatches / totalBatches * 100) : 0;
+            let numSuccessBatches = numSuccessful;
+            let numFailedBatches = numForced;
+            let numNoActionBatches = totalBatches - numTrades;
+            let pctSuccessBatches = totalBatches > 0 ? (numSuccessBatches / totalBatches * 100) : 0;
+            let pctFailedBatches = totalBatches > 0 ? (numFailedBatches / totalBatches * 100) : 0;
+            let pctNoActionBatches = totalBatches > 0 ? (numNoActionBatches / totalBatches * 100) : 0;
 
-                // Simulated earnings calculations with fixed amount per trade, including transaction fees
-                const tradeProfits = trades.map(t => {
-                    const shares = fixedAmount / t.buy_price;
-                    const gross = shares * t.profit;
-                    const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
-                    const sellValue = shares * t.sell_price;
-                    const feeSell = (feePerc / 100) * sellValue + fixedFee;
-                    return gross - feeBuy - feeSell;
-                });
-                const totalProfit = tradeProfits.reduce((sum, p) => sum + p, 0);
-                const totalInvested = numTrades * fixedAmount;
-                const roi = numTrades > 0 ? (totalProfit / totalInvested * 100) : 0;
+            // Simulated earnings calculations with fixed amount per trade, including transaction fees
+            const tradeProfits = trades.map(t => {
+                const shares = fixedAmount / t.buy_price;
+                const gross = shares * t.profit;
+                const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                const sellValue = shares * t.sell_price;
+                const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                return gross - feeBuy - feeSell;
+            });
+            const totalProfit = tradeProfits.reduce((sum, p) => sum + p, 0);
+            const totalInvested = numTrades * fixedAmount;
+            const roi = numTrades > 0 ? (totalProfit / totalInvested * 100) : 0;
 
-                let successfulTrades = trades.filter(t => !t.forced);
-                let successfulProfits = successfulTrades.map(t => {
-                    const shares = fixedAmount / t.buy_price;
-                    const gross = shares * t.profit;
-                    const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
-                    const sellValue = shares * t.sell_price;
-                    const feeSell = (feePerc / 100) * sellValue + fixedFee;
-                    return gross - feeBuy - feeSell;
-                });
-                let avgSuccessfulEarning = successfulProfits.length > 0 ? successfulProfits.reduce((sum, p) => sum + p, 0) / successfulProfits.length : 0;
+            let successfulTrades = trades.filter(t => !t.forced);
+            let successfulProfits = successfulTrades.map(t => {
+                const shares = fixedAmount / t.buy_price;
+                const gross = shares * t.profit;
+                const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                const sellValue = shares * t.sell_price;
+                const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                return gross - feeBuy - feeSell;
+            });
+            let avgSuccessfulEarning = successfulProfits.length > 0 ? successfulProfits.reduce((sum, p) => sum + p, 0) / successfulProfits.length : 0;
 
-                let failedWins = trades.filter(t => t.forced && t.profit > 0);
-                let failedWinProfits = failedWins.map(t => {
-                    const shares = fixedAmount / t.buy_price;
-                    const gross = shares * t.profit;
-                    const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
-                    const sellValue = shares * t.sell_price;
-                    const feeSell = (feePerc / 100) * sellValue + fixedFee;
-                    return gross - feeBuy - feeSell;
-                });
-                let avgFailedWin = failedWinProfits.length > 0 ? failedWinProfits.reduce((sum, p) => sum + p, 0) / failedWinProfits.length : 0;
+            let failedWins = trades.filter(t => t.forced && t.profit > 0);
+            let failedWinProfits = failedWins.map(t => {
+                const shares = fixedAmount / t.buy_price;
+                const gross = shares * t.profit;
+                const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                const sellValue = shares * t.sell_price;
+                const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                return gross - feeBuy - feeSell;
+            });
+            let avgFailedWin = failedWinProfits.length > 0 ? failedWinProfits.reduce((sum, p) => sum + p, 0) / failedWinProfits.length : 0;
 
-                let failedLosses = trades.filter(t => t.forced && t.profit < 0);
-                let failedLossProfits = failedLosses.map(t => {
-                    const shares = fixedAmount / t.buy_price;
-                    const gross = shares * t.profit;
-                    const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
-                    const sellValue = shares * t.sell_price;
-                    const feeSell = (feePerc / 100) * sellValue + fixedFee;
-                    return gross - feeBuy - feeSell;
-                });
-                let avgFailedLoss = failedLossProfits.length > 0 ? failedLossProfits.reduce((sum, p) => sum + p, 0) / failedLossProfits.length : 0;
+            let failedLosses = trades.filter(t => t.forced && t.profit < 0);
+            let failedLossProfits = failedLosses.map(t => {
+                const shares = fixedAmount / t.buy_price;
+                const gross = shares * t.profit;
+                const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                const sellValue = shares * t.sell_price;
+                const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                return gross - feeBuy - feeSell;
+            });
+            let avgFailedLoss = failedLossProfits.length > 0 ? failedLossProfits.reduce((sum, p) => sum + p, 0) / failedLossProfits.length : 0;
 
-                let allWins = trades.filter(t => t.profit > 0);
-                let allWinProfits = allWins.map(t => {
-                    const shares = fixedAmount / t.buy_price;
-                    const gross = shares * t.profit;
-                    const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
-                    const sellValue = shares * t.sell_price;
-                    const feeSell = (feePerc / 100) * sellValue + fixedFee;
-                    return gross - feeBuy - feeSell;
-                });
-                let avgOverallWin = allWinProfits.length > 0 ? allWinProfits.reduce((sum, p) => sum + p, 0) / allWinProfits.length : 0;
+            let allWins = trades.filter(t => t.profit > 0);
+            let allWinProfits = allWins.map(t => {
+                const shares = fixedAmount / t.buy_price;
+                const gross = shares * t.profit;
+                const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                const sellValue = shares * t.sell_price;
+                const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                return gross - feeBuy - feeSell;
+            });
+            let avgOverallWin = allWinProfits.length > 0 ? allWinProfits.reduce((sum, p) => sum + p, 0) / allWinProfits.length : 0;
 
-                let allLosses = trades.filter(t => t.profit < 0);
-                let allLossProfits = allLosses.map(t => {
-                    const shares = fixedAmount / t.buy_price;
-                    const gross = shares * t.profit;
-                    const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
-                    const sellValue = shares * t.sell_price;
-                    const feeSell = (feePerc / 100) * sellValue + fixedFee;
-                    return gross - feeBuy - feeSell;
-                });
-                let avgOverallLoss = allLossProfits.length > 0 ? allLossProfits.reduce((sum, p) => sum + p, 0) / allLossProfits.length : 0;
+            let allLosses = trades.filter(t => t.profit < 0);
+            let allLossProfits = allLosses.map(t => {
+                const shares = fixedAmount / t.buy_price;
+                const gross = shares * t.profit;
+                const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                const sellValue = shares * t.sell_price;
+                const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                return gross - feeBuy - feeSell;
+            });
+            let avgOverallLoss = allLossProfits.length > 0 ? allLossProfits.reduce((sum, p) => sum + p, 0) / allLossProfits.length : 0;
 
-                statsByAsset[asset][month] = {
-                    total_batches: totalBatches,
-                    num_trades: numTrades,
-                    num_gains: numGains,
-                    num_losses: numLosses,
-                    pct_gains: pctGains,
-                    pct_losses: pctLosses,
-                    num_forced: numForced,
-                    num_cut_gain: numCutGain,
-                    num_cut_loss: numCutLoss,
-                    pct_cut_gain: pctCutGain,
-                    pct_cut_loss: pctCutLoss,
-                    num_successful: numSuccessful,
-                    pct_successful: pctSuccessful,
-                    num_success_batches: numSuccessBatches,
-                    num_failed_batches: numFailedBatches,
-                    num_no_action_batches: numNoActionBatches,
-                    pct_success_batches: pctSuccessBatches,
-                    pct_failed_batches: pctFailedBatches,
-                    pct_no_action_batches: pctNoActionBatches,
-                    avg_successful_earning: avgSuccessfulEarning,
-                    avg_failed_win: avgFailedWin,
-                    avg_failed_loss: avgFailedLoss,
-                    avg_overall_win: avgOverallWin,
-                    avg_overall_loss: avgOverallLoss,
-                    total_profit: totalProfit,
-                    roi: roi
-                };
-            }
+            statsByAsset[asset] = {
+                total_batches: totalBatches,
+                num_trades: numTrades,
+                num_gains: numGains,
+                num_losses: numLosses,
+                pct_gains: pctGains,
+                pct_losses: pctLosses,
+                num_forced: numForced,
+                num_cut_gain: numCutGain,
+                num_cut_loss: numCutLoss,
+                pct_cut_gain: pctCutGain,
+                pct_cut_loss: pctCutLoss,
+                num_successful: numSuccessful,
+                pct_successful: pctSuccessful,
+                num_success_batches: numSuccessBatches,
+                num_failed_batches: numFailedBatches,
+                num_no_action_batches: numNoActionBatches,
+                pct_success_batches: pctSuccessBatches,
+                pct_failed_batches: pctFailedBatches,
+                pct_no_action_batches: pctNoActionBatches,
+                avg_successful_earning: avgSuccessfulEarning,
+                avg_failed_win: avgFailedWin,
+                avg_failed_loss: avgFailedLoss,
+                avg_overall_win: avgOverallWin,
+                avg_overall_loss: avgOverallLoss,
+                total_profit: totalProfit,
+                roi: roi
+            };
         }
 
         return statsByAsset;
     }
 
-    // --- Chart Rendering Function ---
-    function renderRollingCharts() {
-        const assetData = statsData[activeAsset] || {};
-        const months = Object.keys(assetData).sort();
+    // --- Batch Type Determination ---
+    function getBatchType(forecastDate, asset, cutLossPct = 0, fixedAmount = 10000, feePerc = 0, fixedFee = 0, minGainPct = 0) {
+        const predictions = forecastData[forecastDate]?.[asset];
+        if (!predictions || predictions.length !== 5) return 'Invalid Batch';
 
-        if (months.length === 0) {
-            document.getElementById('profitChart').innerHTML = `<div class="flex items-center justify-center h-full"><p class="text-gray-400">No data available for ${activeAsset} in the selected period.</p></div>`;
-            document.getElementById('successfulChart').innerHTML = `<div class="flex items-center justify-center h-full"><p class="text-gray-400">No data available for ${activeAsset} in the selected period.</p></div>`;
-            document.getElementById('roiChart').innerHTML = `<div class="flex items-center justify-center h-full"><p class="text-gray-400">No data available for ${activeAsset} in the selected period.</p></div>`;
-            document.getElementById('tradesChart').innerHTML = `<div class="flex items-center justify-center h-full"><p class="text-gray-400">No data available for ${activeAsset} in the selected period.</p></div>`;
-            return;
+        let batchMinLow = Math.min(...predictions.map(p => p.predicted_low));
+        let batchMaxHigh = Math.max(...predictions.map(p => p.predicted_high));
+        if (batchMaxHigh < batchMinLow * (1 + minGainPct / 100)) return 'No Action Batch (Insufficient Predicted Gain)';
+
+        let actualLows = predictions.map(p => p.actual_low);
+        let actualHighs = predictions.map(p => p.actual_high);
+
+        let buyIndex = null;
+        for (let i = 0; i < 5; i++) {
+            if (actualLows[i] <= batchMinLow) {
+                buyIndex = i;
+                break;
+            }
         }
 
-        const profitData = months.map(m => ({ x: new Date(m + '-01'), y: assetData[m].total_profit }));
-        const successData = months.map(m => ({ x: new Date(m + '-01'), y: assetData[m].pct_success_batches }));
-        const roiData = months.map(m => ({ x: new Date(m + '-01'), y: assetData[m].roi }));
-        const tradesData = months.map(m => ({ x: new Date(m + '-01'), y: assetData[m].num_trades }));
+        if (buyIndex === null) return 'No Action Batch (Buy Not Triggered)';
 
-        const baseOptions = {
-            chart: {
-                height: 350,
-                type: 'line',
-                animations: { enabled: true },
-            },
-            stroke: { curve: 'straight', width: 2 },
-            dataLabels: { enabled: false },
-            xaxis: { type: 'datetime' },
-            tooltip: { shared: false, intersect: false },
-            legend: { horizontalAlign: 'center', position: 'top' },
-            theme: { mode: 'dark' }
-        };
+        let buyPrice = batchMinLow;
+        let cutLossPrice = buyPrice * (1 - cutLossPct / 100);
 
-        if (profitChart) profitChart.destroy();
-        profitChart = new ApexCharts(document.getElementById('profitChart'), {
-            ...baseOptions,
-            series: [{ name: 'Total Profit', data: profitData }],
-            colors: ['#00B746'],
-            title: { text: `Monthly Total Profit: ${activeAsset}`, align: 'left' },
-            yaxis: { labels: { formatter: (value) => value !== undefined && value !== null ? '$' + value.toFixed(2) : '' } }
-        });
-        profitChart.render();
+        if (cutLossPct > 0 && actualLows[buyIndex] <= cutLossPrice) {
+            return 'Failed Batch (Cut Loss Triggered on Buy Day)';
+        }
 
-        if (successfulChart) successfulChart.destroy();
-        successfulChart = new ApexCharts(document.getElementById('successfulChart'), {
-            ...baseOptions,
-            series: [{ name: 'Successful Batches %', data: successData }],
-            colors: ['#007BFF'],
-            title: { text: `Monthly Successful Batches %: ${activeAsset}`, align: 'left' },
-            yaxis: { labels: { formatter: (value) => value !== undefined && value !== null ? value.toFixed(2) + '%' : '' } }
-        });
-        successfulChart.render();
+        let cutLossTriggerIndex = null;
+        if (cutLossPct > 0) {
+            for (let i = buyIndex + 1; i < 5; i++) {
+                if (actualLows[i] <= cutLossPrice) {
+                    cutLossTriggerIndex = i;
+                    break;
+                }
+            }
+        }
 
-        if (roiChart) roiChart.destroy();
-        roiChart = new ApexCharts(document.getElementById('roiChart'), {
-            ...baseOptions,
-            series: [{ name: 'ROI %', data: roiData }],
-            colors: ['#FFC107'],
-            title: { text: `Monthly ROI %: ${activeAsset}`, align: 'left' },
-            yaxis: { labels: { formatter: (value) => value !== undefined && value !== null ? value.toFixed(2) + '%' : '' } }
-        });
-        roiChart.render();
+        if (cutLossTriggerIndex !== null) return 'Failed Batch (Cut Loss Triggered)';
 
-        if (tradesChart) tradesChart.destroy();
-        tradesChart = new ApexCharts(document.getElementById('tradesChart'), {
-            ...baseOptions,
-            series: [{ name: 'Number of Trades', data: tradesData }],
-            colors: ['#FF5733'],
-            title: { text: `Monthly Number of Trades: ${activeAsset}`, align: 'left' },
-            yaxis: { labels: { formatter: (value) => value !== undefined && value !== null ? value.toFixed(0) : '' } }
-        });
-        tradesChart.render();
+        let sellIndex = null;
+        for (let i = buyIndex + 1; i < 5; i++) {
+            if (actualHighs[i] > predictions[i].predicted_high) {
+                let potentialSellPrice = predictions[i].predicted_high;
+                if (potentialSellPrice < buyPrice * (1 + minGainPct / 100)) continue;
+                const shares = fixedAmount / buyPrice;
+                const gross = shares * (potentialSellPrice - buyPrice);
+                const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                const sellValue = shares * potentialSellPrice;
+                const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                const net = gross - feeBuy - feeSell;
+                if (net > 0) {
+                    sellIndex = i;
+                    break;
+                }
+            }
+        }
+
+        if (sellIndex !== null) return 'Successful Batch';
+        return 'Failed Batch';
     }
-
-    // --- Average Stats Update ---
+    
+    // --- Infographics Rendering Function ---
     function updateInfoCards(asset) {
-        const assetData = statsData[asset] || {};
-        const months = Object.keys(assetData);
-        if (months.length === 0) {
-            infoCardsContainer.innerHTML = '';
-            return;
-        }
+        const assetData = statsData[asset];
+        if (!assetData) return;
 
-        // Compute averages
-        let avg_num_trades = months.reduce((sum, m) => sum + assetData[m].num_trades, 0) / months.length;
-        let avg_pct_gains = months.reduce((sum, m) => sum + assetData[m].pct_gains, 0) / months.length;
-        let avg_pct_losses = months.reduce((sum, m) => sum + assetData[m].pct_losses, 0) / months.length;
-        let avg_pct_success_batches = months.reduce((sum, m) => sum + assetData[m].pct_success_batches, 0) / months.length;
-        let avg_pct_failed_batches = months.reduce((sum, m) => sum + assetData[m].pct_failed_batches, 0) / months.length;
-        let avg_pct_no_action_batches = months.reduce((sum, m) => sum + assetData[m].pct_no_action_batches, 0) / months.length;
-        let avg_total_profit = months.reduce((sum, m) => sum + assetData[m].total_profit, 0) / months.length;
-        let avg_roi = months.reduce((sum, m) => sum + assetData[m].roi, 0) / months.length;
-        let avg_avg_overall_win = months.reduce((sum, m) => sum + assetData[m].avg_overall_win, 0) / months.length;
-        let avg_avg_overall_loss = months.reduce((sum, m) => sum + assetData[m].avg_overall_loss, 0) / months.length;
-        let avg_avg_successful_earning = months.reduce((sum, m) => sum + assetData[m].avg_successful_earning, 0) / months.length;
-        let avg_pct_cut_gain = months.reduce((sum, m) => sum + assetData[m].pct_cut_gain, 0) / months.length;
-        let avg_avg_failed_win = months.reduce((sum, m) => sum + assetData[m].avg_failed_win, 0) / months.length;
-        let avg_pct_cut_loss = months.reduce((sum, m) => sum + assetData[m].pct_cut_loss, 0) / months.length;
-        let avg_avg_failed_loss = months.reduce((sum, m) => sum + assetData[m].avg_failed_loss, 0) / months.length;
-
-        const profitColor = avg_total_profit >= 0 ? 'green' : 'red';
-        const profitTextColor = avg_total_profit >= 0 ? 'text-green-400' : 'text-red-400';
-        const profitBorder = avg_total_profit >= 0 ? 'border-accent-green' : 'border-accent-red';
+        const profitColor = assetData.total_profit >= 0 ? 'green' : 'red';
+        const profitTextColor = assetData.total_profit >= 0 ? 'text-green-400' : 'text-red-400';
+        const profitBorder = assetData.total_profit >= 0 ? 'border-accent-green' : 'border-accent-red';
 
         let cardsHtml = `
             <div class="info-card border-accent-gray">
-                <h3 class="text-lg font-semibold text-gray-300">Avg Trades</h3>
-                <p class="text-2xl font-bold text-white">${avg_num_trades.toFixed(2)}</p>
+                <h3 class="text-lg font-semibold text-gray-300">Trades</h3>
+                <p class="text-2xl font-bold text-white">${assetData.num_trades}</p>
             </div>
             <div class="info-card border-accent-green">
-                <h3 class="text-lg font-semibold text-gray-300">Avg Win Rate</h3>
-                <p class="text-2xl font-bold text-green-400">${avg_pct_gains.toFixed(2)}%</p>
-                <p class="text-sm text-green-300 mt-1">Avg Win: $${avg_avg_overall_win.toFixed(2)}</p>
+                <h3 class="text-lg font-semibold text-gray-300">Win Rate</h3>
+                <p class="text-2xl font-bold text-green-400">${assetData.pct_gains.toFixed(2)}%</p>
+                <p class="text-sm text-green-300 mt-1">Avg Win: $${assetData.avg_overall_win.toFixed(2)}</p>
             </div>
             <div class="info-card border-accent-red">
-                <h3 class="text-lg font-semibold text-gray-300">Avg Loss Rate</h3>
-                <p class="text-2xl font-bold text-red-400">${avg_pct_losses.toFixed(2)}%</p>
-                <p class="text-sm text-red-300 mt-1">Avg Loss: $${avg_avg_overall_loss.toFixed(2)}</p>
+                <h3 class="text-lg font-semibold text-gray-300">Loss Rate</h3>
+                <p class="text-2xl font-bold text-red-400">${assetData.pct_losses.toFixed(2)}%</p>
+                <p class="text-sm text-red-300 mt-1">Avg Loss: $${assetData.avg_overall_loss.toFixed(2)}</p>
             </div>
             <div class="info-card border-accent-green">
-                <h3 class="text-lg font-semibold text-gray-300">Avg Successful Batches</h3>
-                <p class="text-2xl font-bold text-white">${avg_pct_success_batches.toFixed(2)}%</p>
-                <p class="text-sm text-green-300 mt-1">Avg Earning: $${avg_avg_successful_earning.toFixed(2)}</p>
+                <h3 class="text-lg font-semibold text-gray-300">Successful Batches</h3>
+                <p class="text-2xl font-bold text-white">${assetData.pct_success_batches.toFixed(2)}%</p>
+                <p class="text-sm text-green-300 mt-1">Avg Earning: $${assetData.avg_successful_earning.toFixed(2)}</p>
             </div>
             <div class="info-card border-accent-red">
-                <h3 class="text-lg font-semibold text-gray-300">Avg Failed Batches</h3>
-                <p class="text-2xl font-bold text-white">${avg_pct_failed_batches.toFixed(2)}%</p>
+                <h3 class="text-lg font-semibold text-gray-300">Failed Batches</h3>
+                <p class="text-2xl font-bold text-white">${assetData.pct_failed_batches.toFixed(2)}%</p>
                 <div class="mt-2 flex space-x-1">
                     <div class="flex-1 bg-green-900/50 border border-green-600 p-1.5 rounded text-center">
-                        <p class="text-xs font-semibold text-green-400">${avg_pct_cut_gain.toFixed(2)}% Wins</p>
-                        <p class="text-xs text-green-300">Avg: $${avg_avg_failed_win.toFixed(2)}</p>
+                        <p class="text-xs font-semibold text-green-400">${assetData.pct_cut_gain.toFixed(2)}% Wins</p>
+                        <p class="text-xs text-green-300">Avg: $${assetData.avg_failed_win.toFixed(2)}</p>
                     </div>
                     <div class="flex-1 bg-red-900/50 border border-red-600 p-1.5 rounded text-center">
-                        <p class="text-xs font-semibold text-red-400">${avg_pct_cut_loss.toFixed(2)}% Losses</p>
-                        <p class="text-xs text-red-300">Avg: $${avg_avg_failed_loss.toFixed(2)}</p>
+                        <p class="text-xs font-semibold text-red-400">${assetData.pct_cut_loss.toFixed(2)}% Losses</p>
+                        <p class="text-xs text-red-300">Avg: $${assetData.avg_failed_loss.toFixed(2)}</p>
                     </div>
                 </div>
             </div>
             <div class="info-card border-accent-yellow">
-                <h3 class="text-lg font-semibold text-gray-300">Avg No Action Batches</h3>
-                <p class="text-2xl font-bold text-white">${avg_pct_no_action_batches.toFixed(2)}%</p>
+                <h3 class="text-lg font-semibold text-gray-300">No Action Batches</h3>
+                <p class="text-2xl font-bold text-white">${assetData.pct_no_action_batches.toFixed(2)}%</p>
             </div>
             <div class="info-card ${profitBorder}">
-                <h3 class="text-lg font-semibold text-gray-300">Avg Monthly Profit</h3>
-                <p class="text-2xl font-bold ${profitTextColor}">$${avg_total_profit.toFixed(2)}</p>
+                <h3 class="text-lg font-semibold text-gray-300">Total Profit</h3>
+                <p class="text-2xl font-bold ${profitTextColor}">$${assetData.total_profit.toFixed(2)}</p>
             </div>
             <div class="info-card border-accent-blue">
-                <h3 class="text-lg font-semibold text-gray-300">Avg ROI</h3>
-                <p class="text-2xl font-bold text-blue-400">${avg_roi.toFixed(2)}%</p>
+                <h3 class="text-lg font-semibold text-gray-300">ROI</h3>
+                <p class="text-2xl font-bold text-blue-400">${assetData.roi.toFixed(2)}%</p>
             </div>
         `;
 
         infoCardsContainer.innerHTML = cardsHtml;
+    }
+
+    // --- Chart Rendering Function ---
+    function renderCharts() {
+        const dataForForecastDate = forecastData[activeForecastDate] || {};
+        const chartData = dataForForecastDate[activeAsset] || [];
+
+        if (mergedChart) mergedChart.destroy();
+        
+        if (chartData.length === 0) {
+            mergedContainer.innerHTML = `<div class="flex items-center justify-center h-full"><p class="text-gray-400">No data available for ${activeAsset} on ${activeForecastDate}.</p></div>`;
+            batchTypeElement.textContent = '';
+            suggestedPricesElement.textContent = '';
+            return;
+        } else {
+            mergedContainer.innerHTML = '';
+        }
+
+        const batchType = getBatchType(activeForecastDate, activeAsset, cutLossPct, fixedAmount, feePerc, fixedFee, minGainPct);
+        batchTypeElement.textContent = `Batch Type: ${batchType}`;
+
+        subtitle.textContent = `Analysis for ${activeAsset} (Last observation: ${activeForecastDate}, Predictions for subsequent days)`;
+
+        const actualCandleSeries = chartData.map(d => ({ x: new Date(d.prediction_date), y: [d.actual_open, d.actual_high, d.actual_low, d.actual_close] }));
+        const predictedCandleSeries = chartData.map(d => ({ x: new Date(d.prediction_date), y: [d.predicted_open, d.predicted_high, d.predicted_low, d.predicted_close] }));
+        const actualVolatilityBand = chartData.map(d => ({ x: new Date(d.prediction_date), y: [d.actual_low, d.actual_high] }));
+        const predictedVolatilityBand = chartData.map(d => ({ x: new Date(d.prediction_date), y: [d.predicted_low, d.predicted_high] }));
+
+        const allPrices = chartData.flatMap(d => [d.actual_high, d.actual_low, d.predicted_high, d.predicted_low].filter(p => p != null));
+        const minPrice = Math.min(...allPrices);
+        const maxPrice = Math.max(...allPrices);
+        const padding = (maxPrice - minPrice) * 0.0;
+
+        const mergedOptions = {
+            chart: {
+                height: '100%',
+                type: 'candlestick',
+                animations: { enabled: true },
+            },
+            series: [
+                { name: 'Actual Price', type: 'candlestick', data: actualCandleSeries },
+                { name: 'Predicted Price', type: 'candlestick', data: predictedCandleSeries },
+                { name: 'Predicted Range', type: 'rangeArea', data: predictedVolatilityBand }, 
+                { name: 'Actual Range', type: 'rangeArea', data: actualVolatilityBand }
+            ],
+            colors: ['#AAA', '#AAA', '#FFC107', '#007BFF'],
+            plotOptions: {
+                candlestick: {
+                    colors: {
+                        upward: '#00B746',
+                        downward: '#EF403C'
+                    }
+                }
+            },
+            fill: { opacity: [1, 0.75] },
+            stroke: { curve: 'straight', width: [2, 2] },
+            dataLabels: { enabled: false },
+            title: { text: `Actual Prices up to ${activeForecastDate} with Predicted Prices and Volatility Overlay: ${activeAsset}`, align: 'left' },
+            annotations: {
+                xaxis: [{
+                    x: new Date(activeForecastDate).getTime(),
+                    strokeDashArray: 0,
+                    borderColor: '#775DD0',
+                    label: {
+                        borderColor: '#775DD0',
+                        style: {
+                            color: '#fff',
+                            background: '#775DD0',
+                        },
+                        text: 'Last Observation Day',
+                    }
+                }]
+            },
+            xaxis: { 
+                type: 'datetime',
+                crosshairs: {
+                    show: true,
+                    stroke: {
+                        color: '#90A4AE',
+                        width: 1,
+                        dashArray: 4,
+                    }
+                },
+                tooltip: {
+                    enabled: true,
+                }
+            },
+            yaxis: {
+                labels: { formatter: (value) => value !== undefined && value !== null ? '$' + value.toFixed(2) : '' },
+                min: minPrice - padding,
+                max: maxPrice + padding,
+                tooltip: { enabled: true }
+            },
+            tooltip: {
+                shared: true,
+                intersect: false,
+                custom: function({ series, seriesIndex, dataPointIndex, w }) {
+                    if (dataPointIndex === undefined || dataPointIndex < 0) return '';
+
+                    const date = new Date(w.globals.seriesX[0][dataPointIndex]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                    const candle = w.globals.initialSeries[0].data[dataPointIndex].y;
+                    const pred = w.globals.initialSeries[1].data[dataPointIndex].y;
+
+                    const o = candle[0] !== undefined ? candle[0].toFixed(2) : 'N/A';
+                    const h = candle[1] !== undefined ? candle[1].toFixed(2) : 'N/A';
+                    const l = candle[2] !== undefined ? candle[2].toFixed(2) : 'N/A';
+                    const c = candle[3] !== undefined ? candle[3].toFixed(2) : 'N/A';
+
+                    const pred_o = pred[0] !== undefined ? pred[0].toFixed(2) : 'N/A';
+                    const pred_h = pred[1] !== undefined ? pred[1].toFixed(2) : 'N/A';
+                    const pred_l = pred[2] !== undefined ? pred[2].toFixed(2) : 'N/A';
+                    const pred_c = pred[3] !== undefined ? pred[3].toFixed(2) : 'N/A';
+
+                    return `
+                        <div class="apexcharts-tooltip-title" style="font-weight: bold; padding: 4px 8px; background: #1a202c; color: #fff;">${date}</div>
+                        <div style="padding: 4px 8px;">
+                            <strong>Actual:</strong><br>
+                            Open: $${o}<br>
+                            High: $${h}<br>
+                            Low: $${l}<br>
+                            Close: $${c}
+                        </div>
+                        <div style="padding: 4px 8px;">
+                            <strong>Predicted:</strong><br>
+                            Open: $${pred_o}<br>
+                            High: $${pred_h}<br>
+                            Low: $${pred_l}<br>
+                            Close: $${pred_c}
+                        </div>
+                    `;
+                }
+            },
+            legend: { horizontalAlign: 'center', position: 'top' },
+            theme: { mode: 'dark' }
+        };
+        mergedChart = new ApexCharts(mergedContainer, mergedOptions);
+        mergedChart.render();
+
+        // Compute and display suggested prices based on predictions
+        const predictions = chartData;
+        let batchMinLow = Math.min(...predictions.map(p => p.predicted_low));
+        let batchMaxHigh = Math.max(...predictions.map(p => p.predicted_high));
+        let suggestedText = '';
+        if (batchMaxHigh < batchMinLow * (1 + minGainPct / 100)) {
+            suggestedText = 'Insufficient Predicted Gain - No Buy Suggested';
+        } else {
+            let buyPrice = batchMinLow;
+            let cutLossPrice = buyPrice * (1 - cutLossPct / 100);
+            let sellPrice = null;
+            let sellDay = null;
+            for (let i = 1; i < 5; i++) {
+                if (i >= 1) {
+                    let potentialSellPrice = predictions[i].predicted_high;
+                    if (potentialSellPrice < buyPrice * (1 + minGainPct / 100)) continue;
+                    const shares = fixedAmount / buyPrice;
+                    const gross = shares * (potentialSellPrice - buyPrice);
+                    const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                    const sellValue = shares * potentialSellPrice;
+                    const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                    const net = gross - feeBuy - feeSell;
+                    if (net > 0) {
+                        sellPrice = potentialSellPrice;
+                        sellDay = i;
+                        break;
+                    }
+                }
+            }
+            let buyText = `Suggested Buy Price: $${buyPrice.toFixed(2)}`;
+            let sellText = sellPrice ? `Suggested Sell Price: $${sellPrice.toFixed(2)} (on day ${sellDay + 1})` : 'No profitable sell within period meeting min gain - Hold to end';
+            let cutText = cutLossPct > 0 ? `Cut Loss Price: $${cutLossPrice.toFixed(2)}` : '';
+            suggestedText = `${buyText}, ${sellText}${cutText ? ', ' + cutText : ''}`;
+        }
+        suggestedPricesElement.textContent = suggestedText;
     }
 
     // --- Button Styling Function ---
@@ -719,15 +859,15 @@
     }
 
     function updateStats() {
-        statsData = computeRollingStats(forecastData, activeStartDate, activeEndDate, cutLossPct, fixedAmount, feePerc, fixedFee, minGainPct);
-        console.log("✅ Rolling stats dynamically computed for range:", statsData);
+        statsData = simulateAndAnalyzeTrades(forecastData, activeStartDate, activeEndDate, cutLossPct, fixedAmount, feePerc, fixedFee, minGainPct);
+        console.log("✅ Stats dynamically computed for range:", statsData);
         updateInfoCards(activeAsset);
-        renderRollingCharts();
     }
 
     // --- URL Parameter Functions ---
     function updateURLParams() {
         const params = new URLSearchParams();
+        params.set('forecast_date', activeForecastDate);
         params.set('start_date', activeStartDate);
         params.set('end_date', activeEndDate);
         params.set('asset', activeAsset);
@@ -742,8 +882,8 @@
     // --- Share Function ---
     async function shareCurrentView() {
         const shareData = {
-            title: 'Temporal Contextual Attention Network Rolling Backtest View',
-            text: 'Check out this rolling backtest analysis!',
+            title: 'Temporal Contextual Attention Network View',
+            text: 'Check out this prediction analysis!',
             url: window.location.href
         };
 
@@ -775,6 +915,8 @@
         if (availableDates.length > 0) {
             const minDate = availableDates[availableDates.length - 1];
             const maxDate = availableDates[0];
+            forecastDatePicker.min = minDate;
+            forecastDatePicker.max = maxDate;
             startDatePicker.min = minDate;
             startDatePicker.max = maxDate;
             endDatePicker.min = minDate;
@@ -792,6 +934,11 @@
                 activeEndDate = maxDate;
             }
 
+            activeForecastDate = urlParams.get('forecast_date') || minDate;
+            if (new Date(activeForecastDate) < new Date(minDate) || new Date(activeForecastDate) > new Date(maxDate)) {
+                activeForecastDate = minDate;
+            }
+
             cutLossPct = parseFloat(urlParams.get('cutloss_pct')) || 0;
             if (isNaN(cutLossPct) || cutLossPct < 0) cutLossPct = 0;
 
@@ -807,6 +954,7 @@
             minGainPct = parseFloat(urlParams.get('min_gain_pct')) || 0;
             if (isNaN(minGainPct) || minGainPct < 0) minGainPct = 0;
 
+            forecastDatePicker.value = activeForecastDate;
             startDatePicker.value = activeStartDate;
             endDatePicker.value = activeEndDate;
             cutLossInput.value = cutLossPct;
@@ -816,6 +964,12 @@
             minGainInput.value = minGainPct;
         }
         
+        forecastDatePicker.addEventListener('change', () => {
+            activeForecastDate = forecastDatePicker.value;
+            updateURLParams();
+            renderCharts();
+        });
+
         startDatePicker.addEventListener('change', () => {
             activeStartDate = startDatePicker.value;
             updateURLParams();
@@ -832,6 +986,7 @@
             cutLossPct = parseFloat(cutLossInput.value) || 0;
             updateURLParams();
             updateStats();
+            renderCharts();
         });
 
         initialCapitalInput.addEventListener('input', () => {
@@ -856,20 +1011,18 @@
             minGainPct = parseFloat(minGainInput.value) || 0;
             updateURLParams();
             updateStats();
+            renderCharts();
         });
 
         shareButton.addEventListener('click', shareCurrentView);
 
         jumpToLatestButton.addEventListener('click', () => {
             const availableDates = Object.keys(forecastData).sort((a, b) => new Date(b) - new Date(a));
-            const minDate = availableDates[availableDates.length - 1];
             const maxDate = availableDates[0];
-            startDatePicker.value = minDate;
-            endDatePicker.value = maxDate;
-            activeStartDate = minDate;
-            activeEndDate = maxDate;
+            forecastDatePicker.value = maxDate;
+            activeForecastDate = maxDate;
             updateURLParams();
-            updateStats();
+            renderCharts();
         });
 
         const assetButtonsContainer = document.getElementById('asset-buttons');
@@ -885,10 +1038,8 @@
         let maxWinRate = -1;
         let bestAsset = null;
         for (let t in statsData) {
-            const months = Object.keys(statsData[t]);
-            const avgPctGains = months.length > 0 ? months.reduce((sum, m) => sum + statsData[t][m].pct_gains, 0) / months.length : 0;
-            if (avgPctGains > maxWinRate) {
-                maxWinRate = avgPctGains;
+            if (statsData[t].pct_gains > maxWinRate) {
+                maxWinRate = statsData[t].pct_gains;
                 bestAsset = t;
             }
         }
@@ -912,7 +1063,7 @@
                 updateURLParams();
                 updateButtonStyles();
                 updateInfoCards(activeAsset);
-                renderRollingCharts();
+                renderCharts();
             });
         });
         
@@ -923,7 +1074,7 @@
 
         updateButtonStyles();
         updateInfoCards(activeAsset);
-        renderRollingCharts();
+        renderCharts();
         updateURLParams(); // Ensure URL is set on init
     }
     
