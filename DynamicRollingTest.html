@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temporal Contextual Attention Network Rolling Backtest</title>
+
+    <meta name="description" content="A dashboard to visualize and analyze the rolling backtest performance of a Temporal Contextual Attention Network for financial predictions.">
+
+    <link rel="icon" href="logo.png" type="image/png">
+    <link rel="apple-touch-icon" href="logo.png">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="TCAN Rolling Backtest">
+    <meta property="og:description" content="Visualize and analyze the rolling backtest performance of a Temporal Contextual Attention Network.">
+    <meta property="og:image" content="preview.png"> <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="TCAN Rolling Backtest">
+    <meta property="twitter:description" content="Visualize and analyze the rolling backtest performance of a Temporal Contextual Attention Network.">
+    <meta property="twitter:image" content="preview.png"> <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* A slightly deeper gray */
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            filter: invert(0.8) brightness(100%) sepia(0%) saturate(10000%) hue-rotate(0deg);
+        }
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button { 
+            cursor: pointer;
+            filter: invert(0.8) brightness(100%) sepia(0%) saturate(10000%) hue-rotate(0deg);
+        }
+        .apexcharts-tooltip {
+            background: #1f2937 !important;
+            color: #e2e8f0;
+            border: 1px solid #374151 !important;
+        }
+        .apexcharts-tooltip div {
+            padding: 2px 6px;
+        }
+        .info-card {
+            background-color: #1f2937;
+            padding: 1.5rem;
+            border-radius: 0.75rem; /* Slightly more rounded */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            border-top: 4px solid transparent; /* For accent colors */
+        }
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+        .info-card-icon {
+            margin-bottom: 0.75rem;
+            opacity: 0.8;
+        }
+        
+        /* Accent Colors for Cards */
+        .border-accent-blue { border-top-color: #3b82f6; }
+        .border-accent-green { border-top-color: #22c55e; }
+        .border-accent-red { border-top-color: #ef4444; }
+        .border-accent-yellow { border-top-color: #eab308; }
+        .border-accent-gray { border-top-color: #6b7280; }
+
+        /* --- Loader Styles --- */
+        #loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(17, 24, 39, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .spinner {
+            border: 8px solid #374151;
+            border-top: 8px solid #3b82f6;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-white">
+    <div id="loader-overlay">
+        <div class="spinner"></div>
+        <p class="text-lg text-gray-300 mt-4">Loading data...</p>
+    </div>
+    <div class="w-full max-w-7xl mx-auto flex flex-col space-y-6 p-4">
+        
+        <header class="text-center">
+            <h1 class="text-4xl font-bold text-gray-100">Temporal Contextual Attention Network Rolling Backtest</h1>
+            <div id="info-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-4"></div>
+        </header>
+
+        <div class="bg-gray-800 p-4 rounded-lg shadow-md">
+            <div class="flex flex-wrap justify-center items-center gap-4">
+                <div class="flex items-center space-x-2">
+                    <label for="start-date-picker" class="font-semibold text-gray-300 text-sm">Start Date:</label>
+                    <input type="date" id="start-date-picker" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <label for="end-date-picker" class="font-semibold text-gray-300 text-sm">End Date:</label>
+                    <input type="date" id="end-date-picker" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <button id="jump-to-latest" class="bg-blue-600 text-white px-4 py-1.5 text-sm font-medium rounded-md transition-colors duration-200 hover:bg-blue-500">Full Period</button>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <span class="font-semibold text-gray-300 mr-2 text-sm">Assets:</span>
+                    <div id="asset-buttons" class="flex space-x-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 p-4 rounded-lg shadow-md">
+            <div class="flex flex-wrap justify-center items-center gap-6">
+                <div class="flex items-center space-x-2">
+                    <label for="initial-capital" class="font-semibold text-gray-300 text-sm">Initial Capital:</label>
+                    <input type="number" id="initial-capital" min="1" step="1000" value="10000" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 w-28">
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label for="cutloss-pct" class="font-semibold text-gray-300 text-sm">Cut Loss % below buy:</label>
+                    <input type="number" id="cutloss-pct" min="0" step="0.1" value="0" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 w-20">
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label for="fee-pct" class="font-semibold text-gray-300 text-sm">Transaction Fee %:</label>
+                    <input type="number" id="fee-pct" min="0" step="0.01" value="0" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 w-20">
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label for="fixed-fee" class="font-semibold text-gray-300 text-sm">+ Fixed Fee:</label>
+                    <input type="number" id="fixed-fee" min="0" step="0.1" value="0" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 w-20">
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label for="min-gain-pct" class="font-semibold text-gray-300 text-sm">Min Cut Gain %:</label>
+                    <input type="number" id="min-gain-pct" min="0" step="0.1" value="0" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 w-20">
+                </div>
+                <button id="share-button" class="bg-blue-600 text-white px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 hover:bg-blue-500">Share</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div id="profitChart" class="bg-gray-800 p-6 rounded-xl shadow-2xl w-full"></div>
+            <div id="successfulChart" class="bg-gray-800 p-6 rounded-xl shadow-2xl w-full"></div>
+            <div id="roiChart" class="bg-gray-800 p-6 rounded-xl shadow-2xl w-full"></div>
+            <div id="tradesChart" class="bg-gray-800 p-6 rounded-xl shadow-2xl w-full"></div>
+        </div>
+
+    </div>
+    
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0"></script>
+<script>
+    let uniqueAssets = new Set();
+
+    const loaderOverlay = document.getElementById('loader-overlay');
+    // --- Global State ---
+    let forecastData = {}; // This will be populated from the CSV
+    let statsData = {}; // This will hold dynamically computed stats per asset per month
+    let activeStartDate;
+    let activeEndDate;
+    let activeAsset = 'INDEXNASDAQ-_IXIC';
+    let cutLossPct = 0;
+    let fixedAmount = 10000;
+    let feePerc = 0;
+    let fixedFee = 0;
+    let minGainPct = 0;
+    let profitChart = null;
+    let successfulChart = null;
+    let roiChart = null;
+    let tradesChart = null;
+
+    // --- DOM Elements ---
+    const infoCardsContainer = document.getElementById('info-cards');
+    let assetButtons = document.querySelectorAll('.asset-btn');
+    const startDatePicker = document.getElementById('start-date-picker');
+    const endDatePicker = document.getElementById('end-date-picker');
+    const cutLossInput = document.getElementById('cutloss-pct');
+    const initialCapitalInput = document.getElementById('initial-capital');
+    const feePctInput = document.getElementById('fee-pct');
+    const fixedFeeInput = document.getElementById('fixed-fee');
+    const minGainInput = document.getElementById('min-gain-pct');
+    const shareButton = document.getElementById('share-button');
+    const jumpToLatestButton = document.getElementById('jump-to-latest');
+    
+    // --- Data Loading and Processing ---
+    function loadAndProcessData() {
+        const originalUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQNyFHcXEzmZ3lp6ciRqJYHBOOwieiAgUP_TOgxuQN22tA9XVCmYjsMxmnF6cBnxP2kCSCGnwQ1Q9L8/pub?gid=0&single=true&output=csv";
+        
+        // const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(originalUrl);
+        const proxyUrl = "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(originalUrl);
+        const csvUrl = proxyUrl;
+
+        Papa.parse(csvUrl, {
+            download: true,
+            header: true,
+            dynamicTyping: true, // Automatically converts numbers
+            complete: function(results) {
+                const processedData = {};
+                results.data.forEach(row => {
+                    if (!row.date || !row.asset) {
+                        return;
+                    }
+
+                    const modelDate = row.date;
+                    const asset = row.asset;
+
+                    uniqueAssets.add(asset);
+
+                    if (!processedData[modelDate]) {
+                        processedData[modelDate] = {};
+                    }
+                    if (!processedData[modelDate][asset]) {
+                        processedData[modelDate][asset] = [];
+                    }
+                    
+                    const record = {
+                        prediction_date: row.prediction_date,
+                        asset: row.asset,
+                        predicted_open: row.predicted_open,
+                        predicted_high: row.predicted_high,
+                        predicted_low: row.predicted_low,
+                        predicted_close: row.predicted_close,
+                        actual_open: row.actual_open,
+                        actual_high: row.actual_high,
+                        actual_low: row.actual_low,
+                        actual_close: row.actual_close
+                    };
+
+                    processedData[modelDate][asset].push(record);
+                });
+                
+                forecastData = processedData;
+                console.log("✅ Data successfully loaded and processed:", forecastData);
+                initialize();
+                loaderOverlay.style.display = 'none'; // Hide loader
+            },
+            error: function(error) {
+                console.error("Error loading or parsing CSV data:", error);
+                loaderOverlay.style.display = 'none'; // Hide loader
+            }
+        });
+    }
+
+    function getAssetLabel(asset) {
+        const labels = {
+            'GLD': 'GLD',
+            'INDEXCBOE-VIX': 'VIX',
+            'INDEXDJX-_DJI': 'DJI',
+            'INDEXHANGSENG-HSI': 'HSI',
+            'INDEXNASDAQ-_IXIC': 'NASDAQ',
+            'INDEXSP-_INX': 'S&P500',
+            'TQQQ': 'TQQQ',
+            'USO': 'USO'
+            // Add more mappings if known
+        };
+        return labels[asset] || asset.split(/[-_]/).pop().toUpperCase(); // Fallback to last part
+    }
+
+    // --- Trade Simulation and Analysis ---
+    function computeRollingStats(data, startDate, endDate, cutLossPct = 0, fixedAmount = 10000, feePerc = 0, fixedFee = 0, minGainPct = 0) {
+        let statsByAsset = {};
+        let monthBatchesByAsset = {};
+        let tradesByAsset = {};
+
+        for (let creationDate in data) {
+            if (new Date(creationDate) < new Date(startDate) || new Date(creationDate) > new Date(endDate)) continue;
+            const month = creationDate.slice(0, 7); // YYYY-MM
+            for (let asset in data[creationDate]) {
+                if (!monthBatchesByAsset[asset]) {
+                    monthBatchesByAsset[asset] = {};
+                    tradesByAsset[asset] = {};
+                }
+                if (!monthBatchesByAsset[asset][month]) {
+                    monthBatchesByAsset[asset][month] = 0;
+                }
+                if (!tradesByAsset[asset][month]) {
+                    tradesByAsset[asset][month] = [];
+                }
+
+                let predictions = data[creationDate][asset];
+                if (predictions.length !== 5) continue;
+                monthBatchesByAsset[asset][month] += 1;
+
+                let batchMinLow = Math.min(...predictions.map(p => p.predicted_low));
+                let batchMaxHigh = Math.max(...predictions.map(p => p.predicted_high));
+
+                if (batchMaxHigh < batchMinLow * (1 + minGainPct / 100)) continue;
+
+                let dates = predictions.map(p => p.prediction_date);
+                let actualLows = predictions.map(p => p.actual_low);
+                let actualHighs = predictions.map(p => p.actual_high);
+                let actualCloses = predictions.map(p => p.actual_close);
+
+                let buyIndex = null;
+                for (let i = 0; i < 5; i++) {
+                    if (actualLows[i] <= batchMinLow) {
+                        buyIndex = i;
+                        break;
+                    }
+                }
+
+                if (buyIndex === null) continue;
+
+                let buyDate = dates[buyIndex];
+                let buyPrice = batchMinLow;
+
+                let cutLossTriggerIndex = null;
+                let cutLossSellPrice = null;
+                if (cutLossPct > 0) {
+                    let cutLossPrice = buyPrice * (1 - cutLossPct / 100);
+                    for (let i = buyIndex + 1; i < 5; i++) {
+                        if (actualLows[i] <= cutLossPrice) {
+                            cutLossTriggerIndex = i;
+                            cutLossSellPrice = cutLossPrice;
+                            break;
+                        }
+                    }
+                }
+
+                let sellIndex = null;
+                let forced = false;
+                let sellDate, sellPrice;
+                let profit, cutGain, cutLoss_flag;
+
+                if (cutLossTriggerIndex !== null) {
+                    sellIndex = cutLossTriggerIndex;
+                    sellDate = dates[sellIndex];
+                    sellPrice = cutLossSellPrice;
+                    forced = true;
+                    profit = sellPrice - buyPrice;
+                    cutGain = false;
+                    cutLoss_flag = true;
+                } else {
+                    for (let i = buyIndex + 1; i < 5; i++) {
+                        if (i >= buyIndex + 2 && actualHighs[i] > predictions[i].predicted_high) {
+                            let potentialSellPrice = predictions[i].predicted_high;
+                            if (potentialSellPrice < buyPrice * (1 + minGainPct / 100)) continue;
+                            const shares = fixedAmount / buyPrice;
+                            const gross = shares * (potentialSellPrice - buyPrice);
+                            const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                            const sellValue = shares * potentialSellPrice;
+                            const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                            const net = gross - feeBuy - feeSell;
+                            if (net > 0) {
+                                sellIndex = i;
+                                sellPrice = potentialSellPrice;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (sellIndex === null) {
+                        forced = true;
+                        sellIndex = 4;
+                        sellDate = dates[4];
+                        sellPrice = actualCloses[4];
+                        profit = sellPrice - buyPrice;
+                        cutGain = profit > 0;
+                        cutLoss_flag = profit < 0;
+                    } else {
+                        sellDate = dates[sellIndex];
+                        profit = sellPrice - buyPrice;
+                        cutGain = false;
+                        cutLoss_flag = false;
+                        forced = false;
+                    }
+                }
+
+                tradesByAsset[asset][month].push({
+                    creation_date: creationDate,
+                    asset: asset,
+                    buy_date: buyDate,
+                    buy_price: buyPrice,
+                    sell_date: sellDate,
+                    sell_price: sellPrice,
+                    profit: profit,
+                    forced: forced,
+                    cut_gain: cutGain,
+                    cut_loss: cutLoss_flag
+                });
+            }
+        }
+
+        for (let asset in monthBatchesByAsset) {
+            statsByAsset[asset] = {};
+            for (let month in monthBatchesByAsset[asset]) {
+                let trades = tradesByAsset[asset][month];
+                let totalBatches = monthBatchesByAsset[asset][month];
+                let numTrades = trades.length;
+
+                let numGains = trades.filter(t => t.profit > 0).length;
+                let numLosses = trades.filter(t => t.profit < 0).length;
+                let pctGains = numTrades > 0 ? (numGains / numTrades * 100) : 0;
+                let pctLosses = numTrades > 0 ? (numLosses / numTrades * 100) : 0;
+
+                let forcedTrades = trades.filter(t => t.forced);
+                let numForced = forcedTrades.length;
+                let numCutGain = forcedTrades.filter(t => t.cut_gain).length;
+                let numCutLoss = forcedTrades.filter(t => t.cut_loss).length;
+                let pctCutGain = numForced > 0 ? (numCutGain / numForced * 100) : 0;
+                let pctCutLoss = numForced > 0 ? (numCutLoss / numForced * 100) : 0;
+
+                let numSuccessful = numTrades - numForced;
+                let pctSuccessful = numTrades > 0 ? (numSuccessful / numTrades * 100) : 0;
+
+                let numSuccessBatches = numSuccessful;
+                let numFailedBatches = numForced;
+                let numNoActionBatches = totalBatches - numTrades;
+                let pctSuccessBatches = totalBatches > 0 ? (numSuccessBatches / totalBatches * 100) : 0;
+                let pctFailedBatches = totalBatches > 0 ? (numFailedBatches / totalBatches * 100) : 0;
+                let pctNoActionBatches = totalBatches > 0 ? (numNoActionBatches / totalBatches * 100) : 0;
+
+                // Simulated earnings calculations with fixed amount per trade, including transaction fees
+                const tradeProfits = trades.map(t => {
+                    const shares = fixedAmount / t.buy_price;
+                    const gross = shares * t.profit;
+                    const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                    const sellValue = shares * t.sell_price;
+                    const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                    return gross - feeBuy - feeSell;
+                });
+                const totalProfit = tradeProfits.reduce((sum, p) => sum + p, 0);
+                const totalInvested = numTrades * fixedAmount;
+                const roi = numTrades > 0 ? (totalProfit / totalInvested * 100) : 0;
+
+                let successfulTrades = trades.filter(t => !t.forced);
+                let successfulProfits = successfulTrades.map(t => {
+                    const shares = fixedAmount / t.buy_price;
+                    const gross = shares * t.profit;
+                    const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                    const sellValue = shares * t.sell_price;
+                    const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                    return gross - feeBuy - feeSell;
+                });
+                let avgSuccessfulEarning = successfulProfits.length > 0 ? successfulProfits.reduce((sum, p) => sum + p, 0) / successfulProfits.length : 0;
+
+                let failedWins = trades.filter(t => t.forced && t.profit > 0);
+                let failedWinProfits = failedWins.map(t => {
+                    const shares = fixedAmount / t.buy_price;
+                    const gross = shares * t.profit;
+                    const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                    const sellValue = shares * t.sell_price;
+                    const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                    return gross - feeBuy - feeSell;
+                });
+                let avgFailedWin = failedWinProfits.length > 0 ? failedWinProfits.reduce((sum, p) => sum + p, 0) / failedWinProfits.length : 0;
+
+                let failedLosses = trades.filter(t => t.forced && t.profit < 0);
+                let failedLossProfits = failedLosses.map(t => {
+                    const shares = fixedAmount / t.buy_price;
+                    const gross = shares * t.profit;
+                    const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                    const sellValue = shares * t.sell_price;
+                    const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                    return gross - feeBuy - feeSell;
+                });
+                let avgFailedLoss = failedLossProfits.length > 0 ? failedLossProfits.reduce((sum, p) => sum + p, 0) / failedLossProfits.length : 0;
+
+                let allWins = trades.filter(t => t.profit > 0);
+                let allWinProfits = allWins.map(t => {
+                    const shares = fixedAmount / t.buy_price;
+                    const gross = shares * t.profit;
+                    const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                    const sellValue = shares * t.sell_price;
+                    const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                    return gross - feeBuy - feeSell;
+                });
+                let avgOverallWin = allWinProfits.length > 0 ? allWinProfits.reduce((sum, p) => sum + p, 0) / allWinProfits.length : 0;
+
+                let allLosses = trades.filter(t => t.profit < 0);
+                let allLossProfits = allLosses.map(t => {
+                    const shares = fixedAmount / t.buy_price;
+                    const gross = shares * t.profit;
+                    const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                    const sellValue = shares * t.sell_price;
+                    const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                    return gross - feeBuy - feeSell;
+                });
+                let avgOverallLoss = allLossProfits.length > 0 ? allLossProfits.reduce((sum, p) => sum + p, 0) / allLossProfits.length : 0;
+
+                statsByAsset[asset][month] = {
+                    total_batches: totalBatches,
+                    num_trades: numTrades,
+                    num_gains: numGains,
+                    num_losses: numLosses,
+                    pct_gains: pctGains,
+                    pct_losses: pctLosses,
+                    num_forced: numForced,
+                    num_cut_gain: numCutGain,
+                    num_cut_loss: numCutLoss,
+                    pct_cut_gain: pctCutGain,
+                    pct_cut_loss: pctCutLoss,
+                    num_successful: numSuccessful,
+                    pct_successful: pctSuccessful,
+                    num_success_batches: numSuccessBatches,
+                    num_failed_batches: numFailedBatches,
+                    num_no_action_batches: numNoActionBatches,
+                    pct_success_batches: pctSuccessBatches,
+                    pct_failed_batches: pctFailedBatches,
+                    pct_no_action_batches: pctNoActionBatches,
+                    avg_successful_earning: avgSuccessfulEarning,
+                    avg_failed_win: avgFailedWin,
+                    avg_failed_loss: avgFailedLoss,
+                    avg_overall_win: avgOverallWin,
+                    avg_overall_loss: avgOverallLoss,
+                    total_profit: totalProfit,
+                    roi: roi
+                };
+            }
+        }
+
+        return statsByAsset;
+    }
+
+    // --- Chart Rendering Function ---
+    function renderRollingCharts() {
+        const assetData = statsData[activeAsset] || {};
+        const months = Object.keys(assetData).sort();
+
+        if (months.length === 0) {
+            document.getElementById('profitChart').innerHTML = `<div class="flex items-center justify-center h-full"><p class="text-gray-400">No data available for ${activeAsset} in the selected period.</p></div>`;
+            document.getElementById('successfulChart').innerHTML = `<div class="flex items-center justify-center h-full"><p class="text-gray-400">No data available for ${activeAsset} in the selected period.</p></div>`;
+            document.getElementById('roiChart').innerHTML = `<div class="flex items-center justify-center h-full"><p class="text-gray-400">No data available for ${activeAsset} in the selected period.</p></div>`;
+            document.getElementById('tradesChart').innerHTML = `<div class="flex items-center justify-center h-full"><p class="text-gray-400">No data available for ${activeAsset} in the selected period.</p></div>`;
+            return;
+        }
+
+        const profitData = months.map(m => ({ x: new Date(m + '-01'), y: assetData[m].total_profit }));
+        const successData = months.map(m => ({ x: new Date(m + '-01'), y: assetData[m].pct_success_batches }));
+        const roiData = months.map(m => ({ x: new Date(m + '-01'), y: assetData[m].roi }));
+        const tradesData = months.map(m => ({ x: new Date(m + '-01'), y: assetData[m].num_trades }));
+
+        const baseOptions = {
+            chart: {
+                height: 350,
+                type: 'line',
+                animations: { enabled: true },
+            },
+            stroke: { curve: 'straight', width: 2 },
+            dataLabels: { enabled: false },
+            xaxis: { type: 'datetime' },
+            tooltip: { shared: false, intersect: false },
+            legend: { horizontalAlign: 'center', position: 'top' },
+            theme: { mode: 'dark' }
+        };
+
+        if (profitChart) profitChart.destroy();
+        profitChart = new ApexCharts(document.getElementById('profitChart'), {
+            ...baseOptions,
+            series: [{ name: 'Total Profit', data: profitData }],
+            colors: ['#00B746'],
+            title: { text: `Monthly Total Profit: ${activeAsset}`, align: 'left' },
+            yaxis: { labels: { formatter: (value) => value !== undefined && value !== null ? '$' + value.toFixed(2) : '' } }
+        });
+        profitChart.render();
+
+        if (successfulChart) successfulChart.destroy();
+        successfulChart = new ApexCharts(document.getElementById('successfulChart'), {
+            ...baseOptions,
+            series: [{ name: 'Successful Batches %', data: successData }],
+            colors: ['#007BFF'],
+            title: { text: `Monthly Successful Batches %: ${activeAsset}`, align: 'left' },
+            yaxis: { labels: { formatter: (value) => value !== undefined && value !== null ? value.toFixed(2) + '%' : '' } }
+        });
+        successfulChart.render();
+
+        if (roiChart) roiChart.destroy();
+        roiChart = new ApexCharts(document.getElementById('roiChart'), {
+            ...baseOptions,
+            series: [{ name: 'ROI %', data: roiData }],
+            colors: ['#FFC107'],
+            title: { text: `Monthly ROI %: ${activeAsset}`, align: 'left' },
+            yaxis: { labels: { formatter: (value) => value !== undefined && value !== null ? value.toFixed(2) + '%' : '' } }
+        });
+        roiChart.render();
+
+        if (tradesChart) tradesChart.destroy();
+        tradesChart = new ApexCharts(document.getElementById('tradesChart'), {
+            ...baseOptions,
+            series: [{ name: 'Number of Trades', data: tradesData }],
+            colors: ['#FF5733'],
+            title: { text: `Monthly Number of Trades: ${activeAsset}`, align: 'left' },
+            yaxis: { labels: { formatter: (value) => value !== undefined && value !== null ? value.toFixed(0) : '' } }
+        });
+        tradesChart.render();
+    }
+
+    // --- Average Stats Update ---
+    function updateInfoCards(asset) {
+        const assetData = statsData[asset] || {};
+        const months = Object.keys(assetData);
+        if (months.length === 0) {
+            infoCardsContainer.innerHTML = '';
+            return;
+        }
+
+        // Compute averages
+        let avg_num_trades = months.reduce((sum, m) => sum + assetData[m].num_trades, 0) / months.length;
+        let avg_pct_gains = months.reduce((sum, m) => sum + assetData[m].pct_gains, 0) / months.length;
+        let avg_pct_losses = months.reduce((sum, m) => sum + assetData[m].pct_losses, 0) / months.length;
+        let avg_pct_success_batches = months.reduce((sum, m) => sum + assetData[m].pct_success_batches, 0) / months.length;
+        let avg_pct_failed_batches = months.reduce((sum, m) => sum + assetData[m].pct_failed_batches, 0) / months.length;
+        let avg_pct_no_action_batches = months.reduce((sum, m) => sum + assetData[m].pct_no_action_batches, 0) / months.length;
+        let avg_total_profit = months.reduce((sum, m) => sum + assetData[m].total_profit, 0) / months.length;
+        let avg_roi = months.reduce((sum, m) => sum + assetData[m].roi, 0) / months.length;
+        let avg_avg_overall_win = months.reduce((sum, m) => sum + assetData[m].avg_overall_win, 0) / months.length;
+        let avg_avg_overall_loss = months.reduce((sum, m) => sum + assetData[m].avg_overall_loss, 0) / months.length;
+        let avg_avg_successful_earning = months.reduce((sum, m) => sum + assetData[m].avg_successful_earning, 0) / months.length;
+        let avg_pct_cut_gain = months.reduce((sum, m) => sum + assetData[m].pct_cut_gain, 0) / months.length;
+        let avg_avg_failed_win = months.reduce((sum, m) => sum + assetData[m].avg_failed_win, 0) / months.length;
+        let avg_pct_cut_loss = months.reduce((sum, m) => sum + assetData[m].pct_cut_loss, 0) / months.length;
+        let avg_avg_failed_loss = months.reduce((sum, m) => sum + assetData[m].avg_failed_loss, 0) / months.length;
+
+        const profitColor = avg_total_profit >= 0 ? 'green' : 'red';
+        const profitTextColor = avg_total_profit >= 0 ? 'text-green-400' : 'text-red-400';
+        const profitBorder = avg_total_profit >= 0 ? 'border-accent-green' : 'border-accent-red';
+
+        let cardsHtml = `
+            <div class="info-card border-accent-gray">
+                <h3 class="text-lg font-semibold text-gray-300">Avg Trades</h3>
+                <p class="text-2xl font-bold text-white">${avg_num_trades.toFixed(2)}</p>
+            </div>
+            <div class="info-card border-accent-green">
+                <h3 class="text-lg font-semibold text-gray-300">Avg Win Rate</h3>
+                <p class="text-2xl font-bold text-green-400">${avg_pct_gains.toFixed(2)}%</p>
+                <p class="text-sm text-green-300 mt-1">Avg Win: $${avg_avg_overall_win.toFixed(2)}</p>
+            </div>
+            <div class="info-card border-accent-red">
+                <h3 class="text-lg font-semibold text-gray-300">Avg Loss Rate</h3>
+                <p class="text-2xl font-bold text-red-400">${avg_pct_losses.toFixed(2)}%</p>
+                <p class="text-sm text-red-300 mt-1">Avg Loss: $${avg_avg_overall_loss.toFixed(2)}</p>
+            </div>
+            <div class="info-card border-accent-green">
+                <h3 class="text-lg font-semibold text-gray-300">Avg Successful Batches</h3>
+                <p class="text-2xl font-bold text-white">${avg_pct_success_batches.toFixed(2)}%</p>
+                <p class="text-sm text-green-300 mt-1">Avg Earning: $${avg_avg_successful_earning.toFixed(2)}</p>
+            </div>
+            <div class="info-card border-accent-red">
+                <h3 class="text-lg font-semibold text-gray-300">Avg Failed Batches</h3>
+                <p class="text-2xl font-bold text-white">${avg_pct_failed_batches.toFixed(2)}%</p>
+                <div class="mt-2 flex space-x-1">
+                    <div class="flex-1 bg-green-900/50 border border-green-600 p-1.5 rounded text-center">
+                        <p class="text-xs font-semibold text-green-400">${avg_pct_cut_gain.toFixed(2)}% Wins</p>
+                        <p class="text-xs text-green-300">Avg: $${avg_avg_failed_win.toFixed(2)}</p>
+                    </div>
+                    <div class="flex-1 bg-red-900/50 border border-red-600 p-1.5 rounded text-center">
+                        <p class="text-xs font-semibold text-red-400">${avg_pct_cut_loss.toFixed(2)}% Losses</p>
+                        <p class="text-xs text-red-300">Avg: $${avg_avg_failed_loss.toFixed(2)}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="info-card border-accent-yellow">
+                <h3 class="text-lg font-semibold text-gray-300">Avg No Action Batches</h3>
+                <p class="text-2xl font-bold text-white">${avg_pct_no_action_batches.toFixed(2)}%</p>
+            </div>
+            <div class="info-card ${profitBorder}">
+                <h3 class="text-lg font-semibold text-gray-300">Avg Monthly Profit</h3>
+                <p class="text-2xl font-bold ${profitTextColor}">$${avg_total_profit.toFixed(2)}</p>
+            </div>
+            <div class="info-card border-accent-blue">
+                <h3 class="text-lg font-semibold text-gray-300">Avg ROI</h3>
+                <p class="text-2xl font-bold text-blue-400">${avg_roi.toFixed(2)}%</p>
+            </div>
+        `;
+
+        infoCardsContainer.innerHTML = cardsHtml;
+    }
+
+    // --- Button Styling Function ---
+    function updateButtonStyles() {
+        assetButtons.forEach(button => {
+            const isActive = button.dataset.asset === activeAsset;
+            button.classList.toggle('bg-blue-600', isActive);
+            button.classList.toggle('text-white', isActive);
+            button.classList.toggle('bg-gray-700', !isActive);
+            button.classList.toggle('text-gray-300', !isActive);
+            button.classList.toggle('hover:bg-blue-500', !isActive);
+        });
+    }
+
+    function updateStats() {
+        statsData = computeRollingStats(forecastData, activeStartDate, activeEndDate, cutLossPct, fixedAmount, feePerc, fixedFee, minGainPct);
+        console.log("✅ Rolling stats dynamically computed for range:", statsData);
+        updateInfoCards(activeAsset);
+        renderRollingCharts();
+    }
+
+    // --- URL Parameter Functions ---
+    function updateURLParams() {
+        const params = new URLSearchParams();
+        params.set('start_date', activeStartDate);
+        params.set('end_date', activeEndDate);
+        params.set('asset', activeAsset);
+        params.set('initial_capital', fixedAmount);
+        params.set('cutloss_pct', cutLossPct);
+        params.set('fee_perc', feePerc);
+        params.set('fixed_fee', fixedFee);
+        params.set('min_gain_pct', minGainPct);
+        history.pushState({}, '', `${location.pathname}?${params.toString()}`);
+    }
+
+    // --- Share Function ---
+    async function shareCurrentView() {
+        const shareData = {
+            title: 'Temporal Contextual Attention Network Rolling Backtest View',
+            text: 'Check out this rolling backtest analysis!',
+            url: window.location.href
+        };
+
+        if (navigator.canShare && navigator.canShare(shareData)) {
+            try {
+                await navigator.share(shareData);
+            } catch (err) {
+                console.error('Share failed:', err);
+                fallbackCopyToClipboard();
+            }
+        } else {
+            fallbackCopyToClipboard();
+        }
+    }
+
+    function fallbackCopyToClipboard() {
+        const url = window.location.href;
+        navigator.clipboard.writeText(url).then(() => {
+            alert('URL copied to clipboard!');
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+            alert('Failed to copy URL. Please copy manually: ' + url);
+        });
+    }
+
+    // --- Main Initialization Function (called AFTER data is loaded) ---
+    function initialize() {
+        const availableDates = Object.keys(forecastData).sort((a, b) => new Date(b) - new Date(a));
+        if (availableDates.length > 0) {
+            const minDate = availableDates[availableDates.length - 1];
+            const maxDate = availableDates[0];
+            startDatePicker.min = minDate;
+            startDatePicker.max = maxDate;
+            endDatePicker.min = minDate;
+            endDatePicker.max = maxDate;
+
+            const urlParams = new URLSearchParams(window.location.search);
+
+            activeStartDate = urlParams.get('start_date') || minDate;
+            if (new Date(activeStartDate) < new Date(minDate) || new Date(activeStartDate) > new Date(maxDate)) {
+                activeStartDate = minDate;
+            }
+
+            activeEndDate = urlParams.get('end_date') || maxDate;
+            if (new Date(activeEndDate) < new Date(minDate) || new Date(activeEndDate) > new Date(maxDate)) {
+                activeEndDate = maxDate;
+            }
+
+            cutLossPct = parseFloat(urlParams.get('cutloss_pct')) || 0;
+            if (isNaN(cutLossPct) || cutLossPct < 0) cutLossPct = 0;
+
+            fixedAmount = parseFloat(urlParams.get('initial_capital')) || 10000;
+            if (isNaN(fixedAmount) || fixedAmount < 1) fixedAmount = 10000;
+
+            feePerc = parseFloat(urlParams.get('fee_perc')) || 0;
+            if (isNaN(feePerc) || feePerc < 0) feePerc = 0;
+
+            fixedFee = parseFloat(urlParams.get('fixed_fee')) || 0;
+            if (isNaN(fixedFee) || fixedFee < 0) fixedFee = 0;
+
+            minGainPct = parseFloat(urlParams.get('min_gain_pct')) || 0;
+            if (isNaN(minGainPct) || minGainPct < 0) minGainPct = 0;
+
+            startDatePicker.value = activeStartDate;
+            endDatePicker.value = activeEndDate;
+            cutLossInput.value = cutLossPct;
+            initialCapitalInput.value = fixedAmount;
+            feePctInput.value = feePerc;
+            fixedFeeInput.value = fixedFee;
+            minGainInput.value = minGainPct;
+        }
+        
+        startDatePicker.addEventListener('change', () => {
+            activeStartDate = startDatePicker.value;
+            updateURLParams();
+            updateStats();
+        });
+
+        endDatePicker.addEventListener('change', () => {
+            activeEndDate = endDatePicker.value;
+            updateURLParams();
+            updateStats();
+        });
+
+        cutLossInput.addEventListener('input', () => {
+            cutLossPct = parseFloat(cutLossInput.value) || 0;
+            updateURLParams();
+            updateStats();
+        });
+
+        initialCapitalInput.addEventListener('input', () => {
+            fixedAmount = parseFloat(initialCapitalInput.value) || 10000;
+            updateURLParams();
+            updateStats();
+        });
+
+        feePctInput.addEventListener('input', () => {
+            feePerc = parseFloat(feePctInput.value) || 0;
+            updateURLParams();
+            updateStats();
+        });
+
+        fixedFeeInput.addEventListener('input', () => {
+            fixedFee = parseFloat(fixedFeeInput.value) || 0;
+            updateURLParams();
+            updateStats();
+        });
+
+        minGainInput.addEventListener('input', () => {
+            minGainPct = parseFloat(minGainInput.value) || 0;
+            updateURLParams();
+            updateStats();
+        });
+
+        shareButton.addEventListener('click', shareCurrentView);
+
+        jumpToLatestButton.addEventListener('click', () => {
+            const availableDates = Object.keys(forecastData).sort((a, b) => new Date(b) - new Date(a));
+            const minDate = availableDates[availableDates.length - 1];
+            const maxDate = availableDates[0];
+            startDatePicker.value = minDate;
+            endDatePicker.value = maxDate;
+            activeStartDate = minDate;
+            activeEndDate = maxDate;
+            updateURLParams();
+            updateStats();
+        });
+
+        const assetButtonsContainer = document.getElementById('asset-buttons');
+        Array.from(uniqueAssets).sort().forEach(asset => {
+            const button = document.createElement('button');
+            button.dataset.asset = asset;
+            button.textContent = getAssetLabel(asset);
+            button.classList.add('control-button', 'asset-btn', 'px-4', 'py-2', 'text-sm', 'font-medium', 'rounded-md', 'transition-colors', 'duration-200');
+            assetButtonsContainer.appendChild(button);
+        });
+
+        updateStats();
+        let maxWinRate = -1;
+        let bestAsset = null;
+        for (let t in statsData) {
+            const months = Object.keys(statsData[t]);
+            const avgPctGains = months.length > 0 ? months.reduce((sum, m) => sum + statsData[t][m].pct_gains, 0) / months.length : 0;
+            if (avgPctGains > maxWinRate) {
+                maxWinRate = avgPctGains;
+                bestAsset = t;
+            }
+        }
+        if (bestAsset) {
+            activeAsset = bestAsset; // Default to best asset
+        }
+
+        // Re-query after all buttons are added
+        assetButtons = document.querySelectorAll('.asset-btn');
+
+        // Set activeAsset from URL if valid
+        const urlAsset = new URLSearchParams(window.location.search).get('asset');
+        if (urlAsset && uniqueAssets.has(urlAsset)) {
+            activeAsset = urlAsset;
+        }
+
+        // Attach event listeners after re-query
+        assetButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                activeAsset = button.dataset.asset;
+                updateURLParams();
+                updateButtonStyles();
+                updateInfoCards(activeAsset);
+                renderRollingCharts();
+            });
+        });
+        
+        // Optional: Ensure activeAsset is valid (set to best or first if not)
+        if (!Array.from(assetButtons).some(b => b.dataset.asset === activeAsset)) {
+            activeAsset = bestAsset || assetButtons[0]?.dataset.asset;
+        }
+
+        updateButtonStyles();
+        updateInfoCards(activeAsset);
+        renderRollingCharts();
+        updateURLParams(); // Ensure URL is set on init
+    }
+    
+    // --- Start the process on page load ---
+    window.onload = loadAndProcessData;
+</script>
+
+</body>
+</html>
