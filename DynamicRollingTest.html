@@ -159,6 +159,7 @@
                     <input type="number" id="min-gain-pct" min="0" step="0.1" value="0" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 w-20">
                 </div>
                 <button id="share-button" class="bg-blue-600 text-white px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 hover:bg-blue-500">Share</button>
+                <button id="copy-json-button" class="bg-teal-600 text-white px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 hover:bg-teal-500">Copy JSON</button>
             </div>
         </div>
 
@@ -625,6 +626,81 @@
         tradesChart.render();
     }
 
+    // --- Function to get Overall Results as JSON ---
+    function getOverallResultsJSON(asset) {
+        const assetData = statsData[asset] || {};
+        const months = Object.keys(assetData);
+        if (months.length === 0) {
+            return JSON.stringify({ error: "No data available for this asset in the selected period." }, null, 2);
+        }
+
+        // Averages
+        const avg_num_trades = months.reduce((sum, m) => sum + assetData[m].num_trades, 0) / months.length;
+        const avg_pct_gains = months.reduce((sum, m) => sum + assetData[m].pct_gains, 0) / months.length;
+        const avg_avg_overall_win = months.reduce((sum, m) => sum + assetData[m].avg_overall_win, 0) / months.length;
+        const avg_pct_losses = months.reduce((sum, m) => sum + assetData[m].pct_losses, 0) / months.length;
+        const avg_avg_overall_loss = months.reduce((sum, m) => sum + assetData[m].avg_overall_loss, 0) / months.length;
+        const avg_pct_success_batches = months.reduce((sum, m) => sum + assetData[m].pct_success_batches, 0) / months.length;
+        const avg_avg_successful_earning = months.reduce((sum, m) => sum + assetData[m].avg_successful_earning, 0) / months.length;
+        const avg_pct_failed_batches = months.reduce((sum, m) => sum + assetData[m].pct_failed_batches, 0) / months.length;
+        const avg_pct_cut_gain = months.reduce((sum, m) => sum + assetData[m].pct_cut_gain, 0) / months.length;
+        const avg_avg_failed_win = months.reduce((sum, m) => sum + assetData[m].avg_failed_win, 0) / months.length;
+        const avg_pct_cut_loss = months.reduce((sum, m) => sum + assetData[m].pct_cut_loss, 0) / months.length;
+        const avg_avg_failed_loss = months.reduce((sum, m) => sum + assetData[m].avg_failed_loss, 0) / months.length;
+        const avg_pct_no_action_batches = months.reduce((sum, m) => sum + assetData[m].pct_no_action_batches, 0) / months.length;
+        const avg_total_profit = months.reduce((sum, m) => sum + assetData[m].total_profit, 0) / months.length;
+        const avg_roi = months.reduce((sum, m) => sum + assetData[m].roi, 0) / months.length;
+
+        // Overall
+        const total_profit = months.reduce((sum, m) => sum + assetData[m].total_profit, 0);
+        const total_trades = months.reduce((sum, m) => sum + assetData[m].num_trades, 0);
+        const total_invested = total_trades * fixedAmount;
+        const overall_roi = total_invested > 0 ? (total_profit / total_invested * 100) : 0;
+
+        const results = {
+            asset: asset,
+            assetLabel: getAssetLabel(asset),
+            dateRange: {
+                start: activeStartDate,
+                end: activeEndDate,
+            },
+            simulationParameters: {
+                initialCapitalPerTrade: fixedAmount,
+                cutLossPercentage: cutLossPct,
+                transactionFeePercentage: feePerc,
+                transactionFixedFee: fixedFee,
+                minGainPercentage: minGainPct,
+            },
+            overall: {
+                totalProfit: total_profit,
+                totalTrades: total_trades,
+                totalInvested: total_invested,
+                overallRoiPercentage: overall_roi,
+            },
+            monthlyAverages: {
+                averageTradesPerMonth: avg_num_trades,
+                averageWinRatePercentage: avg_pct_gains,
+                averageWinAmount: avg_avg_overall_win,
+                averageLossRatePercentage: avg_pct_losses,
+                averageLossAmount: avg_avg_overall_loss,
+                averageSuccessfulBatchesPercentage: avg_pct_success_batches,
+                averageEarningPerSuccessfulBatch: avg_avg_successful_earning,
+                averageFailedBatchesPercentage: avg_pct_failed_batches,
+                averageNoActionBatchesPercentage: avg_pct_no_action_batches,
+                averageMonthlyProfit: avg_total_profit,
+                averageMonthlyRoiPercentage: avg_roi,
+            },
+            failedBatchesBreakdown: {
+                winPercentage: avg_pct_cut_gain,
+                averageWinAmount: avg_avg_failed_win,
+                lossPercentage: avg_pct_cut_loss,
+                averageLossAmount: avg_avg_failed_loss,
+            }
+        };
+
+        return JSON.stringify(results, null, 2);
+    }
+
     // --- Average Stats Update ---
     function updateInfoCards(asset) {
         const assetData = statsData[asset] || {};
@@ -650,6 +726,12 @@
         let avg_avg_failed_win = months.reduce((sum, m) => sum + assetData[m].avg_failed_win, 0) / months.length;
         let avg_pct_cut_loss = months.reduce((sum, m) => sum + assetData[m].pct_cut_loss, 0) / months.length;
         let avg_avg_failed_loss = months.reduce((sum, m) => sum + assetData[m].avg_failed_loss, 0) / months.length;
+
+        // Compute overall ROI
+        let total_profit = months.reduce((sum, m) => sum + assetData[m].total_profit, 0);
+        let total_trades = months.reduce((sum, m) => sum + assetData[m].num_trades, 0);
+        let total_invested = total_trades * fixedAmount;
+        let overall_roi = total_invested > 0 ? (total_profit / total_invested * 100) : 0;
 
         const profitColor = avg_total_profit >= 0 ? 'green' : 'red';
         const profitTextColor = avg_total_profit >= 0 ? 'text-green-400' : 'text-red-400';
@@ -700,6 +782,8 @@
             <div class="info-card border-accent-blue">
                 <h3 class="text-lg font-semibold text-gray-300">Avg ROI</h3>
                 <p class="text-2xl font-bold text-blue-400">${avg_roi.toFixed(2)}%</p>
+                <h3 class="text-lg font-semibold text-gray-300">Overall ROI</h3>
+                <p class="text-2xl font-bold text-blue-400">${overall_roi.toFixed(2)}%</p>
             </div>
         `;
 
@@ -859,6 +943,16 @@
         });
 
         shareButton.addEventListener('click', shareCurrentView);
+
+        document.getElementById('copy-json-button').addEventListener('click', () => {
+            const jsonResults = getOverallResultsJSON(activeAsset);
+            navigator.clipboard.writeText(jsonResults).then(() => {
+                alert('Overall results copied to clipboard as JSON!');
+            }).catch(err => {
+                console.error('Failed to copy JSON:', err);
+                alert('Failed to copy results. See console for details.');
+            });
+        });
 
         jumpToLatestButton.addEventListener('click', () => {
             const availableDates = Object.keys(forecastData).sort((a, b) => new Date(b) - new Date(a));
