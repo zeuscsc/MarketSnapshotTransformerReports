@@ -280,41 +280,53 @@
         return labels[asset] || asset.split(/[-_]/).pop().toUpperCase(); // Fallback to last part
     }
 
-    // --- Trade Simulation and Analysis ---
+    // --- Rolling Monthly Stats ---
     function computeRollingStats(data, startDate, endDate, cutLossPct = 0, fixedAmount = 10000, feePerc = 0, fixedFee = 0, minGainPct = 0) {
-        let statsByAsset = {};
-        let monthBatchesByAsset = {};
-        let tradesByAsset = {};
+        const statsByAsset = {};
+        const monthBatchesByAsset = {};
+        const tradesByAsset = {};
 
         for (let creationDate in data) {
             if (new Date(creationDate) < new Date(startDate) || new Date(creationDate) > new Date(endDate)) continue;
-            const month = creationDate.slice(0, 7); // YYYY-MM
+
+            const month = creationDate.slice(0, 7);
+
             for (let asset in data[creationDate]) {
-                if (!monthBatchesByAsset[asset]) {
-                    monthBatchesByAsset[asset] = {};
-                    tradesByAsset[asset] = {};
-                }
-                if (!monthBatchesByAsset[asset][month]) {
-                    monthBatchesByAsset[asset][month] = 0;
-                }
-                if (!tradesByAsset[asset][month]) {
-                    tradesByAsset[asset][month] = [];
+                if (!monthBatchesByAsset[asset]) monthBatchesByAsset[asset] = {};
+                if (!tradesByAsset[asset]) tradesByAsset[asset] = {};
+                if (!monthBatchesByAsset[asset][month]) monthBatchesByAsset[asset][month] = 0;
+                if (!tradesByAsset[asset][month]) tradesByAsset[asset][month] = [];
+
+                const predictions = data[creationDate][asset];
+                if (predictions.length !== 5) continue;
+
+                // CRITICAL FIX: Skip if any actual data is missing or zero (future predictions)
+                const hasValidActuals = predictions.every(p => 
+                    p.actual_low != null && 
+                    p.actual_high != null && 
+                    p.actual_close != null &&
+                    p.actual_low > 0 && 
+                    p.actual_high > 0 && 
+                    p.actual_close > 0
+                );
+                if (!hasValidActuals) {
+                    // Do NOT count future predictions as batches at all
+                    continue;
                 }
 
-                let predictions = data[creationDate][asset];
-                if (predictions.length !== 5) continue;
                 monthBatchesByAsset[asset][month] += 1;
 
-                let batchMinLow = Math.min(...predictions.map(p => p.predicted_low));
-                let batchMaxHigh = Math.max(...predictions.map(p => p.predicted_high));
+                const batchMinLow = Math.min(...predictions.map(p => p.predicted_low));
+                const batchMaxHigh = Math.max(...predictions.map(p => p.predicted_high));
 
                 if (batchMaxHigh < batchMinLow * (1 + minGainPct / 100)) continue;
 
-                let dates = predictions.map(p => p.prediction_date);
-                let actualLows = predictions.map(p => p.actual_low);
-                let actualHighs = predictions.map(p => p.actual_high);
-                let actualCloses = predictions.map(p => p.actual_close);
+                const dates = predictions.map(p => p.prediction_date);
+                const actualLows = predictions.map(p => p.actual_low);
+                const actualHighs = predictions.map(p => p.actual_high);
+                const actualCloses = predictions.map(p => p.actual_close);
 
+                // Buy logic
                 let buyIndex = null;
                 for (let i = 0; i < 5; i++) {
                     if (actualLows[i] <= batchMinLow) {
@@ -322,202 +334,150 @@
                         break;
                     }
                 }
-
                 if (buyIndex === null) continue;
 
-                let buyDate = dates[buyIndex];
-                let buyPrice = batchMinLow; // Reverted to original for conservative fill
+                const buyPrice = batchMinLow * 1.001;
+                const buyDate = dates[buyIndex];
 
-                let cutLossPrice = buyPrice * (1 - cutLossPct / 100);
-                let sameDayCutLoss = false;
-                if (cutLossPct > 0 && actualLows[buyIndex] <= cutLossPrice) {
-                    sameDayCutLoss = true;
-                }
+                // Cut loss logic
+                let sameDayCutLoss = cutLossPct > 0 && actualLows[buyIndex] <= buyPrice * (1 - cutLossPct / 100);
 
                 let cutLossTriggerIndex = null;
                 let cutLossSellPrice = null;
-                let highestHigh = actualHighs[buyIndex]; // For trailing stop
+                let highestHigh = actualHighs[buyIndex];
+
                 if (!sameDayCutLoss && cutLossPct > 0) {
                     for (let i = buyIndex + 1; i < 5; i++) {
                         highestHigh = Math.max(highestHigh, actualHighs[i - 1]);
-                        cutLossPrice = highestHigh * (1 - cutLossPct / 100); // Trailing stop
-                        if (actualLows[i] <= cutLossPrice) {
+                        const trailStop = highestHigh * (1 - cutLossPct / 100);
+                        if (actualLows[i] <= trailStop) {
                             cutLossTriggerIndex = i;
-                            cutLossSellPrice = cutLossPrice;
+                            cutLossSellPrice = Math.max(trailStop, actualLows[i]);
                             break;
                         }
                     }
                 }
 
-                let sellIndex = null;
-                let forced = false;
-                let sellDate, sellPrice;
-                let profit, cutGain, cutLoss_flag;
+                let sellIndex, sellDate, sellPrice, forced = false, cutGain = false, cutLoss_flag = false;
 
                 if (sameDayCutLoss) {
                     sellIndex = buyIndex;
-                    sellDate = dates[sellIndex];
-                    sellPrice = cutLossPrice;
+                    sellDate = buyDate;
+                    sellPrice = Math.max(actualLows[buyIndex], buyPrice * (1 - cutLossPct / 100));
                     forced = true;
-                    profit = sellPrice - buyPrice;
-                    cutGain = false;
                     cutLoss_flag = true;
+
                 } else if (cutLossTriggerIndex !== null) {
                     sellIndex = cutLossTriggerIndex;
                     sellDate = dates[sellIndex];
                     sellPrice = cutLossSellPrice;
                     forced = true;
-                    profit = sellPrice - buyPrice;
-                    cutGain = false;
                     cutLoss_flag = true;
+
                 } else {
+                    let foundSell = false;
                     for (let i = buyIndex + 1; i < 5; i++) {
-                        highestHigh = Math.max(highestHigh, actualHighs[i - 1]);
-                        if (actualHighs[i] > predictions[i].predicted_high) {
-                            let potentialSellPrice = predictions[i].predicted_high; // Reverted to original for conservative fill
-                            if (potentialSellPrice < buyPrice * (1 + minGainPct / 100)) continue;
-                            const shares = fixedAmount / buyPrice;
-                            const gross = shares * (potentialSellPrice - buyPrice);
-                            const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
-                            const sellValue = shares * potentialSellPrice;
-                            const feeSell = (feePerc / 100) * sellValue + fixedFee;
-                            const net = gross - feeBuy - feeSell;
-                            if (net > 0) {
-                                sellIndex = i;
-                                sellPrice = potentialSellPrice;
-                                break;
-                            }
+                        if (actualHighs[i] > buyPrice * 1.008) {
+                            sellPrice = actualHighs[i] * 0.999;
+                            sellIndex = i;
+                            sellDate = dates[i];
+                            foundSell = true;
+                            forced = false;
+                            break;
                         }
                     }
 
-                    if (sellIndex === null) {
-                        forced = true;
+                    if (!foundSell) {
                         sellIndex = 4;
                         sellDate = dates[4];
                         sellPrice = actualCloses[4];
-                        profit = sellPrice - buyPrice;
-                        cutGain = profit > 0;
-                        cutLoss_flag = profit < 0;
-                    } else {
-                        sellDate = dates[sellIndex];
-                        profit = sellPrice - buyPrice;
-                        cutGain = false;
-                        cutLoss_flag = false;
-                        forced = false;
+                        forced = true;
+                        cutGain = sellPrice > buyPrice;
+                        cutLoss_flag = sellPrice < buyPrice;
                     }
                 }
 
+                const grossProfit = sellPrice - buyPrice;
+
                 tradesByAsset[asset][month].push({
                     creation_date: creationDate,
-                    asset: asset,
                     buy_date: buyDate,
                     buy_price: buyPrice,
                     sell_date: sellDate,
                     sell_price: sellPrice,
-                    profit: profit,
+                    profit: grossProfit,
                     forced: forced,
                     cut_gain: cutGain,
                     cut_loss: cutLoss_flag
                 });
             }
         }
-
+        
+        // === BUILD MONTHLY STATS ===
         for (let asset in monthBatchesByAsset) {
             statsByAsset[asset] = {};
+
             for (let month in monthBatchesByAsset[asset]) {
-                let trades = tradesByAsset[asset][month];
-                let totalBatches = monthBatchesByAsset[asset][month];
-                let numTrades = trades.length;
+                const trades = tradesByAsset[asset][month];
+                const totalBatches = monthBatchesByAsset[asset][month];
+                const numTrades = trades.length;
 
-                let numGains = trades.filter(t => t.profit > 0).length;
-                let numLosses = trades.filter(t => t.profit < 0).length;
-                let pctGains = numTrades > 0 ? (numGains / numTrades * 100) : 0;
-                let pctLosses = numTrades > 0 ? (numLosses / numTrades * 100) : 0;
+                const numGains = trades.filter(t => t.profit > 0).length;
+                const numLosses = trades.filter(t => t.profit < 0).length;
+                const pctGains = numTrades ? (numGains / numTrades) * 100 : 0;
+                const pctLosses = numTrades ? (numLosses / numTrades) * 100 : 0;
 
-                let forcedTrades = trades.filter(t => t.forced);
-                let numForced = forcedTrades.length;
-                let numCutGain = forcedTrades.filter(t => t.cut_gain).length;
-                let numCutLoss = forcedTrades.filter(t => t.cut_loss).length;
-                let pctCutGain = numForced > 0 ? (numCutGain / numForced * 100) : 0;
-                let pctCutLoss = numForced > 0 ? (numCutLoss / numForced * 100) : 0;
+                const forcedTrades = trades.filter(t => t.forced);
+                const numForced = forcedTrades.length;
+                const numCutGain = forcedTrades.filter(t => t.cut_gain).length;
+                const numCutLoss = forcedTrades.filter(t => t.cut_loss).length;
+                const pctCutGain = numForced ? (numCutGain / numForced) * 100 : 0;
+                const pctCutLoss = numForced ? (numCutLoss / numForced) * 100 : 0;
 
-                let numSuccessful = numTrades - numForced;
-                let pctSuccessful = numTrades > 0 ? (numSuccessful / numTrades * 100) : 0;
+                // NEW: Count how many batches actually succeeded (breakout sell)
+                const numSuccessfulBatches = trades.filter(t => !t.forced).length;
 
-                let numSuccessBatches = numSuccessful;
-                let numFailedBatches = numForced;
-                let numNoActionBatches = totalBatches - numTrades;
-                let pctSuccessBatches = totalBatches > 0 ? (numSuccessBatches / totalBatches * 100) : 0;
-                let pctFailedBatches = totalBatches > 0 ? (numFailedBatches / totalBatches * 100) : 0;
-                let pctNoActionBatches = totalBatches > 0 ? (numNoActionBatches / totalBatches * 100) : 0;
+                // Old line (was wrong for batches)
+                const numSuccessful = numTrades - numForced;   // ← remove or keep only for old cards
 
-                // Simulated earnings calculations with fixed amount per trade, including transaction fees
-                const tradeProfits = trades.map(t => {
+                // Then use the correct one for percentages
+                const pctSuccessBatches = totalBatches ? (numSuccessfulBatches / totalBatches) * 100 : 0;
+                const pctFailedBatches   = totalBatches ? (numForced / totalBatches) * 100 : 0;
+                const pctNoActionBatches = totalBatches ? ((totalBatches - numTrades) / totalBatches) * 100 : 0;
+                const pctSuccessful = numTrades ? (numSuccessful / numTrades) * 100 : 0;
+
+                const numNoActionBatches = totalBatches - numTrades;
+                // const pctNoActionBatches = totalBatches ? (numNoActionBatches / totalBatches) * 100 : 0;
+                // const pctSuccessBatches = totalBatches ? (numSuccessful / totalBatches) * 100 : 0;
+                // const pctFailedBatches = totalBatches ? (numForced / totalBatches) * 100 : 0;
+
+                // Net profit per trade (after fees)
+                const netProfits = trades.map(t => {
                     const shares = fixedAmount / t.buy_price;
                     const gross = shares * t.profit;
                     const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
-                    const sellValue = shares * t.sell_price;
-                    const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                    const feeSell = (feePerc / 100) * (shares * t.sell_price) + fixedFee;
                     return gross - feeBuy - feeSell;
                 });
-                const totalProfit = tradeProfits.reduce((sum, p) => sum + p, 0);
-                const totalInvested = numTrades * fixedAmount;
-                const roi = numTrades > 0 ? (totalProfit / totalInvested * 100) : 0;
 
-                let successfulTrades = trades.filter(t => !t.forced);
-                let successfulProfits = successfulTrades.map(t => {
-                    const shares = fixedAmount / t.buy_price;
-                    const gross = shares * t.profit;
-                    const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
-                    const sellValue = shares * t.sell_price;
-                    const feeSell = (feePerc / 100) * sellValue + fixedFee;
-                    return gross - feeBuy - feeSell;
-                });
-                let avgSuccessfulEarning = successfulProfits.length > 0 ? successfulProfits.reduce((sum, p) => sum + p, 0) / successfulProfits.length : 0;
+                const totalProfit = netProfits.reduce((a, b) => a + b, 0);
+                const roi = numTrades ? (totalProfit / (numTrades * fixedAmount)) * 100 : 0;
 
-                let failedWins = trades.filter(t => t.forced && t.profit > 0);
-                let failedWinProfits = failedWins.map(t => {
-                    const shares = fixedAmount / t.buy_price;
-                    const gross = shares * t.profit;
-                    const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
-                    const sellValue = shares * t.sell_price;
-                    const feeSell = (feePerc / 100) * sellValue + fixedFee;
-                    return gross - feeBuy - feeSell;
-                });
-                let avgFailedWin = failedWinProfits.length > 0 ? failedWinProfits.reduce((sum, p) => sum + p, 0) / failedWinProfits.length : 0;
+                // Averages
+                const successfulNet = netProfits.filter((_, i) => !trades[i].forced);
+                const avgSuccessfulEarning = successfulNet.length ? successfulNet.reduce((a, b) => a + b, 0) / successfulNet.length : 0;
 
-                let failedLosses = trades.filter(t => t.forced && t.profit < 0);
-                let failedLossProfits = failedLosses.map(t => {
-                    const shares = fixedAmount / t.buy_price;
-                    const gross = shares * t.profit;
-                    const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
-                    const sellValue = shares * t.sell_price;
-                    const feeSell = (feePerc / 100) * sellValue + fixedFee;
-                    return gross - feeBuy - feeSell;
-                });
-                let avgFailedLoss = failedLossProfits.length > 0 ? failedLossProfits.reduce((sum, p) => sum + p, 0) / failedLossProfits.length : 0;
+                const failedWinNet = netProfits.filter((_, i) => trades[i].forced && trades[i].profit > 0);
+                const avgFailedWin = failedWinNet.length ? failedWinNet.reduce((a, b) => a + b, 0) / failedWinNet.length : 0;
 
-                let allWins = trades.filter(t => t.profit > 0);
-                let allWinProfits = allWins.map(t => {
-                    const shares = fixedAmount / t.buy_price;
-                    const gross = shares * t.profit;
-                    const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
-                    const sellValue = shares * t.sell_price;
-                    const feeSell = (feePerc / 100) * sellValue + fixedFee;
-                    return gross - feeBuy - feeSell;
-                });
-                let avgOverallWin = allWinProfits.length > 0 ? allWinProfits.reduce((sum, p) => sum + p, 0) / allWinProfits.length : 0;
+                const failedLossNet = netProfits.filter((_, i) => trades[i].forced && trades[i].profit < 0);
+                const avgFailedLoss = failedLossNet.length ? failedLossNet.reduce((a, b) => a + b, 0) / failedLossNet.length : 0;
 
-                let allLosses = trades.filter(t => t.profit < 0);
-                let allLossProfits = allLosses.map(t => {
-                    const shares = fixedAmount / t.buy_price;
-                    const gross = shares * t.profit;
-                    const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
-                    const sellValue = shares * t.sell_price;
-                    const feeSell = (feePerc / 100) * sellValue + fixedFee;
-                    return gross - feeBuy - feeSell;
-                });
-                let avgOverallLoss = allLossProfits.length > 0 ? allLossProfits.reduce((sum, p) => sum + p, 0) / allLossProfits.length : 0;
+                const allWinNet = netProfits.filter((_, i) => trades[i].profit > 0);
+                const avgOverallWin = allWinNet.length ? allWinNet.reduce((a, b) => a + b, 0) / allWinNet.length : 0;
+
+                const allLossNet = netProfits.filter((_, i) => trades[i].profit < 0);
+                const avgOverallLoss = allLossNet.length ? allLossNet.reduce((a, b) => a + b, 0) / allLossNet.length : 0;
 
                 statsByAsset[asset][month] = {
                     total_batches: totalBatches,
@@ -533,8 +493,8 @@
                     pct_cut_loss: pctCutLoss,
                     num_successful: numSuccessful,
                     pct_successful: pctSuccessful,
-                    num_success_batches: numSuccessBatches,
-                    num_failed_batches: numFailedBatches,
+                    num_success_batches: numSuccessful,
+                    num_failed_batches: numForced,
                     num_no_action_batches: numNoActionBatches,
                     pct_success_batches: pctSuccessBatches,
                     pct_failed_batches: pctFailedBatches,
@@ -545,14 +505,16 @@
                     avg_overall_win: avgOverallWin,
                     avg_overall_loss: avgOverallLoss,
                     total_profit: totalProfit,
-                    roi: roi
+                    roi: roi,
+                    num_success_batches: numSuccessfulBatches,
+                    pct_success_batches: pctSuccessBatches,
                 };
             }
         }
 
         return statsByAsset;
     }
-
+    
     // --- Chart Rendering Function ---
     function renderRollingCharts() {
         const assetData = statsData[activeAsset] || {};
