@@ -116,62 +116,83 @@
             <p id="suggested-prices" class="text-lg text-gray-400 mt-2"></p>
         </header>
 
-        <div class="bg-gray-800 p-4 rounded-lg shadow-md">
-            <div class="flex flex-wrap justify-center items-center gap-4">
-                <div class="flex items-center space-x-2">
-                    <label for="forecast-date-picker" class="font-semibold text-gray-300 text-sm">Forecast Date:</label>
-                    <input type="date" id="forecast-date-picker" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500">
+        <div class="bg-gray-800 p-6 rounded-xl shadow-2xl w-full">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+                <!-- Column 1: Date & Asset Controls -->
+                <div class="flex flex-col space-y-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-200 mb-2">Analysis Period</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="flex flex-col">
+                                <label for="start-date-picker" class="text-sm font-medium text-gray-400 mb-1">Start Date</label>
+                                <input type="date" id="start-date-picker" class="bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div class="flex flex-col">
+                                <label for="end-date-picker" class="text-sm font-medium text-gray-400 mb-1">End Date</label>
+                                <input type="date" id="end-date-picker" class="bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                        </div>
+                    </div>
+                     <div>
+                        <h3 class="text-lg font-semibold text-gray-200 mb-2">Asset Selection</h3>
+                        <div id="asset-buttons" class="flex flex-wrap gap-2"></div>
+                    </div>
                 </div>
-
-                <div class="flex items-center space-x-2">
-                    <label for="start-date-picker" class="font-semibold text-gray-300 text-sm">Start Date:</label>
-                    <input type="date" id="start-date-picker" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500">
+        
+                <!-- Column 2: Batch & View Controls -->
+                <div class="flex flex-col space-y-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-200 mb-2">Prediction Batch</h3>
+                        <div class="flex flex-col">
+                            <label for="forecast-date-picker" class="text-sm font-medium text-gray-400 mb-1">Forecast Date</label>
+                            <input type="date" id="forecast-date-picker" class="bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                    <div class="flex items-end h-full">
+                         <button id="jump-to-latest" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 relative group flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                            Jump to Latest
+                            <span class="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
+                                Latest batch with full actuals
+                            </span>
+                        </button>
+                    </div>
                 </div>
-
-                <div class="flex items-center space-x-2">
-                    <label for="end-date-picker" class="font-semibold text-gray-300 text-sm">End Date:</label>
-                    <input type="date" id="end-date-picker" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500">
+                
+                <!-- Column 3: Simulation Parameters -->
+                <div class="flex flex-col space-y-2">
+                    <h3 class="text-lg font-semibold text-gray-200 mb-2">Trade Simulation</h3>
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                        <div>
+                            <label for="initial-capital" class="text-sm font-medium text-gray-400">Initial Capital</label>
+                            <input type="number" id="initial-capital" value="10000" class="w-full bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 mt-1">
+                        </div>
+                        <div>
+                            <label for="min-gain-pct" class="text-sm font-medium text-gray-400">Min Gain %</label>
+                            <input type="number" id="min-gain-pct" value="0" class="w-full bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 mt-1">
+                        </div>
+                        <div>
+                            <label for="cutloss-pct" class="text-sm font-medium text-gray-400">Cut Loss %</labe>
+                            <input type="number" id="cutloss-pct" value="0" class="w-full bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 mt-1">
+                        </div>
+                        <div>
+                            <label for="fee-pct" class="text-sm font-medium text-gray-400">Fee %</label>
+                            <input type="number" id="fee-pct" value="0" class="w-full bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 mt-1">
+                        </div>
+                        <div>
+                            <label for="fixed-fee" class="text-sm font-medium text-gray-400">Fixed Fee</label>
+                            <input type="number" id="fixed-fee" value="0" class="w-full bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 mt-1">
+                        </div>
+                    </div>
+                     <div class="pt-2">
+                        <button id="share-button" class="w-full bg-blue-600 text-white px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 hover:bg-blue-500 flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.368a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" /></svg>
+                            Share View
+                        </button>
+                    </div>
                 </div>
-
-                <div class="flex items-center space-x-2">
-                    <button id="jump-to-latest" class="... relative group">
-                        Jump to Latest Completed Batch
-                        <span class="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
-                            Shows the most recent 5-day prediction with full actual results
-                        </span>
-                    </button>
-                </div>
-
-                <div class="flex items-center space-x-2">
-                    <span class="font-semibold text-gray-300 mr-2 text-sm">Assets:</span>
-                    <div id="asset-buttons" class="flex space-x-2"></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-gray-800 p-4 rounded-lg shadow-md">
-            <div class="flex flex-wrap justify-center items-center gap-6">
-                <div class="flex items-center space-x-2">
-                    <label for="initial-capital" class="font-semibold text-gray-300 text-sm">Initial Capital:</label>
-                    <input type="number" id="initial-capital" min="1" step="1000" value="10000" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 w-28">
-                </div>
-                <div class="flex items-center space-x-2">
-                    <label for="cutloss-pct" class="font-semibold text-gray-300 text-sm">Cut Loss % below buy:</label>
-                    <input type="number" id="cutloss-pct" min="0" step="0.1" value="0" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 w-20">
-                </div>
-                <div class="flex items-center space-x-2">
-                    <label for="fee-pct" class="font-semibold text-gray-300 text-sm">Transaction Fee %:</label>
-                    <input type="number" id="fee-pct" min="0" step="0.01" value="0" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 w-20">
-                </div>
-                <div class="flex items-center space-x-2">
-                    <label for="fixed-fee" class="font-semibold text-gray-300 text-sm">+ Fixed Fee:</label>
-                    <input type="number" id="fixed-fee" min="0" step="0.1" value="0" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 w-20">
-                </div>
-                <div class="flex items-center space-x-2">
-                    <label for="min-gain-pct" class="font-semibold text-gray-300 text-sm">Min Cut Gain %:</label>
-                    <input type="number" id="min-gain-pct" min="0" step="0.1" value="0" class="bg-gray-700 text-white rounded-md p-1.5 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 w-20">
-                </div>
-                <button id="share-button" class="bg-blue-600 text-white px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 hover:bg-blue-500">Share</button>
+        
             </div>
         </div>
 
@@ -296,341 +317,362 @@
     }
 
     // --- Trade Simulation and Analysis ---
-    function simulateAndAnalyzeTrades(data, startDate, endDate, cutLossPct = 0, fixedAmount = 10000, feePerc = 0, fixedFee = 0, minGainPct = 0) {
-        let statsByAsset = {};
-        let totalBatchesByAsset = {};
-        let tradesByAsset = {};
+    function simulateAndAnalyzeTrades(data, start, end) {
+        const result = {};
+        const trades = [];  // For profit calculations
 
-        for (let creationDate in data) {
-            if (new Date(creationDate) < new Date(startDate) || new Date(creationDate) > new Date(endDate)) continue;
+        for (const creationDate in data) {
+            if (new Date(creationDate) < new Date(start) || new Date(creationDate) > new Date(end)) continue;
 
-            for (let asset in data[creationDate]) {
-                if (!statsByAsset[asset]) {
-                    statsByAsset[asset] = {};
-                    totalBatchesByAsset[asset] = 0;
-                    tradesByAsset[asset] = [];
+            const batch = data[creationDate][activeAsset];
+            if (!batch || batch.length !== 5) continue;
+
+            const valid = batch.every(p => p.actual_low > 0 && p.actual_high > 0 && p.actual_close > 0);
+            if (!valid) continue;
+
+            const lows = batch.map(p => p.predicted_low);
+            const highs = batch.map(p => p.predicted_high);
+            const actualLows = batch.map(p => p.actual_low);
+            const actualHighs = batch.map(p => p.actual_high);
+            const actualCloses = batch.map(p => p.actual_close);
+
+            const batchMinLow = Math.min(...lows);
+            const batchMaxHigh = Math.max(...highs);
+
+            // No action?
+            if (batchMaxHigh < batchMinLow * (1 + minGainPct / 100)) continue;
+
+            // Buy?
+            let buyDay = -1;
+            for (let i = 0; i < 5; i++) if (actualLows[i] <= batchMinLow) { buyDay = i; break; }
+            if (buyDay === -1) continue;
+
+            const buyPrice = batchMinLow;
+
+            // Cut loss?
+            let cutLossDay = null;
+            if (cutLossPct > 0) {
+                const stop = buyPrice * (1 - cutLossPct / 100);
+                if (actualLows[buyDay] <= stop) cutLossDay = buyDay;
+                else {
+                    let peak = actualHighs[buyDay];
+                    for (let i = buyDay + 1; i < 5; i++) {
+                        peak = Math.max(peak, actualHighs[i-1]);
+                        if (actualLows[i] <= peak * (1 - cutLossPct / 100)) {
+                            cutLossDay = i;
+                            break;
+                        }
+                    }
                 }
+            }
+            if (cutLossDay !== null) {
+                trades.push({ profit: -cutLossPct/100 * fixedAmount, forced: true, cutLoss: true });
+                continue;
+            }
 
-                let predictions = data[creationDate][asset];
-                const hasValidActuals = predictions.every(p => 
-                    p.actual_low != null && 
-                    p.actual_high != null && 
-                    p.actual_close != null &&
-                    p.actual_low > 0 && 
-                    p.actual_high > 0 && 
-                    p.actual_close > 0
-                );
-                if (!hasValidActuals) {
-                    continue;  // Skip batches with missing/future actual data
-                }
-
-                totalBatchesByAsset[asset] += 1;
-
-                let batchMinLow = Math.min(...predictions.map(p => p.predicted_low));
-                let batchMaxHigh = Math.max(...predictions.map(p => p.predicted_high));
-
-                if (batchMaxHigh < batchMinLow * (1 + minGainPct / 100)) continue;
-
-                let dates = predictions.map(p => p.prediction_date);
-                let actualLows = predictions.map(p => p.actual_low);
-                let actualHighs = predictions.map(p => p.actual_high);
-                let actualCloses = predictions.map(p => p.actual_close);
-
-                // Buy logic
-                let buyIndex = null;
-                for (let i = 0; i < 5; i++) {
-                    if (actualLows[i] <= batchMinLow) {
-                        buyIndex = i;
+            // Success? Breakout above that day's predicted high (from day+2)
+            let sold = false;
+            for (let i = buyDay + 2; i < 5; i++) {
+                if (actualHighs[i] > highs[i]) {
+                    const sellPrice = highs[i];
+                    const shares = fixedAmount / buyPrice;
+                    const gross = shares * (sellPrice - buyPrice);
+                    const feeBuy = (feePerc/100)*fixedAmount + fixedFee;
+                    const feeSell = (feePerc/100)*(shares*sellPrice) + fixedFee;
+                    if (gross - feeBuy - feeSell > 0) {
+                        trades.push({ profit: gross - feeBuy - feeSell, forced: false });
+                        sold = true;
                         break;
                     }
                 }
-                if (buyIndex === null) continue;
+            }
 
-                let buyPrice = batchMinLow * 1.001;  // tiny conservative slippage
-                let buyDate = dates[buyIndex];
-
-                // Cut-loss (trailing stop)
-                let sameDayCutLoss = false;
-                if (cutLossPct > 0) {
-                    const trailOnBuyDay = buyPrice * (1 - cutLossPct / 100);
-                    if (actualLows[buyIndex] < trailOnBuyDay * 0.98) {  // only if really gapped down hard
-                        sameDayCutLoss = true;
-                    }
-                }
-
-                let cutLossTriggerIndex = null;
-                let cutLossSellPrice = null;
-                let highestHigh = actualHighs[buyIndex];
-
-                if (!sameDayCutLoss && cutLossPct > 0) {
-                    for (let i = buyIndex + 1; i < 5; i++) {
-                        highestHigh = Math.max(highestHigh, actualHighs[i - 1]);
-                        let trailPrice = highestHigh * (1 - cutLossPct / 100);
-                        if (actualLows[i] <= trailPrice) {
-                            cutLossTriggerIndex = i;
-                            cutLossSellPrice = Math.max(trailPrice, actualLows[i]); // don't sell below low
-                            break;
-                        }
-                    }
-                }
-
-                let sellIndex, sellDate, sellPrice, forced = false, cutGain = false, cutLoss_flag = false;
-
-                if (sameDayCutLoss) {
-                    sellIndex = buyIndex;
-                    sellDate = buyDate;
-                    sellPrice = Math.max(actualLows[buyIndex], buyPrice * (1 - cutLossPct / 100));
-                    forced = true;
-                    cutLoss_flag = true;
-
-                } else if (cutLossTriggerIndex !== null) {
-                    sellIndex = cutLossTriggerIndex;
-                    sellDate = dates[sellIndex];
-                    sellPrice = cutLossSellPrice;
-                    forced = true;
-                    cutLoss_flag = true;
-
-                } else {
-                    // Look for successful breakout
-                    let foundSell = false;
-                    for (let i = buyIndex + 1; i < 5; i++) {
-                        // Success = price breaks above the HIGHEST predicted high in the entire 5-day batch
-                        if (actualHighs[i] > batchMaxHigh) {  
-                            sellPrice = actualHighs[i] * 0.999;  // realistic fill
-                            sellIndex = i;
-                            sellDate = dates[i];
-                            foundSell = true;
-                            forced = false;
-                            break;
-                        }
-                    }
-
-                    // No breakout → forced exit at day 5 close
-                    if (!foundSell) {
-                        sellIndex = 4;
-                        sellDate = dates[4];
-                        sellPrice = actualCloses[4];
-                        forced = true;
-                        cutGain = sellPrice > buyPrice;
-                        cutLoss_flag = sellPrice < buyPrice;
-                    }
-                }
-
-                let grossProfit = sellPrice - buyPrice;
-
-                tradesByAsset[asset].push({
-                    creation_date: creationDate,
-                    asset: asset,
-                    buy_date: buyDate,
-                    buy_price: buyPrice,
-                    sell_date: sellDate,
-                    sell_price: sellPrice,
-                    profit: grossProfit,
-                    forced: forced,
-                    cut_gain: cutGain,
-                    cut_loss: cutLoss_flag
-                });
+            // Forced exit
+            if (!sold) {
+                const sellPrice = actualCloses[4];
+                const shares = fixedAmount / buyPrice;
+                const gross = shares * (sellPrice - buyPrice);
+                const feeBuy = (feePerc/100)*fixedAmount + fixedFee;
+                const feeSell = (feePerc/100)*(shares*sellPrice) + fixedFee;
+                trades.push({ profit: gross - feeBuy - feeSell, forced: true });
             }
         }
 
-        // =============== STATISTICS ===============
-        for (let asset in tradesByAsset) {
-            let trades = tradesByAsset[asset];
-            let totalBatches = totalBatchesByAsset[asset] || 0;
-            let numTrades = trades.length;
+        // === Build full stats object (exactly like old version) ===
+        const totalBatches = Object.keys(data).filter(d => {
+            const b = data[d][activeAsset];
+            return b && b.length === 5 && b.every(p => p.actual_low > 0);
+        }).length;
 
-            let numGains = trades.filter(t => t.profit > 0).length;
-            let numLosses = trades.filter(t => t.profit < 0).length;
-            let pctGains = numTrades > 0 ? (numGains / numTrades) * 100 : 0;
-            let pctLosses = numTrades > 0 ? (numLosses / numTrades) * 100 : 0;
+        const numTrades = trades.length;
+        const successful = trades.filter(t => !t.forced);
+        const forced = trades.filter(t => t.forced);
 
-            let forcedTrades = trades.filter(t => t.forced);          // ← FIXED HERE
-            let numForced = forcedTrades.length;
-            let numCutGain = forcedTrades.filter(t => t.cut_gain).length;
-            let numCutLoss = forcedTrades.filter(t => t.cut_loss).length;
-            let pctCutGain = numForced > 0 ? (numCutGain / numForced) * 100 : 0;
-            let pctCutLoss = numForced > 0 ? (numCutLoss / numForced) * 100 : 0;
+        const totalProfit = trades.reduce((s, t) => s + t.profit, 0);
+        const roi = numTrades > 0 ? (totalProfit / (numTrades * fixedAmount)) * 100 : 0;
 
-            let numSuccessful = numTrades - numForced;
-            let pctSuccessful = numTrades > 0 ? (numSuccessful / numTrades) * 100 : 0;
+        result[activeAsset] = {
+            total_batches: totalBatches,
+            num_trades: numTrades,
+            num_gains: trades.filter(t => t.profit > 0).length,
+            num_losses: trades.filter(t => t.profit < 0).length,
+            pct_gains: numTrades ? (trades.filter(t => t.profit > 0).length / numTrades) * 100 : 0,
+            pct_losses: numTrades ? (trades.filter(t => t.profit < 0).length / numTrades) * 100 : 0,
+            num_forced: forced.length,
+            num_cut_gain: forced.filter(t => t.cutLoss !== true && t.profit > 0).length,
+            num_cut_loss: forced.filter(t => t.cutLoss).length,
+            pct_cut_gain: forced.length ? (forced.filter(t => t.cutLoss !== true && t.profit > 0).length / forced.length) * 100 : 0,
+            pct_cut_loss: forced.length ? (forced.filter(t => t.cutLoss).length / forced.length) * 100 : 0,
+            num_successful: successful.length,
+            pct_successful: numTrades ? (successful.length / numTrades) * 100 : 0,
+            num_success_batches: successful.length,
+            num_failed_batches: forced.length,
+            num_no_action_batches: totalBatches - numTrades,
+            pct_success_batches: totalBatches ? (successful.length / totalBatches) * 100 : 0,
+            pct_failed_batches: totalBatches ? (forced.length / totalBatches) * 100 : 0,
+            pct_no_action_batches: totalBatches ? ((totalBatches - numTrades) / totalBatches) * 100 : 0,
+            avg_successful_earning: successful.length ? successful.reduce((s,t)=>s+t.profit,0)/successful.length : 0,
+            avg_failed_win: forced.filter(t=>t.profit>0).length ? forced.filter(t=>t.profit>0).reduce((s,t)=>s+t.profit,0)/forced.filter(t=>t.profit>0).length : 0,
+            avg_failed_loss: forced.filter(t=>t.profit<0).length ? forced.filter(t=>t.profit<0).reduce((s,t)=>s+t.profit,0)/forced.filter(t=>t.profit<0).length : 0,
+            avg_overall_win: trades.filter(t=>t.profit>0).length ? trades.filter(t=>t.profit>0).reduce((s,t)=>s+t.profit,0)/trades.filter(t=>t.profit>0).length : 0,
+            avg_overall_loss: trades.filter(t=>t.profit<0).length ? trades.filter(t=>t.profit<0).reduce((s,t)=>s+t.profit,0)/trades.filter(t=>t.profit<0).length : 0,
+            total_profit: totalProfit,
+            roi: roi
+        };
 
-            let numNoActionBatches = totalBatches - numTrades;
-            let pctNoActionBatches = totalBatches > 0 ? (numNoActionBatches / totalBatches) * 100 : 0;
-            let pctSuccessBatches = totalBatches > 0 ? (numSuccessful / totalBatches) * 100 : 0;
-            let pctFailedBatches = totalBatches > 0 ? (numForced / totalBatches) * 100 : 0;
-
-            // Net profit calculations with fees
-            const tradeProfitsNet = trades.map(t => {
-                const shares = fixedAmount / t.buy_price;
-                const gross = shares * (t.sell_price - t.buy_price);
-                const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
-                const feeSell = (feePerc / 100) * (shares * t.sell_price) + fixedFee;
-                return gross - feeBuy - feeSell;
-            });
-
-            const totalProfit = tradeProfitsNet.reduce((a, b) => a + b, 0);
-            const roi = numTrades > 0 ? (totalProfit / (numTrades * fixedAmount)) * 100 : 0;
-
-            const successfulNet = tradeProfitsNet.filter((_, i) => !trades[i].forced);
-            const avgSuccessfulEarning = successfulNet.length ? successfulNet.reduce((a, b) => a + b, 0) / successfulNet.length : 0;
-
-            const failedWinNet = tradeProfitsNet.filter((_, i) => trades[i].forced && trades[i].profit > 0);
-            const avgFailedWin = failedWinNet.length ? failedWinNet.reduce((a, b) => a + b, 0) / failedWinNet.length : 0;
-
-            const failedLossNet = tradeProfitsNet.filter((_, i) => trades[i].forced && trades[i].profit < 0);
-            const avgFailedLoss = failedLossNet.length ? failedLossNet.reduce((a, b) => a + b, 0) / failedLossNet.length : 0;
-
-            const allWinNet = tradeProfitsNet.filter((_, i) => trades[i].profit > 0);
-            const avgOverallWin = allWinNet.length ? allWinNet.reduce((a, b) => a + b, 0) / allWinNet.length : 0;
-
-            const allLossNet = tradeProfitsNet.filter((_, i) => trades[i].profit < 0);
-            const avgOverallLoss = allLossNet.length ? allLossNet.reduce((a, b) => a + b, 0) / allLossNet.length : 0;
-
-            statsByAsset[asset] = {
-                total_batches: totalBatches,
-                num_trades: numTrades,
-                num_gains: numGains,
-                num_losses: numLosses,
-                pct_gains: pctGains,
-                pct_losses: pctLosses,
-                num_forced: numForced,
-                num_cut_gain: numCutGain,
-                num_cut_loss: numCutLoss,
-                pct_cut_gain: pctCutGain,
-                pct_cut_loss: pctCutLoss,
-                num_successful: numSuccessful,
-                pct_successful: pctSuccessful,
-                num_success_batches: numSuccessful,
-                num_failed_batches: numForced,
-                num_no_action_batches: numNoActionBatches,
-                pct_success_batches: pctSuccessBatches,
-                pct_failed_batches: pctFailedBatches,
-                pct_no_action_batches: pctNoActionBatches,
-                avg_successful_earning: avgSuccessfulEarning,
-                avg_failed_win: avgFailedWin,
-                avg_failed_loss: avgFailedLoss,
-                avg_overall_win: avgOverallWin,
-                avg_overall_loss: avgOverallLoss,
-                total_profit: totalProfit,
-                roi: roi
-            };
-        }
-
-        return statsByAsset;
+        return result;
     }
     
     // --- Batch Type Determination ---
     function getBatchType(forecastDate, asset, cutLossPct = 0, fixedAmount = 10000, feePerc = 0, fixedFee = 0, minGainPct = 0) {
         const predictions = forecastData[forecastDate]?.[asset];
-        if (!predictions || predictions.length !== 5) return 'Invalid Batch';
+        if (!predictions || predictions.length !== 5) {
+            return { type: "invalid", text: "Invalid Batch", color: "gray" };
+        }
 
-        let batchMinLow = Math.min(...predictions.map(p => p.predicted_low));
-        let batchMaxHigh = Math.max(...predictions.map(p => p.predicted_high));
-        if (batchMaxHigh < batchMinLow * (1 + minGainPct / 100)) return 'No Action Batch (Insufficient Predicted Gain)';
+        const validActuals = predictions.every(p =>
+            p.actual_low != null && p.actual_high != null && p.actual_close != null &&
+            p.actual_low > 0 && p.actual_high > 0 && p.actual_close > 0
+        );
+        if (!validActuals) {
+            return { type: "future", text: "Future (No Actuals)", color: "blue" };
+        }
 
-        let actualLows = predictions.map(p => p.actual_low);
-        let actualHighs = predictions.map(p => p.actual_high);
+        const batchMinLow = Math.min(...predictions.map(p => p.predicted_low));
+        const batchMaxHigh = Math.max(...predictions.map(p => p.predicted_high));
 
-        let buyIndex = null;
+        // 1. Insufficient predicted gain?
+        if (batchMaxHigh < batchMinLow * (1 + minGainPct / 100)) {
+            return { type: "noaction", text: "No Action (Low Gain)", color: "orange" };
+        }
+
+        const actualLows   = predictions.map(p => p.actual_low);
+        const actualHighs  = predictions.map(p => p.actual_high);
+        const actualCloses = predictions.map(p => p.actual_close);
+        const predHighs    = predictions.map(p => p.predicted_high);
+
+        // 2. Buy trigger?
+        let buyDay = -1;
         for (let i = 0; i < 5; i++) {
             if (actualLows[i] <= batchMinLow) {
-                buyIndex = i;
+                buyDay = i;
                 break;
             }
         }
-        if (buyIndex === null) return 'No Action Batch (Buy Not Triggered)';
-
-        let buyPrice = batchMinLow * 1.001;
-
-        if (cutLossPct > 0 && actualLows[buyIndex] <= buyPrice * (1 - cutLossPct / 100)) {
-            return 'Failed Batch (Cut Loss Triggered on Buy Day)';
+        if (buyDay === -1) {
+            return { type: "noaction", text: "No Action (Buy Not Hit)", color: "orange" };
         }
 
-        let highestHigh = actualHighs[buyIndex];
-        let cutLossPrice = buyPrice * (1 - cutLossPct / 100);
+        const buyPrice = batchMinLow;
 
+        // 3. Cut-loss?
         if (cutLossPct > 0) {
-            for (let i = buyIndex + 1; i < 5; i++) {
-                highestHigh = Math.max(highestHigh, actualHighs[i - 1]);
-                cutLossPrice = highestHigh * (1 - cutLossPct / 100);
-                if (actualLows[i] <= cutLossPrice) {
-                    return 'Failed Batch (Cut Loss Triggered)';
+            const initialStop = buyPrice * (1 - cutLossPct / 100);
+            if (actualLows[buyDay] <= initialStop) {
+                return { type: "failed", text: "Failed (Cut Loss on Buy)", color: "red" };
+            }
+            let peak = actualHighs[buyDay];
+            for (let i = buyDay + 1; i < 5; i++) {
+                peak = Math.max(peak, actualHighs[i - 1]);
+                if (actualLows[i] <= peak * (1 - cutLossPct / 100)) {
+                    return { type: "failed", text: "Failed (Cut Loss)", color: "red" };
                 }
             }
         }
 
-        for (let i = buyIndex + 1; i < 5; i++) {
-            if (actualHighs[i] > batchMaxHigh) {  // breakout above the batch's max predicted high
-                let sellPrice = actualHighs[i] * 0.999;
-                if (sellPrice >= buyPrice * (1 + minGainPct / 100)) {
-                    return 'Successful Batch';
+        // 4. Success? Breakout above that exact day's predicted high (from day+2)
+        for (let i = buyDay + 2; i < 5; i++) {
+            if (actualHighs[i] > predHighs[i]) {
+                const sellPriceCand = predHighs[i];
+
+                // Exact same fee-aware net profit check as Python
+                const shares = fixedAmount / buyPrice;
+                const gross = shares * (sellPriceCand - buyPrice);
+                const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                const feeSell = (feePerc / 100) * (shares * sellPriceCand) + fixedFee;
+
+                if (gross - feeBuy - feeSell > 0) {
+                    return { type: "success", text: "Success (Breakout)", color: "green" };
                 }
             }
         }
 
-        return 'Failed Batch';
+        // 5. No breakout → forced exit
+        return { type: "failed", text: "Failed (Forced Exit)", color: "red" };
     }
-    
+
     // --- Infographics Rendering Function ---
+    function computeOverallStats() {
+        const allDates = Object.keys(forecastData)
+            .filter(d => new Date(d) >= new Date(activeStartDate) && new Date(d) <= new Date(activeEndDate))
+            .sort();
+
+        let totalBatches = 0;
+        let success = 0;
+        let failed = 0;
+        let noActionOrFuture = 0;
+
+        allDates.forEach(date => {
+            const batch = forecastData[date]?.[activeAsset];
+            if (!batch || batch.length !== 5) return;
+
+            totalBatches++;
+
+            const info = getBatchType(date, activeAsset, cutLossPct, fixedAmount, feePerc, fixedFee, minGainPct);
+
+            if (info.type === "success") success++;
+            else if (info.type === "failed") failed++;
+            else noActionOrFuture++;  // includes noaction + future
+        });
+
+        const tradesTaken = success + failed;
+
+        // Always return a valid object – never undefined
+        return {
+            total_batches: totalBatches,
+            num_trades: tradesTaken,
+            num_gains: success,
+            num_losses: failed,
+            pct_gains: tradesTaken > 0 ? (success / tradesTaken) * 100 : 0,
+            pct_losses: tradesTaken > 0 ? (failed / tradesTaken) * 100 : 0,
+            num_successful: success,
+            pct_successful: tradesTaken > 0 ? (success / tradesTaken) * 100 : 0,
+            num_success_batches: success,
+            pct_success_batches: totalBatches > 0 ? (success / totalBatches) * 100 : 0,
+            num_failed_batches: failed,
+            pct_failed_batches: totalBatches > 0 ? (failed / totalBatches) * 100 : 0,
+            num_no_action_batches: noActionOrFuture,
+            pct_no_action_batches: totalBatches > 0 ? (noActionOrFuture / totalBatches) * 100 : 0,
+            total_profit: 0,
+            roi: 0
+        };
+    }
+
+    function updateStats() {
+        statsData = simulateAndAnalyzeTrades(forecastData, activeStartDate, activeEndDate);
+        updateInfoCards(activeAsset);
+    }
+
     function updateInfoCards(asset) {
-        const assetData = statsData[asset];
-        if (!assetData) return;
+        const d = (statsData[asset] || {
+            total_batches: 0, num_trades: 0, num_gains: 0, num_losses: 0,
+            pct_gains: 0, pct_losses: 0, num_forced: 0, num_cut_gain: 0, num_cut_loss: 0,
+            pct_cut_gain: 0, pct_cut_loss: 0, num_successful: 0, pct_successful: 0,
+            num_success_batches: 0, num_failed_batches: 0, num_no_action_batches: 0,
+            pct_success_batches: 0, pct_failed_batches: 0, pct_no_action_batches: 100,
+            avg_successful_earning: 0, avg_failed_win: 0, avg_failed_loss: 0,
+            avg_overall_win: 0, avg_overall_loss: 0, total_profit: 0, roi: 0
+        });
 
-        const profitColor = assetData.total_profit >= 0 ? 'green' : 'red';
-        const profitTextColor = assetData.total_profit >= 0 ? 'text-green-400' : 'text-red-400';
-        const profitBorder = assetData.total_profit >= 0 ? 'border-accent-green' : 'border-accent-red';
+        const formatCurrency = (value) => {
+            const absValue = Math.abs(value);
+            if (absValue >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+            if (absValue >= 1000) return `$${(value / 1000).toFixed(1)}K`;
+            return `$${value.toFixed(0)}`;
+        };
 
-        let cardsHtml = `
-            <div class="info-card border-accent-gray">
-                <h3 class="text-lg font-semibold text-gray-300">Trades</h3>
-                <p class="text-2xl font-bold text-white">${assetData.num_trades}</p>
+        const profitColor = d.total_profit >= 0 ? 'green' : 'red';
+        const roiColor = d.roi >= 0 ? 'blue' : 'red';
+
+        infoCardsContainer.innerHTML = `
+            <!-- Row 1: Core Trade Stats -->
+            <div class="info-card border-accent-blue">
+                <div class="info-card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                </div>
+                <h3 class="text-base font-semibold text-gray-400">Total Trades</h3>
+                <p class="text-3xl font-bold text-white">${d.num_trades}</p>
+                <p class="text-xs text-gray-500 mt-1">${d.total_batches} total batches</p>
             </div>
+
             <div class="info-card border-accent-green">
-                <h3 class="text-lg font-semibold text-gray-300">Win Rate</h3>
-                <p class="text-2xl font-bold text-green-400">${assetData.pct_gains.toFixed(2)}%</p>
-                <p class="text-sm text-green-300 mt-1">Avg Win: $${assetData.avg_overall_win.toFixed(2)}</p>
+                <div class="info-card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                </div>
+                <h3 class="text-base font-semibold text-gray-400">Win Rate</h3>
+                <p class="text-3xl font-bold text-green-400">${d.pct_gains.toFixed(1)}%</p>
+                <p class="text-sm text-gray-300 mt-1">${d.num_gains} Wins / Avg: <span class="font-semibold">${formatCurrency(d.avg_overall_win)}</span></p>
             </div>
+
             <div class="info-card border-accent-red">
-                <h3 class="text-lg font-semibold text-gray-300">Loss Rate</h3>
-                <p class="text-2xl font-bold text-red-400">${assetData.pct_losses.toFixed(2)}%</p>
-                <p class="text-sm text-red-300 mt-1">Avg Loss: $${assetData.avg_overall_loss.toFixed(2)}</p>
+                <div class="info-card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" /></svg>
+                </div>
+                <h3 class="text-base font-semibold text-gray-400">Loss Rate</h3>
+                <p class="text-3xl font-bold text-red-400">${d.pct_losses.toFixed(1)}%</p>
+                <p class="text-sm text-gray-300 mt-1">${d.num_losses} Losses / Avg: <span class="font-semibold">${formatCurrency(d.avg_overall_loss)}</span></p>
             </div>
+            
+            <div class="info-card border-accent-yellow">
+                <div class="info-card-icon">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <h3 class="text-base font-semibold text-gray-400">No Action Rate</h3>
+                <p class="text-3xl font-bold text-yellow-400">${d.pct_no_action_batches.toFixed(1)}%</p>
+                <p class="text-sm text-gray-300 mt-1">${d.num_no_action_batches} batches</p>
+            </div>
+
             <div class="info-card border-accent-green">
-                <h3 class="text-lg font-semibold text-gray-300">Successful Batches</h3>
-                <p class="text-2xl font-bold text-white">${assetData.pct_success_batches.toFixed(2)}%</p>
-                <p class="text-sm text-green-300 mt-1">Avg Earning: $${assetData.avg_successful_earning.toFixed(2)}</p>
+                <div class="info-card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <h3 class="text-base font-semibold text-gray-400">Success Batches</h3>
+                <p class="text-3xl font-bold text-green-400">${d.pct_success_batches.toFixed(1)}%</p>
+                <p class="text-sm text-gray-300 mt-1">Avg Earning: <span class="font-semibold">${formatCurrency(d.avg_successful_earning)}</span></p>
             </div>
+            
             <div class="info-card border-accent-red">
-                <h3 class="text-lg font-semibold text-gray-300">Failed Batches</h3>
-                <p class="text-2xl font-bold text-white">${assetData.pct_failed_batches.toFixed(2)}%</p>
-                <div class="mt-2 flex space-x-1">
-                    <div class="flex-1 bg-green-900/50 border border-green-600 p-1.5 rounded text-center">
-                        <p class="text-xs font-semibold text-green-400">${assetData.pct_cut_gain.toFixed(2)}% Wins</p>
-                        <p class="text-xs text-green-300">Avg: $${assetData.avg_failed_win.toFixed(2)}</p>
-                    </div>
-                    <div class="flex-1 bg-red-900/50 border border-red-600 p-1.5 rounded text-center">
-                        <p class="text-xs font-semibold text-red-400">${assetData.pct_cut_loss.toFixed(2)}% Losses</p>
-                        <p class="text-xs text-red-300">Avg: $${assetData.avg_failed_loss.toFixed(2)}</p>
-                    </div>
+                <div class="info-card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <h3 class="text-base font-semibold text-gray-400">Failed Batches</h3>
+                <p class="text-3xl font-bold text-red-400">${d.pct_failed_batches.toFixed(1)}%</p>
+                <div class="mt-2 text-xs">
+                    <p class="text-green-400">${d.pct_cut_gain.toFixed(1)}% Win / Avg: ${formatCurrency(d.avg_failed_win)}</p>
+                    <p class="text-red-400">${d.pct_cut_loss.toFixed(1)}% Loss / Avg: ${formatCurrency(d.avg_failed_loss)}</p>
                 </div>
             </div>
-            <div class="info-card border-accent-yellow">
-                <h3 class="text-lg font-semibold text-gray-300">No Action Batches</h3>
-                <p class="text-2xl font-bold text-white">${assetData.pct_no_action_batches.toFixed(2)}%</p>
+
+            <!-- Row 2: Financial Summary -->
+            <div class="info-card lg:col-span-3 border-accent-${profitColor}">
+                <div class="info-card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-${profitColor}-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-400">Net Profit</h3>
+                <p class="text-4xl font-bold text-${profitColor}-400">${formatCurrency(d.total_profit)}</p>
             </div>
-            <div class="info-card ${profitBorder}">
-                <h3 class="text-lg font-semibold text-gray-300">Total Profit</h3>
-                <p class="text-2xl font-bold ${profitTextColor}">$${assetData.total_profit.toFixed(2)}</p>
-            </div>
-            <div class="info-card border-accent-blue">
-                <h3 class="text-lg font-semibold text-gray-300">ROI</h3>
-                <p class="text-2xl font-bold text-blue-400">${assetData.roi.toFixed(2)}%</p>
+            
+            <div class="info-card lg:col-span-3 border-accent-${roiColor}">
+                <div class="info-card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-${roiColor}-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-400">Return on Investment (ROI)</h3>
+                <p class="text-4xl font-bold text-${roiColor}-400">${d.roi.toFixed(2)}%</p>
             </div>
         `;
-
-        infoCardsContainer.innerHTML = cardsHtml;
+        infoCardsContainer.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4';
     }
-
+    
     // --- Chart Rendering Function ---
     function renderCharts() {
         const dataForForecastDate = forecastData[activeForecastDate] || {};
@@ -647,8 +689,16 @@
             mergedContainer.innerHTML = '';
         }
 
-        const batchType = getBatchType(activeForecastDate, activeAsset, cutLossPct, fixedAmount, feePerc, fixedFee, minGainPct);
-        batchTypeElement.textContent = `Batch Type: ${batchType}`;
+        // const batchType = getBatchType(activeForecastDate, activeAsset, cutLossPct, fixedAmount, feePerc, fixedFee, minGainPct);
+        // batchTypeElement.textContent = `Batch Type: ${batchType}`;
+
+        const batchInfo = getBatchType(activeForecastDate, activeAsset, cutLossPct, fixedAmount, feePerc, fixedFee, minGainPct);
+        batchTypeElement.textContent = `Batch Type: ${batchInfo.text}`;
+        batchTypeElement.style.color = 
+            batchInfo.color === "green" ? "#22c55e" :
+            batchInfo.color === "red" ? "#ef4444" :
+            batchInfo.color === "orange" ? "#f97316" :
+            batchInfo.color === "blue" ? "#3b82f6" : "#9ca3af";
 
         subtitle.textContent = `Analysis for ${activeAsset} (Last observation: ${activeForecastDate}, Predictions for subsequent days)`;
 
@@ -729,34 +779,29 @@
                     if (dataPointIndex === undefined || dataPointIndex < 0) return '';
 
                     const date = new Date(w.globals.seriesX[0][dataPointIndex]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-                    const candle = w.globals.initialSeries[0].data[dataPointIndex].y;
-                    const pred = w.globals.initialSeries[1].data[dataPointIndex].y;
 
-                    const o = candle[0] !== undefined ? candle[0].toFixed(2) : 'N/A';
-                    const h = candle[1] !== undefined ? candle[1].toFixed(2) : 'N/A';
-                    const l = candle[2] !== undefined ? candle[2].toFixed(2) : 'N/A';
-                    const c = candle[3] !== undefined ? candle[3].toFixed(2) : 'N/A';
+                    // Safely get actual candle (index 0) and predicted candle (index 1)
+                    const actual = w.globals.initialSeries[0]?.data[dataPointIndex]?.y || [];
+                    const pred   = w.globals.initialSeries[1]?.data[dataPointIndex]?.y || [];
 
-                    const pred_o = pred[0] !== undefined ? pred[0].toFixed(2) : 'N/A';
-                    const pred_h = pred[1] !== undefined ? pred[1].toFixed(2) : 'N/A';
-                    const pred_l = pred[2] !== undefined ? pred[2].toFixed(2) : 'N/A';
-                    const pred_c = pred[3] !== undefined ? pred[3].toFixed(2) : 'N/A';
+                    // Helper to safely format number or return 'N/A'
+                    const fmt = (val) => (val != null && !isNaN(val)) ? Number(val).toFixed(2) : 'N/A';
 
                     return `
                         <div class="apexcharts-tooltip-title" style="font-weight: bold; padding: 4px 8px; background: #1a202c; color: #fff;">${date}</div>
                         <div style="padding: 4px 8px;">
                             <strong>Actual:</strong><br>
-                            Open: $${o}<br>
-                            High: $${h}<br>
-                            Low: $${l}<br>
-                            Close: $${c}
+                            Open: $${fmt(actual[0])}<br>
+                            High: $${fmt(actual[1])}<br>
+                            Low:  $${fmt(actual[2])}<br>
+                            Close: $${fmt(actual[3])}
                         </div>
                         <div style="padding: 4px 8px;">
                             <strong>Predicted:</strong><br>
-                            Open: $${pred_o}<br>
-                            High: $${pred_h}<br>
-                            Low: $${pred_l}<br>
-                            Close: $${pred_c}
+                            Open: $${fmt(pred[0])}<br>
+                            High: $${fmt(pred[1])}<br>
+                            Low:  $${fmt(pred[2])}<br>
+                            Close: $${fmt(pred[3])}
                         </div>
                     `;
                 }
@@ -796,12 +841,6 @@
             button.classList.toggle('text-gray-300', !isActive);
             button.classList.toggle('hover:bg-blue-500', !isActive);
         });
-    }
-
-    function updateStats() {
-        statsData = simulateAndAnalyzeTrades(forecastData, activeStartDate, activeEndDate, cutLossPct, fixedAmount, feePerc, fixedFee, minGainPct);
-        console.log("✅ Stats dynamically computed for range:", statsData);
-        updateInfoCards(activeAsset);
     }
 
     // --- URL Parameter Functions ---
@@ -1032,9 +1071,22 @@
                 activeAsset = button.dataset.asset;
                 updateURLParams();
                 updateButtonStyles();
-                updateInfoCards(activeAsset);
+                updateStats();         
                 renderCharts();
             });
+        });
+
+        // After date picker changes
+        startDatePicker.addEventListener('change', () => {
+            activeStartDate = startDatePicker.value;
+            updateURLParams();
+            updateStats();     
+        });
+
+        endDatePicker.addEventListener('change', () => {
+            activeEndDate = endDatePicker.value;
+            updateURLParams();
+            updateStats();     
         });
         
         // Optional: Ensure activeAsset is valid (set to best or first if not)
@@ -1045,7 +1097,8 @@
         updateButtonStyles();
         updateInfoCards(activeAsset);
         renderCharts();
-        updateURLParams(); // Ensure URL is set on init
+        updateURLParams();
+        updateStats();     
     }
     
     // --- Start the process on page load ---
