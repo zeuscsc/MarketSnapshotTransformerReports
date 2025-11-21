@@ -1,0 +1,925 @@
+<html lang="en"><head>
+
+<script class="injected-ffc2e83d85">
+(function(){'use strict';function q(b){var c=0;return function(){return c<b.length?{done:!1,value:b[c++]}:{done:!0}}}function t(b){var c=typeof Symbol!="undefined"&&Symbol.iterator&&b[Symbol.iterator];if(c)return c.call(b);if(typeof b.length=="number")return{next:q(b)};throw Error(String(b)+" is not an iterable or ArrayLike");}var u=typeof Object.defineProperties=="function"?Object.defineProperty:function(b,c,g){if(b==Array.prototype||b==Object.prototype)return b;b[c]=g.value;return b};
+function v(b){b=["object"==typeof globalThis&&globalThis,b,"object"==typeof window&&window,"object"==typeof self&&self,"object"==typeof global&&global];for(var c=0;c<b.length;++c){var g=b[c];if(g&&g.Math==Math)return g}throw Error("Cannot find global object");}var w=v(this);function x(b,c){if(c)a:{var g=w;b=b.split(".");for(var h=0;h<b.length-1;h++){var l=b[h];if(!(l in g))break a;g=g[l]}b=b[b.length-1];h=g[b];c=c(h);c!=h&&c!=null&&u(g,b,{configurable:!0,writable:!0,value:c})}}
+function y(){this.j=!1;this.g=null;this.u=void 0;this.h=1;this.v=this.l=0;this.i=null}function z(b){if(b.j)throw new TypeError("Generator is already running");b.j=!0}y.prototype.o=function(b){this.u=b};function A(b,c){b.i={I:c,J:!0};b.h=b.l||b.v}y.prototype.return=function(b){this.i={return:b};this.h=this.v};function B(b){this.g=new y;this.h=b}function E(b,c){z(b.g);var g=b.g.g;if(g)return F(b,"return"in g?g["return"]:function(h){return{value:h,done:!0}},c,b.g.return);b.g.return(c);return G(b)}
+function F(b,c,g,h){try{var l=c.call(b.g.g,g);if(!(l instanceof Object))throw new TypeError("Iterator result "+l+" is not an object");if(!l.done)return b.g.j=!1,l;var m=l.value}catch(f){return b.g.g=null,A(b.g,f),G(b)}b.g.g=null;h.call(b.g,m);return G(b)}function G(b){for(;b.g.h;)try{var c=b.h(b.g);if(c)return b.g.j=!1,{value:c.value,done:!1}}catch(g){b.g.u=void 0,A(b.g,g)}b.g.j=!1;if(b.g.i){c=b.g.i;b.g.i=null;if(c.J)throw c.I;return{value:c.return,done:!0}}return{value:void 0,done:!0}}
+function H(b){this.next=function(c){z(b.g);b.g.g?c=F(b,b.g.g.next,c,b.g.o):(b.g.o(c),c=G(b));return c};this.throw=function(c){z(b.g);b.g.g?c=F(b,b.g.g["throw"],c,b.g.o):(A(b.g,c),c=G(b));return c};this.return=function(c){return E(b,c)};this[Symbol.iterator]=function(){return this}}function I(b){function c(h){return b.next(h)}function g(h){return b.throw(h)}return new Promise(function(h,l){function m(f){f.done?h(f.value):Promise.resolve(f.value).then(c,g).then(m,l)}m(b.next())})}
+x("Symbol",function(b){function c(m){if(this instanceof c)throw new TypeError("Symbol is not a constructor");return new g(h+(m||"")+"_"+l++,m)}function g(m,f){this.g=m;u(this,"description",{configurable:!0,writable:!0,value:f})}if(b)return b;g.prototype.toString=function(){return this.g};var h="jscomp_symbol_"+(Math.random()*1E9>>>0)+"_",l=0;return c});
+x("Symbol.iterator",function(b){if(b)return b;b=Symbol("Symbol.iterator");u(Array.prototype,b,{configurable:!0,writable:!0,value:function(){return J(q(this))}});return b});function J(b){b={next:b};b[Symbol.iterator]=function(){return this};return b}
+x("Promise",function(b){function c(f){this.h=0;this.i=void 0;this.g=[];this.u=!1;var a=this.j();try{f(a.resolve,a.reject)}catch(d){a.reject(d)}}function g(){this.g=null}function h(f){return f instanceof c?f:new c(function(a){a(f)})}if(b)return b;g.prototype.h=function(f){if(this.g==null){this.g=[];var a=this;this.i(function(){a.l()})}this.g.push(f)};var l=w.setTimeout;g.prototype.i=function(f){l(f,0)};g.prototype.l=function(){for(;this.g&&this.g.length;){var f=this.g;this.g=[];for(var a=0;a<f.length;++a){var d=
+f[a];f[a]=null;try{d()}catch(e){this.j(e)}}}this.g=null};g.prototype.j=function(f){this.i(function(){throw f;})};c.prototype.j=function(){function f(e){return function(k){d||(d=!0,e.call(a,k))}}var a=this,d=!1;return{resolve:f(this.D),reject:f(this.l)}};c.prototype.D=function(f){if(f===this)this.l(new TypeError("A Promise cannot resolve to itself"));else if(f instanceof c)this.G(f);else{a:switch(typeof f){case "object":var a=f!=null;break a;case "function":a=!0;break a;default:a=!1}a?this.C(f):this.o(f)}};
+c.prototype.C=function(f){var a=void 0;try{a=f.then}catch(d){this.l(d);return}typeof a=="function"?this.H(a,f):this.o(f)};c.prototype.l=function(f){this.v(2,f)};c.prototype.o=function(f){this.v(1,f)};c.prototype.v=function(f,a){if(this.h!=0)throw Error("Cannot settle("+f+", "+a+"): Promise already settled in state"+this.h);this.h=f;this.i=a;this.h===2&&this.F();this.K()};c.prototype.F=function(){var f=this;l(function(){if(f.B()){var a=w.console;typeof a!=="undefined"&&a.error(f.i)}},1)};c.prototype.B=
+function(){if(this.u)return!1;var f=w.CustomEvent,a=w.Event,d=w.dispatchEvent;if(typeof d==="undefined")return!0;typeof f==="function"?f=new f("unhandledrejection",{cancelable:!0}):typeof a==="function"?f=new a("unhandledrejection",{cancelable:!0}):(f=w.document.createEvent("CustomEvent"),f.initCustomEvent("unhandledrejection",!1,!0,f));f.promise=this;f.reason=this.i;return d(f)};c.prototype.K=function(){if(this.g!=null){for(var f=0;f<this.g.length;++f)m.h(this.g[f]);this.g=null}};var m=new g;c.prototype.G=
+function(f){var a=this.j();f.A(a.resolve,a.reject)};c.prototype.H=function(f,a){var d=this.j();try{f.call(a,d.resolve,d.reject)}catch(e){d.reject(e)}};c.prototype.then=function(f,a){function d(n,r){return typeof n=="function"?function(C){try{e(n(C))}catch(D){k(D)}}:r}var e,k,p=new c(function(n,r){e=n;k=r});this.A(d(f,e),d(a,k));return p};c.prototype.catch=function(f){return this.then(void 0,f)};c.prototype.A=function(f,a){function d(){switch(e.h){case 1:f(e.i);break;case 2:a(e.i);break;default:throw Error("Unexpected state: "+
+e.h);}}var e=this;this.g==null?m.h(d):this.g.push(d);this.u=!0};c.resolve=h;c.reject=function(f){return new c(function(a,d){d(f)})};c.race=function(f){return new c(function(a,d){for(var e=t(f),k=e.next();!k.done;k=e.next())h(k.value).A(a,d)})};c.all=function(f){var a=t(f),d=a.next();return d.done?h([]):new c(function(e,k){function p(C){return function(D){n[C]=D;r--;r==0&&e(n)}}var n=[],r=0;do n.push(void 0),r++,h(d.value).A(p(n.length-1),k),d=a.next();while(!d.done)})};return c});
+function K(b,c){return Object.prototype.hasOwnProperty.call(b,c)}x("Object.is",function(b){return b?b:function(c,g){return c===g?c!==0||1/c===1/g:c!==c&&g!==g}});x("Array.prototype.includes",function(b){return b?b:function(c,g){var h=this;h instanceof String&&(h=String(h));var l=h.length;g=g||0;for(g<0&&(g=Math.max(g+l,0));g<l;g++){var m=h[g];if(m===c||Object.is(m,c))return!0}return!1}});
+x("String.prototype.includes",function(b){return b?b:function(c,g){if(this==null)throw new TypeError("The 'this' value for String.prototype.includes must not be null or undefined");if(c instanceof RegExp)throw new TypeError("First argument to String.prototype.includes must not be a regular expression");return this.indexOf(c,g||0)!==-1}});
+x("WeakMap",function(b){function c(d){this.g=(a+=Math.random()+1).toString();if(d){d=t(d);for(var e;!(e=d.next()).done;)e=e.value,this.set(e[0],e[1])}}function g(){}function h(d){var e=typeof d;return e==="object"&&d!==null||e==="function"}function l(d){if(!K(d,f)){var e=new g;u(d,f,{value:e})}}function m(d){var e=Object[d];e&&(Object[d]=function(k){if(k instanceof g)return k;Object.isExtensible(k)&&l(k);return e(k)})}if(function(){if(!b||!Object.seal)return!1;try{var d=Object.seal({}),e=Object.seal({}),
+k=new b([[d,2],[e,3]]);if(k.get(d)!=2||k.get(e)!=3)return!1;k.delete(d);k.set(e,4);return!k.has(d)&&k.get(e)==4}catch(p){return!1}}())return b;var f="$jscomp_hidden_"+Math.random();m("freeze");m("preventExtensions");m("seal");var a=0;c.prototype.set=function(d,e){if(!h(d))throw Error("Invalid WeakMap key");l(d);if(!K(d,f))throw Error("WeakMap key fail: "+d);d[f][this.g]=e;return this};c.prototype.get=function(d){return h(d)&&K(d,f)?d[f][this.g]:void 0};c.prototype.has=function(d){return h(d)&&K(d,
+f)&&K(d[f],this.g)};c.prototype.delete=function(d){return h(d)&&K(d,f)&&K(d[f],this.g)?delete d[f][this.g]:!1};return c});
+x("Map",function(b){function c(){var a={};return a.m=a.next=a.head=a}function g(a,d){var e=a[1];return J(function(){if(e){for(;e.head!=a[1];)e=e.m;for(;e.next!=e.head;)return e=e.next,{done:!1,value:d(e)};e=null}return{done:!0,value:void 0}})}function h(a,d){var e=d&&typeof d;e=="object"||e=="function"?m.has(d)?e=m.get(d):(e=""+ ++f,m.set(d,e)):e="p_"+d;var k=a[0][e];if(k&&K(a[0],e))for(a=0;a<k.length;a++){var p=k[a];if(d!==d&&p.key!==p.key||d===p.key)return{id:e,list:k,index:a,entry:p}}return{id:e,
+list:k,index:-1,entry:void 0}}function l(a){this[0]={};this[1]=c();this.size=0;if(a){a=t(a);for(var d;!(d=a.next()).done;)d=d.value,this.set(d[0],d[1])}}if(function(){if(!b||typeof b!="function"||!b.prototype.entries||typeof Object.seal!="function")return!1;try{var a=Object.seal({x:4}),d=new b(t([[a,"s"]]));if(d.get(a)!="s"||d.size!=1||d.get({x:4})||d.set({x:4},"t")!=d||d.size!=2)return!1;var e=d.entries(),k=e.next();if(k.done||k.value[0]!=a||k.value[1]!="s")return!1;k=e.next();return k.done||k.value[0].x!=
+4||k.value[1]!="t"||!e.next().done?!1:!0}catch(p){return!1}}())return b;var m=new WeakMap;l.prototype.set=function(a,d){a=a===0?0:a;var e=h(this,a);e.list||(e.list=this[0][e.id]=[]);e.entry?e.entry.value=d:(e.entry={next:this[1],m:this[1].m,head:this[1],key:a,value:d},e.list.push(e.entry),this[1].m.next=e.entry,this[1].m=e.entry,this.size++);return this};l.prototype.delete=function(a){a=h(this,a);return a.entry&&a.list?(a.list.splice(a.index,1),a.list.length||delete this[0][a.id],a.entry.m.next=a.entry.next,
+a.entry.next.m=a.entry.m,a.entry.head=null,this.size--,!0):!1};l.prototype.clear=function(){this[0]={};this[1]=this[1].m=c();this.size=0};l.prototype.has=function(a){return!!h(this,a).entry};l.prototype.get=function(a){return(a=h(this,a).entry)&&a.value};l.prototype.entries=function(){return g(this,function(a){return[a.key,a.value]})};l.prototype.keys=function(){return g(this,function(a){return a.key})};l.prototype.values=function(){return g(this,function(a){return a.value})};l.prototype.forEach=
+function(a,d){for(var e=this.entries(),k;!(k=e.next()).done;)k=k.value,a.call(d,k[1],k[0],this)};l.prototype[Symbol.iterator]=l.prototype.entries;var f=0;return l});
+x("Set",function(b){function c(g){this.g=new Map;if(g){g=t(g);for(var h;!(h=g.next()).done;)this.add(h.value)}this.size=this.g.size}if(function(){if(!b||typeof b!="function"||!b.prototype.entries||typeof Object.seal!="function")return!1;try{var g=Object.seal({x:4}),h=new b(t([g]));if(!h.has(g)||h.size!=1||h.add(g)!=h||h.size!=1||h.add({x:4})!=h||h.size!=2)return!1;var l=h.entries(),m=l.next();if(m.done||m.value[0]!=g||m.value[1]!=g)return!1;m=l.next();return m.done||m.value[0]==g||m.value[0].x!=4||
+m.value[1]!=m.value[0]?!1:l.next().done}catch(f){return!1}}())return b;c.prototype.add=function(g){g=g===0?0:g;this.g.set(g,g);this.size=this.g.size;return this};c.prototype.delete=function(g){g=this.g.delete(g);this.size=this.g.size;return g};c.prototype.clear=function(){this.g.clear();this.size=0};c.prototype.has=function(g){return this.g.has(g)};c.prototype.entries=function(){return this.g.entries()};c.prototype.values=function(){return this.g.values()};c.prototype.keys=c.prototype.values;c.prototype[Symbol.iterator]=
+c.prototype.values;c.prototype.forEach=function(g,h){var l=this;this.g.forEach(function(m){return g.call(h,m,m,l)})};return c});(function(){function b(){return m?Promise.resolve(m):f?f:f=fetch("https://www.gstatic.com/bard-maui/resources/material-design-icon-names.804824289.json").then(function(a){if(!a.ok)throw Error("HTTP error! status: "+a.status+" fetching https://www.gstatic.com/bard-maui/resources/material-design-icon-names.804824289.json");return a.json()}).then(function(a){if(!Array.isArray(a))throw new TypeError("Fetched icon names from https://www.gstatic.com/bard-maui/resources/material-design-icon-names.804824289.json is not an array.");
+return m=a}).catch(function(a){console.error("IconChecker: Failed to load valid icon names from https://www.gstatic.com/bard-maui/resources/material-design-icon-names.804824289.json.",a);f=null;throw a;})}function c(a){var d,e,k,p;return I(new H(new B(function(n){switch(n.h){case 1:d=(a.textContent||"").trim();if(!d||a.classList.contains("js-replaced-missing-icon")&&d==="radio_button_unchecked")return n.return();e=window.getComputedStyle(a);if(e.display==="none"||e.visibility==="hidden")return n.return();
+n.l=2;var r=b();n.h=4;return{value:r};case 4:k=n.u;n.h=3;n.l=0;break;case 2:return n.l=0,n.i=null,console.warn('IconChecker: Skipping check for icon "'+d+'" as valid names could not be loaded.'),n.return();case 3:(p=k.includes(d))?a.classList.contains("js-replaced-missing-icon")&&a.classList.remove("js-replaced-missing-icon"):d==="radio_button_unchecked"&&a.classList.contains("js-replaced-missing-icon")||(a.textContent="radio_button_unchecked",a.classList.add("js-replaced-missing-icon")),n.h=0}})))}
+function g(a){a=a===void 0?document.body:a;a.querySelectorAll(l).forEach(function(d){c(d)})}function h(){b().catch(function(){});document.fonts.ready.then(function(){requestAnimationFrame(function(){g(document.body);(new MutationObserver(function(a){var d=new Set;a=t(a);for(var e=a.next();!e.done;e=a.next())if(e=e.value,e.type==="childList")e.addedNodes.forEach(function(p){p.nodeType===Node.ELEMENT_NODE&&(p.matches(l)&&d.add(p),p.querySelectorAll(l).forEach(function(n){d.add(n)}))});else if(e.type===
+"attributes"&&e.attributeName==="class"){var k=e.target;e.target.nodeType===Node.ELEMENT_NODE&&k.matches(l)&&d.add(k)}else e.type==="characterData"&&e.target.parentNode&&(e=e.target.parentNode,e.nodeType===Node.ELEMENT_NODE&&e.matches(l)&&d.add(e));d.size>0&&setTimeout(function(){d.forEach(function(p){c(p)})},500)})).observe(document.body,{childList:!0,subtree:!0,attributes:!0,attributeFilter:["class"],characterData:!0})})}).catch(function(a){console.error("IconChecker: Font loading error. Scanning icons anyway.",
+a);requestAnimationFrame(function(){g(document.body)})})}var l=["material-icons","material-symbols-outlined","material-symbols-rounded","material-symbols-sharp"].map(function(a){return"."+a}).join(","),m=null,f=null;document.readyState==="loading"?document.addEventListener("DOMContentLoaded",function(){h()}):h()})();}).call(this);
+
+</script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Learning Blocks: Interactive Tutorial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0">
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        .code-block { font-family: 'Fira Code', 'Courier New', monospace; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #4F46E5;
+            cursor: pointer;
+            margin-top: -6px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #E2E8F0;
+            border-radius: 2px;
+        }
+        .tab-active {
+            border-bottom: 3px solid #4F46E5;
+            color: #4F46E5;
+            font-weight: 600;
+        }
+        .tab-inactive {
+            border-bottom: 3px solid transparent;
+            color: #64748B;
+        }
+        .tab-inactive:hover {
+            color: #1E293B;
+            border-bottom-color: #CBD5E1;
+        }
+        /* Custom Scrollbar for code blocks */
+        .custom-scroll::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #1e293b; 
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #475569; 
+            border-radius: 4px;
+        }
+    </style>
+    <script>
+        /* Google Maps Bootstrap Placeholder (Not used but kept for template consistency) */
+    </script>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.pointer-events-none{pointer-events:none}.absolute{position:absolute}.relative{position:relative}.bottom-2{bottom:0.5rem}.left-2{left:0.5rem}.right-0{right:0px}.right-2{right:0.5rem}.top-0{top:0px}.top-2{top:0.5rem}.z-10{z-index:10}.mx-auto{margin-left:auto;margin-right:auto}.mb-1{margin-bottom:0.25rem}.mb-2{margin-bottom:0.5rem}.mb-4{margin-bottom:1rem}.ml-2{margin-left:0.5rem}.mt-1{margin-top:0.25rem}.mt-2{margin-top:0.5rem}.mt-4{margin-top:1rem}.block{display:block}.flex{display:flex}.grid{display:grid}.hidden{display:none}.h-40{height:10rem}.h-64{height:16rem}.h-full{height:100%}.h-screen{height:100vh}.w-full{width:100%}.max-w-7xl{max-width:80rem}.flex-1{flex:1 1 0%}.list-inside{list-style-position:inside}.list-disc{list-style-type:disc}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.flex-col{flex-direction:column}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-1{gap:0.25rem}.gap-2{gap:0.5rem}.gap-3{gap:0.75rem}.gap-4{gap:1rem}.gap-6{gap:1.5rem}.gap-8{gap:2rem}.space-y-1 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.25rem * var(--tw-space-y-reverse))}.space-y-4 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}.overflow-auto{overflow:auto}.overflow-hidden{overflow:hidden}.overflow-y-auto{overflow-y:auto}.rounded{border-radius:0.25rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:0.5rem}.rounded-xl{border-radius:0.75rem}.border{border-width:1px}.border-b{border-bottom-width:1px}.border-l{border-left-width:1px}.border-emerald-100{--tw-border-opacity:1;border-color:rgb(209 250 229 / var(--tw-border-opacity, 1))}.border-emerald-600{--tw-border-opacity:1;border-color:rgb(5 150 105 / var(--tw-border-opacity, 1))}.border-indigo-100{--tw-border-opacity:1;border-color:rgb(224 231 255 / var(--tw-border-opacity, 1))}.border-purple-100{--tw-border-opacity:1;border-color:rgb(243 232 255 / var(--tw-border-opacity, 1))}.border-red-500{--tw-border-opacity:1;border-color:rgb(239 68 68 / var(--tw-border-opacity, 1))}.border-slate-100{--tw-border-opacity:1;border-color:rgb(241 245 249 / var(--tw-border-opacity, 1))}.border-slate-200{--tw-border-opacity:1;border-color:rgb(226 232 240 / var(--tw-border-opacity, 1))}.border-slate-300{--tw-border-opacity:1;border-color:rgb(203 213 225 / var(--tw-border-opacity, 1))}.border-slate-700{--tw-border-opacity:1;border-color:rgb(51 65 85 / var(--tw-border-opacity, 1))}.bg-black\/50{background-color:rgb(0 0 0 / 0.5)}.bg-emerald-100{--tw-bg-opacity:1;background-color:rgb(209 250 229 / var(--tw-bg-opacity, 1))}.bg-emerald-50{--tw-bg-opacity:1;background-color:rgb(236 253 245 / var(--tw-bg-opacity, 1))}.bg-emerald-600{--tw-bg-opacity:1;background-color:rgb(5 150 105 / var(--tw-bg-opacity, 1))}.bg-indigo-100{--tw-bg-opacity:1;background-color:rgb(224 231 255 / var(--tw-bg-opacity, 1))}.bg-indigo-50{--tw-bg-opacity:1;background-color:rgb(238 242 255 / var(--tw-bg-opacity, 1))}.bg-indigo-600{--tw-bg-opacity:1;background-color:rgb(79 70 229 / var(--tw-bg-opacity, 1))}.bg-purple-100{--tw-bg-opacity:1;background-color:rgb(243 232 255 / var(--tw-bg-opacity, 1))}.bg-purple-50{--tw-bg-opacity:1;background-color:rgb(250 245 255 / var(--tw-bg-opacity, 1))}.bg-red-500\/20{background-color:rgb(239 68 68 / 0.2)}.bg-slate-100{--tw-bg-opacity:1;background-color:rgb(241 245 249 / var(--tw-bg-opacity, 1))}.bg-slate-50{--tw-bg-opacity:1;background-color:rgb(248 250 252 / var(--tw-bg-opacity, 1))}.bg-slate-800{--tw-bg-opacity:1;background-color:rgb(30 41 59 / var(--tw-bg-opacity, 1))}.bg-slate-900{--tw-bg-opacity:1;background-color:rgb(15 23 42 / var(--tw-bg-opacity, 1))}.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1))}.p-2{padding:0.5rem}.p-4{padding:1rem}.p-6{padding:1.5rem}.px-2{padding-left:0.5rem;padding-right:0.5rem}.px-4{padding-left:1rem;padding-right:1rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.pb-1{padding-bottom:0.25rem}.text-center{text-align:center}.font-mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}.font-serif{font-family:ui-serif, Georgia, Cambria, "Times New Roman", Times, serif}.text-2xl{font-size:1.5rem;line-height:2rem}.text-\[10px\]{font-size:10px}.text-\[14px\]{font-size:14px}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-bold{font-weight:700}.font-medium{font-weight:500}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.leading-relaxed{line-height:1.625}.leading-tight{line-height:1.25}.tracking-wider{letter-spacing:0.05em}.text-emerald-400{--tw-text-opacity:1;color:rgb(52 211 153 / var(--tw-text-opacity, 1))}.text-emerald-500{--tw-text-opacity:1;color:rgb(16 185 129 / var(--tw-text-opacity, 1))}.text-emerald-700{--tw-text-opacity:1;color:rgb(4 120 87 / var(--tw-text-opacity, 1))}.text-emerald-800{--tw-text-opacity:1;color:rgb(6 95 70 / var(--tw-text-opacity, 1))}.text-emerald-900{--tw-text-opacity:1;color:rgb(6 78 59 / var(--tw-text-opacity, 1))}.text-indigo-400{--tw-text-opacity:1;color:rgb(129 140 248 / var(--tw-text-opacity, 1))}.text-indigo-500{--tw-text-opacity:1;color:rgb(99 102 241 / var(--tw-text-opacity, 1))}.text-indigo-600{--tw-text-opacity:1;color:rgb(79 70 229 / var(--tw-text-opacity, 1))}.text-indigo-700{--tw-text-opacity:1;color:rgb(67 56 202 / var(--tw-text-opacity, 1))}.text-indigo-800{--tw-text-opacity:1;color:rgb(55 48 163 / var(--tw-text-opacity, 1))}.text-indigo-900{--tw-text-opacity:1;color:rgb(49 46 129 / var(--tw-text-opacity, 1))}.text-purple-400{--tw-text-opacity:1;color:rgb(192 132 252 / var(--tw-text-opacity, 1))}.text-purple-500{--tw-text-opacity:1;color:rgb(168 85 247 / var(--tw-text-opacity, 1))}.text-purple-600{--tw-text-opacity:1;color:rgb(147 51 234 / var(--tw-text-opacity, 1))}.text-purple-700{--tw-text-opacity:1;color:rgb(126 34 206 / var(--tw-text-opacity, 1))}.text-purple-800{--tw-text-opacity:1;color:rgb(107 33 168 / var(--tw-text-opacity, 1))}.text-purple-900{--tw-text-opacity:1;color:rgb(88 28 135 / var(--tw-text-opacity, 1))}.text-slate-300{--tw-text-opacity:1;color:rgb(203 213 225 / var(--tw-text-opacity, 1))}.text-slate-400{--tw-text-opacity:1;color:rgb(148 163 184 / var(--tw-text-opacity, 1))}.text-slate-500{--tw-text-opacity:1;color:rgb(100 116 139 / var(--tw-text-opacity, 1))}.text-slate-600{--tw-text-opacity:1;color:rgb(71 85 105 / var(--tw-text-opacity, 1))}.text-slate-700{--tw-text-opacity:1;color:rgb(51 65 85 / var(--tw-text-opacity, 1))}.text-slate-800{--tw-text-opacity:1;color:rgb(30 41 59 / var(--tw-text-opacity, 1))}.text-slate-900{--tw-text-opacity:1;color:rgb(15 23 42 / var(--tw-text-opacity, 1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.shadow-lg{--tw-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-sm{--tw-shadow:0 1px 2px 0 rgb(0 0 0 / 0.05);--tw-shadow-colored:0 1px 2px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-colors{transition-property:color, background-color, border-color, fill, stroke, -webkit-text-decoration-color;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, -webkit-text-decoration-color;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.duration-100{transition-duration:100ms}.duration-200{transition-duration:200ms}.hover\:border-emerald-300:hover{--tw-border-opacity:1;border-color:rgb(110 231 183 / var(--tw-border-opacity, 1))}.hover\:bg-emerald-50:hover{--tw-bg-opacity:1;background-color:rgb(236 253 245 / var(--tw-bg-opacity, 1))}.hover\:bg-slate-200:hover{--tw-bg-opacity:1;background-color:rgb(226 232 240 / var(--tw-bg-opacity, 1))}.hover\:text-white:hover{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}@media (min-width: 640px){.sm\:text-base{font-size:1rem;line-height:1.5rem}.sm\:text-sm{font-size:0.875rem;line-height:1.25rem}}@media (min-width: 1024px){.lg\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}}</style></head>
+<body class="bg-slate-50 text-slate-800 h-screen flex flex-col overflow-hidden">
+
+    <!-- Navigation Bar -->
+    <nav class="bg-white border-b border-slate-200 px-6 py-3 flex justify-between items-center shadow-sm z-10">
+        <div class="flex items-center gap-3">
+            <div class="bg-indigo-600 text-white p-2 rounded-lg">
+                <span class="material-symbols-outlined block">neurology</span>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-slate-900 leading-tight">Neural Blocks Academy</h1>
+                <p class="text-xs text-slate-500">Interactive Deep Learning Modules</p>
+            </div>
+        </div>
+        <div class="flex gap-6 text-sm font-medium">
+            <button onclick="switchTab('pe')" id="tab-pe" class="pb-1 transition-colors tab-inactive text-slate-500">Positional Encoding</button>
+            <button onclick="switchTab('sc')" id="tab-sc" class="pb-1 transition-colors tab-inactive text-slate-500">SpectralConvBlock</button>
+            <button onclick="switchTab('tc')" id="tab-tc" class="pb-1 transition-colors tab-active">TemporalConvBlock</button>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto relative bg-slate-50">
+        
+        <!-- TAB 1: POSITIONAL ENCODING -->
+        <section id="content-pe" class="w-full max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-2 gap-8 hidden">
+            
+            <!-- Interactive Visualization Panel -->
+            <div class="flex flex-col gap-6">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold flex items-center gap-2">
+                            <span class="material-symbols-outlined text-indigo-500">grid_4x4</span>
+                            Encoding Visualizer
+                        </h2>
+                        <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">Interactive</span>
+                    </div>
+                    
+                    <!-- Canvas Container -->
+                    <div class="relative w-full h-64 bg-slate-900 rounded-lg overflow-hidden mb-4 border border-slate-300">
+                        <canvas id="peCanvas" class="w-full h-full" width="256" height="200"></canvas>
+                        <div class="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded pointer-events-none">
+                            X: Dimension ($d_{model}$), Y: Position
+                        </div>
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="flex justify-between text-sm font-medium text-slate-700 mb-1">
+                                <span>Sequence Length (Positions)</span>
+                                <span id="pe-len-val" class="text-indigo-600">50</span>
+                            </label>
+                            <input type="range" min="10" max="200" value="50" id="pe-len" oninput="updatePE()">
+                        </div>
+                        <div>
+                            <label class="flex justify-between text-sm font-medium text-slate-700 mb-1">
+                                <span>Embedding Dimension ($d_{model}$)</span>
+                                <span id="pe-dim-val" class="text-indigo-600">64</span>
+                            </label>
+                            <input type="range" min="16" max="128" step="2" value="64" id="pe-dim" oninput="updatePE()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-indigo-50 rounded-xl p-6 border border-indigo-100">
+                    <h3 class="text-indigo-900 font-semibold mb-2 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">lightbulb</span>
+                        Key Insight
+                    </h3>
+                    <p class="text-sm text-indigo-800 leading-relaxed">
+                        Notice the distinct "wave" patterns. The lower dimensions (left) oscillate rapidly, while higher dimensions (right) change slowly. This unique frequency fingerprint allows the Transformer to distinguish relative distances between tokens, regardless of the sequence length.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Explainer & Code Panel -->
+            <div class="flex flex-col gap-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-2">Positional Encoding</h2>
+                    <p class="text-slate-600 mb-4">
+                        Transformers process tokens in parallel, losing the notion of order. Positional Encoding injects information about the token's location in the sequence by adding a fixed vector to the input embedding.
+                    </p>
+                    
+                    <div class="bg-white rounded-lg border border-slate-200 p-4 mb-4">
+                        <p class="font-mono text-sm text-slate-700 mb-2">The Formula:</p>
+                        <div class="text-center text-slate-800 text-sm sm:text-base font-serif bg-slate-50 py-3 rounded border border-slate-100">
+                            PE<sub>(pos, 2i)</sub> = sin(pos / 10000<sup>2i/d</sup>)<br>
+                            PE<sub>(pos, 2i+1)</sub> = cos(pos / 10000<sup>2i/d</sup>)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Code Block -->
+                <div class="flex-1 bg-slate-900 rounded-xl overflow-hidden border border-slate-700 shadow-lg flex flex-col">
+                    <div class="bg-slate-800 px-4 py-2 flex justify-between items-center border-b border-slate-700">
+                        <span class="text-xs text-slate-300 font-mono">pytorch_implementation.py</span>
+                        <button onclick="copyCode('code-pe')" class="text-xs text-indigo-400 hover:text-white transition-colors flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[14px]">content_copy</span> Copy
+                        </button>
+                    </div>
+                    <div class="relative flex-1 overflow-hidden">
+                        <pre id="code-pe" class="text-xs sm:text-sm text-slate-300 p-4 font-mono custom-scroll h-full overflow-auto"><code>import torch
+import torch.nn as nn
+import math
+
+class PositionalEncoding(nn.Module):
+    def __init__(self, d_model, max_len=5000):
+        super().__init__()
+        
+        # Create a matrix of shape [max_len, d_model]
+        pe = torch.zeros(max_len, d_model)
+        position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
+        
+        # Apply sine to even indices
+        pe[:, 0::2] = torch.sin(position * div_term)
+        # Apply cosine to odd indices
+        pe[:, 1::2] = torch.cos(position * div_term)
+        
+        # Register as buffer (not a learnable parameter)
+        self.register_buffer('pe', pe.unsqueeze(0))
+
+    def forward(self, x):
+        # x shape: [batch_size, seq_len, d_model]
+        # Add PE to input embeddings
+        return x + self.pe[:, :x.size(1), :]</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- TAB 2: SPECTRAL CONV BLOCK -->
+        <section id="content-sc" class="w-full max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-2 gap-8 hidden">
+             <!-- Interactive Visualization Panel -->
+             <div class="flex flex-col gap-6">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold flex items-center gap-2">
+                            <span class="material-symbols-outlined text-purple-500">graphic_eq</span>
+                            Frequency Domain Filter
+                        </h2>
+                        <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">Simulation</span>
+                    </div>
+                    
+                    <!-- Canvas Container -->
+                    <div class="relative w-full h-40 bg-slate-50 rounded-lg border border-slate-200 mb-2">
+                        <canvas id="scSignalCanvas" class="w-full h-full" width="549" height="159"></canvas>
+                        <div class="absolute top-2 left-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Input Signal (Time Domain)</div>
+                    </div>
+                    <div class="relative w-full h-40 bg-slate-900 rounded-lg border border-slate-700 mb-4">
+                        <canvas id="scSpectrumCanvas" class="w-full h-full" width="549" height="159"></canvas>
+                        <div class="absolute top-2 left-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Frequency Spectrum (Modes)</div>
+                        <!-- Overlay to show cutoff -->
+                        <div id="scCutoffOverlay" class="absolute top-0 right-0 h-full bg-red-500/20 border-l border-red-500 pointer-events-none transition-all duration-100" style="left: 100%; width: 0%;"></div>
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="space-y-4">
+                        <div class="flex gap-2 mb-2">
+                            <button onclick="generateNewSignal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs py-2 rounded transition-colors">Generate New Signal</button>
+                        </div>
+                        <div>
+                            <label class="flex justify-between text-sm font-medium text-slate-700 mb-1">
+                                <span>Spectral Modes Kept (Low-Pass Filter)</span>
+                                <span id="sc-modes-val" class="text-purple-600">64 modes</span>
+                            </label>
+                            <input type="range" min="1" max="64" value="64" id="sc-modes" oninput="updateSC()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-purple-50 rounded-xl p-6 border border-purple-100">
+                    <h3 class="text-purple-900 font-semibold mb-2 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">lightbulb</span>
+                        Global Convolution
+                    </h3>
+                    <p class="text-sm text-purple-800 leading-relaxed">
+                        Unlike standard convolutions which are local, Spectral Convolutions operate globally. By multiplying in the frequency domain, we perform a global convolution over the entire domain in one step. The "Modes Kept" slider simulates truncating high-frequency noise, a key feature of Fourier Neural Operators (FNO).
+                    </p>
+                </div>
+            </div>
+
+            <!-- Explainer & Code Panel -->
+            <div class="flex flex-col gap-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-2">SpectralConvBlock (Fourier Layer)</h2>
+                    <p class="text-slate-600 mb-4">
+                        The core of the Fourier Neural Operator (FNO). It learns resolution-independent features by transforming the input to the frequency domain (FFT), multiplying by learnable weights, and transforming back (IFFT).
+                    </p>
+                    
+                    <div class="bg-white rounded-lg border border-slate-200 p-4 mb-4">
+                        <p class="font-mono text-sm text-slate-700 mb-2">The Operation:</p>
+                        <div class="flex flex-col items-center text-slate-800 text-sm font-serif bg-slate-50 py-3 rounded border border-slate-100">
+                            <span>y = IFFT( R · FFT(x) ) + Wx</span>
+                            <span class="text-xs text-slate-500 mt-2">R: Learnable Complex Weights (in Freq Domain) | W: Linear Skip</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Code Block -->
+                <div class="flex-1 bg-slate-900 rounded-xl overflow-hidden border border-slate-700 shadow-lg flex flex-col">
+                    <div class="bg-slate-800 px-4 py-2 flex justify-between items-center border-b border-slate-700">
+                        <span class="text-xs text-slate-300 font-mono">fno_block.py</span>
+                        <button onclick="copyCode('code-sc')" class="text-xs text-purple-400 hover:text-white transition-colors flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[14px]">content_copy</span> Copy
+                        </button>
+                    </div>
+                    <div class="relative flex-1 overflow-hidden">
+                        <pre id="code-sc" class="text-xs sm:text-sm text-slate-300 p-4 font-mono custom-scroll h-full overflow-auto"><code>import torch
+import torch.nn as nn
+
+class SpectralConv1d(nn.Module):
+    def __init__(self, in_channels, out_channels, modes):
+        super().__init__()
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.modes = modes  # Number of Fourier modes to multiply
+
+        # Learnable complex weights
+        self.weights = nn.Parameter(
+            torch.rand(in_channels, out_channels, modes, dtype=torch.cfloat) / (in_channels * out_channels)
+        )
+
+    def complex_mul1d(self, input, weights):
+        # (batch, in_channel, x), (in_channel, out_channel, x) -&gt; (batch, out_channel, x)
+        return torch.einsum("bix,iox-&gt;box", input, weights)
+
+    def forward(self, x):
+        batchsize = x.shape[0]
+        
+        # 1. Compute FFT
+        # rfft computes FFT for real input, output is onesided
+        x_ft = torch.fft.rfft(x)
+
+        # 2. Multiply relevant modes
+        out_ft = torch.zeros(batchsize, self.out_channels, x.size(-1)//2 + 1, 
+                             device=x.device, dtype=torch.cfloat)
+        
+        # Only multiply the lowest 'modes' frequencies
+        out_ft[:, :, :self.modes] = self.complex_mul1d(
+            x_ft[:, :, :self.modes], self.weights
+        )
+
+        # 3. Compute Inverse FFT
+        x = torch.fft.irfft(out_ft, n=x.size(-1))
+        return x
+
+# Full Block usually includes a residual skip connection
+class FNOBlock(nn.Module):
+    def __init__(self, width, modes):
+        super().__init__()
+        self.conv = SpectralConv1d(width, width, modes)
+        self.w = nn.Conv1d(width, width, 1) # Skip connection
+        self.act = nn.GELU()
+
+    def forward(self, x):
+        return self.act(self.conv(x) + self.w(x))</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: TEMPORAL CONV BLOCK -->
+        <section id="content-tc" class="w-full max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Interactive Visualization Panel -->
+            <div class="flex flex-col gap-6">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold flex items-center gap-2">
+                            <span class="material-symbols-outlined text-emerald-500">network_node</span>
+                            Dilated Receptive Field
+                        </h2>
+                        <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">Interactive</span>
+                    </div>
+                    
+                    <!-- Visualization Container -->
+                    <div class="relative w-full h-64 bg-slate-900 rounded-lg border border-slate-300 overflow-hidden flex items-center justify-center" id="tc-container"><svg width="551" height="256"><g><circle cx="25.045454545454547" cy="192" r="4" fill="#64748b" class="transition-all duration-200" id="node-0-0"></circle><circle cx="50.09090909090909" cy="192" r="4" fill="#64748b" class="transition-all duration-200" id="node-0-1"></circle><circle cx="75.13636363636364" cy="192" r="4" fill="#64748b" class="transition-all duration-200" id="node-0-2"></circle><circle cx="100.18181818181819" cy="192" r="4" fill="#64748b" class="transition-all duration-200" id="node-0-3"></circle><circle cx="125.22727272727273" cy="192" r="4" fill="#64748b" class="transition-all duration-200" id="node-0-4"></circle><circle cx="150.27272727272728" cy="192" r="4" fill="#64748b" class="transition-all duration-200" id="node-0-5"></circle><circle cx="175.3181818181818" cy="192" r="4" fill="#64748b" class="transition-all duration-200" id="node-0-6"></circle><circle cx="200.36363636363637" cy="192" r="4" fill="#64748b" class="transition-all duration-200" id="node-0-7"></circle><circle cx="225.40909090909093" cy="192" r="4" fill="#64748b" class="transition-all duration-200" id="node-0-8"></circle><circle cx="250.45454545454547" cy="192" r="4" fill="#64748b" class="transition-all duration-200" id="node-0-9"></circle><circle cx="275.5" cy="192" r="4" fill="#64748b" class="transition-all duration-200" id="node-0-10"></circle><circle cx="300.54545454545456" cy="192" r="4" fill="#64748b" class="transition-all duration-200" id="node-0-11"></circle><circle cx="325.5909090909091" cy="192" r="4" fill="#64748b" class="transition-all duration-200" id="node-0-12"></circle><circle cx="350.6363636363636" cy="192" r="4" fill="#64748b" class="transition-all duration-200" id="node-0-13"></circle><circle cx="375.6818181818182" cy="192" r="4" fill="#64748b" class="transition-all duration-200" id="node-0-14"></circle><circle cx="400.72727272727275" cy="192" r="4" fill="#64748b" class="transition-all duration-200" id="node-0-15"></circle><circle cx="425.7727272727273" cy="192" r="4" fill="#64748b" class="transition-all duration-200" id="node-0-16"></circle><circle cx="450.81818181818187" cy="192" r="4" fill="#64748b" class="transition-all duration-200" id="node-0-17"></circle><circle cx="475.8636363636364" cy="192" r="4" fill="#64748b" class="transition-all duration-200" id="node-0-18"></circle><circle cx="500.90909090909093" cy="192" r="4" fill="#64748b" class="transition-all duration-200" id="node-0-19"></circle></g><g><circle cx="25.045454545454547" cy="128" r="4" fill="#94a3b8" class="transition-all duration-200" id="node-1-0"></circle><circle cx="50.09090909090909" cy="128" r="4" fill="#94a3b8" class="transition-all duration-200" id="node-1-1"></circle><circle cx="75.13636363636364" cy="128" r="4" fill="#94a3b8" class="transition-all duration-200" id="node-1-2"></circle><circle cx="100.18181818181819" cy="128" r="4" fill="#94a3b8" class="transition-all duration-200" id="node-1-3"></circle><circle cx="125.22727272727273" cy="128" r="4" fill="#94a3b8" class="transition-all duration-200" id="node-1-4"></circle><circle cx="150.27272727272728" cy="128" r="4" fill="#94a3b8" class="transition-all duration-200" id="node-1-5"></circle><circle cx="175.3181818181818" cy="128" r="4" fill="#94a3b8" class="transition-all duration-200" id="node-1-6"></circle><circle cx="200.36363636363637" cy="128" r="4" fill="#94a3b8" class="transition-all duration-200" id="node-1-7"></circle><circle cx="225.40909090909093" cy="128" r="4" fill="#94a3b8" class="transition-all duration-200" id="node-1-8"></circle><circle cx="250.45454545454547" cy="128" r="4" fill="#94a3b8" class="transition-all duration-200" id="node-1-9"></circle><circle cx="275.5" cy="128" r="4" fill="#94a3b8" class="transition-all duration-200" id="node-1-10"></circle><circle cx="300.54545454545456" cy="128" r="4" fill="#94a3b8" class="transition-all duration-200" id="node-1-11"></circle><circle cx="325.5909090909091" cy="128" r="4" fill="#94a3b8" class="transition-all duration-200" id="node-1-12"></circle><circle cx="350.6363636363636" cy="128" r="4" fill="#94a3b8" class="transition-all duration-200" id="node-1-13"></circle><circle cx="375.6818181818182" cy="128" r="4" fill="#94a3b8" class="transition-all duration-200" id="node-1-14"></circle><circle cx="400.72727272727275" cy="128" r="4" fill="#94a3b8" class="transition-all duration-200" id="node-1-15"></circle><circle cx="425.7727272727273" cy="128" r="4" fill="#94a3b8" class="transition-all duration-200" id="node-1-16"></circle><circle cx="450.81818181818187" cy="128" r="4" fill="#94a3b8" class="transition-all duration-200" id="node-1-17"></circle><circle cx="475.8636363636364" cy="128" r="4" fill="#94a3b8" class="transition-all duration-200" id="node-1-18"></circle><circle cx="500.90909090909093" cy="128" r="4" fill="#94a3b8" class="transition-all duration-200" id="node-1-19"></circle></g><g><circle cx="25.045454545454547" cy="64" r="6" fill="#10b981" class="transition-all duration-200" id="node-2-0" style="cursor: pointer;"></circle><circle cx="50.09090909090909" cy="64" r="6" fill="#10b981" class="transition-all duration-200" id="node-2-1" style="cursor: pointer;"></circle><circle cx="75.13636363636364" cy="64" r="6" fill="#10b981" class="transition-all duration-200" id="node-2-2" style="cursor: pointer;"></circle><circle cx="100.18181818181819" cy="64" r="6" fill="#10b981" class="transition-all duration-200" id="node-2-3" style="cursor: pointer;"></circle><circle cx="125.22727272727273" cy="64" r="6" fill="#10b981" class="transition-all duration-200" id="node-2-4" style="cursor: pointer;"></circle><circle cx="150.27272727272728" cy="64" r="6" fill="#10b981" class="transition-all duration-200" id="node-2-5" style="cursor: pointer;"></circle><circle cx="175.3181818181818" cy="64" r="6" fill="#10b981" class="transition-all duration-200" id="node-2-6" style="cursor: pointer;"></circle><circle cx="200.36363636363637" cy="64" r="6" fill="#10b981" class="transition-all duration-200" id="node-2-7" style="cursor: pointer;"></circle><circle cx="225.40909090909093" cy="64" r="6" fill="#10b981" class="transition-all duration-200" id="node-2-8" style="cursor: pointer;"></circle><circle cx="250.45454545454547" cy="64" r="6" fill="#10b981" class="transition-all duration-200" id="node-2-9" style="cursor: pointer;"></circle><circle cx="275.5" cy="64" r="6" fill="#10b981" class="transition-all duration-200" id="node-2-10" style="cursor: pointer;"></circle><circle cx="300.54545454545456" cy="64" r="6" fill="#10b981" class="transition-all duration-200" id="node-2-11" style="cursor: pointer;"></circle><circle cx="325.5909090909091" cy="64" r="6" fill="#10b981" class="transition-all duration-200" id="node-2-12" style="cursor: pointer;"></circle><circle cx="350.6363636363636" cy="64" r="6" fill="#10b981" class="transition-all duration-200" id="node-2-13" style="cursor: pointer;"></circle><circle cx="375.6818181818182" cy="64" r="6" fill="#10b981" class="transition-all duration-200" id="node-2-14" style="cursor: pointer;"></circle><circle cx="400.72727272727275" cy="64" r="6" fill="#10b981" class="transition-all duration-200" id="node-2-15" style="cursor: pointer;"></circle><circle cx="425.7727272727273" cy="64" r="6" fill="#10b981" class="transition-all duration-200" id="node-2-16" style="cursor: pointer;"></circle><circle cx="450.81818181818187" cy="64" r="6" fill="#10b981" class="transition-all duration-200" id="node-2-17" style="cursor: pointer;"></circle><circle cx="475.8636363636364" cy="64" r="6" fill="#10b981" class="transition-all duration-200" id="node-2-18" style="cursor: pointer;"></circle><circle cx="500.90909090909093" cy="64" r="6" fill="#10b981" class="transition-all duration-200" id="node-2-19" style="cursor: pointer;"></circle></g></svg></div>
+
+                    <!-- Controls -->
+                    <div class="space-y-4 mt-4">
+                        <div class="flex justify-between text-xs text-slate-500 mb-2">
+                            <span>Input Layer (Bottom)</span>
+                            <span>Output Layer (Top)</span>
+                        </div>
+                        <p class="text-xs text-center text-slate-400">Hover over the top nodes to see which past inputs affect them.</p>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                             <div>
+                                <label class="text-xs font-semibold text-slate-700 uppercase">Dilation Factor</label>
+                                <div class="flex gap-2 mt-1">
+                                    <button onclick="setDilation(1)" class="tc-btn-d flex-1 py-1 text-xs border rounded bg-slate-100 hover:bg-emerald-50 hover:border-emerald-300 transition-all">d=1</button>
+                                    <button onclick="setDilation(2)" class="tc-btn-d flex-1 py-1 text-xs border rounded bg-emerald-600 text-white border-emerald-600 transition-all">d=2</button>
+                                    <button onclick="setDilation(4)" class="tc-btn-d flex-1 py-1 text-xs border rounded bg-slate-100 hover:bg-emerald-50 hover:border-emerald-300 transition-all">d=4</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-slate-700 uppercase">Kernel Size</label>
+                                <div class="flex gap-2 mt-1">
+                                    <button onclick="setKernel(2)" class="tc-btn-k flex-1 py-1 text-xs border rounded transition-all bg-slate-100 hover:bg-emerald-50">k=2</button>
+                                    <button onclick="setKernel(3)" class="tc-btn-k flex-1 py-1 text-xs border rounded hover:border-emerald-300 transition-all bg-emerald-600 text-white border-emerald-600">k=3</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-emerald-50 rounded-xl p-6 border border-emerald-100">
+                    <h3 class="text-emerald-900 font-semibold mb-2 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">lightbulb</span>
+                        Why Dilations?
+                    </h3>
+                    <p class="text-sm text-emerald-800 leading-relaxed">
+                        Standard convolutions have a linear receptive field. By adding gaps (dilation) between kernel points, the receptive field grows exponentially ($2^i$) with depth. This allows TCNs to remember very long history with few layers, without the vanishing gradients of RNNs.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Explainer & Code Panel -->
+            <div class="flex flex-col gap-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-2">TemporalConvBlock (TCN)</h2>
+                    <p class="text-slate-600 mb-4">
+                        Used in Temporal Convolutional Networks (TCNs). It combines 1D convolutions with "Causal Padding" (no looking into the future) and "Dilations" (skipping inputs) to capture long-term dependencies efficiently.
+                    </p>
+                    
+                    <div class="bg-white rounded-lg border border-slate-200 p-4 mb-4">
+                        <p class="font-mono text-sm text-slate-700 mb-2">Structure:</p>
+                        <ul class="list-disc list-inside text-sm text-slate-600 space-y-1 ml-2">
+                            <li>Dilated Causal Conv1d</li>
+                            <li>Weight Norm &amp; Chomp (remove padding from right)</li>
+                            <li>ReLU &amp; Dropout</li>
+                            <li>Residual Connection (Input + Output)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Code Block -->
+                <div class="flex-1 bg-slate-900 rounded-xl overflow-hidden border border-slate-700 shadow-lg flex flex-col">
+                    <div class="bg-slate-800 px-4 py-2 flex justify-between items-center border-b border-slate-700">
+                        <span class="text-xs text-slate-300 font-mono">tcn_block.py</span>
+                        <button onclick="copyCode('code-tc')" class="text-xs text-emerald-400 hover:text-white transition-colors flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[14px]">content_copy</span> Copy
+                        </button>
+                    </div>
+                    <div class="relative flex-1 overflow-hidden">
+                        <pre id="code-tc" class="text-xs sm:text-sm text-slate-300 p-4 font-mono custom-scroll h-full overflow-auto"><code>import torch
+import torch.nn as nn
+from torch.nn.utils import weight_norm
+
+class Chomp1d(nn.Module):
+    """Removes the extra padding from the end of the sequence to ensure causality."""
+    def __init__(self, chomp_size):
+        super(Chomp1d, self).__init__()
+        self.chomp_size = chomp_size
+
+    def forward(self, x):
+        return x[:, :, :-self.chomp_size]
+
+class TemporalBlock(nn.Module):
+    def __init__(self, n_inputs, n_outputs, kernel_size, stride, dilation, padding, dropout=0.2):
+        super(TemporalBlock, self).__init__()
+        
+        # Convolution 1
+        self.conv1 = weight_norm(nn.Conv1d(n_inputs, n_outputs, kernel_size,
+                                           stride=stride, padding=padding, dilation=dilation))
+        self.chomp1 = Chomp1d(padding) # Crop right side padding
+        self.relu1 = nn.ReLU()
+        self.dropout1 = nn.Dropout(dropout)
+
+        # Convolution 2
+        self.conv2 = weight_norm(nn.Conv1d(n_outputs, n_outputs, kernel_size,
+                                           stride=stride, padding=padding, dilation=dilation))
+        self.chomp2 = Chomp1d(padding)
+        self.relu2 = nn.ReLU()
+        self.dropout2 = nn.Dropout(dropout)
+
+        self.net = nn.Sequential(self.conv1, self.chomp1, self.relu1, self.dropout1,
+                                 self.conv2, self.chomp2, self.relu2, self.dropout2)
+        
+        # Residual connection (1x1 conv if dimensions change)
+        self.downsample = nn.Conv1d(n_inputs, n_outputs, 1) if n_inputs != n_outputs else None
+        self.relu = nn.ReLU()
+
+    def forward(self, x):
+        out = self.net(x)
+        res = x if self.downsample is None else self.downsample(x)
+        return self.relu(out + res)</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- GLOBAL UTILS ---
+        function copyCode(id) {
+            const el = document.getElementById(id);
+            navigator.clipboard.writeText(el.textContent);
+            alert('Code copied to clipboard!');
+        }
+
+        function switchTab(tabId) {
+            // Hide all contents
+            ['pe', 'sc', 'tc'].forEach(id => {
+                document.getElementById(`content-${id}`).classList.add('hidden');
+                const btn = document.getElementById(`tab-${id}`);
+                btn.classList.remove('tab-active', 'text-indigo-600', 'border-indigo-600');
+                btn.classList.add('tab-inactive', 'text-slate-500');
+                
+                // Re-style active button
+                if(id === tabId) {
+                    btn.classList.remove('tab-inactive', 'text-slate-500');
+                    btn.classList.add('tab-active');
+                }
+            });
+            
+            // Show selected content
+            document.getElementById(`content-${tabId}`).classList.remove('hidden');
+
+            // Trigger specific logic
+            if(tabId === 'pe') updatePE();
+            if(tabId === 'sc') updateSC();
+            if(tabId === 'tc') renderTCN();
+        }
+
+
+        // --- POSITIONAL ENCODING LOGIC ---
+        function updatePE() {
+            const canvas = document.getElementById('peCanvas');
+            const ctx = canvas.getContext('2d');
+            const length = parseInt(document.getElementById('pe-len').value);
+            const d_model = parseInt(document.getElementById('pe-dim').value);
+            
+            // Update labels
+            document.getElementById('pe-len-val').innerText = length;
+            document.getElementById('pe-dim-val').innerText = d_model;
+
+            // Resize canvas
+            canvas.width = d_model * 4; // Scale up for visibility
+            canvas.height = length * 4;
+
+            const imgData = ctx.createImageData(canvas.width, canvas.height);
+            const data = imgData.data;
+
+            // Render Logic
+            for (let pos = 0; pos < length; pos++) {
+                for (let i = 0; i < d_model; i++) {
+                    let val = 0;
+                    const div_term = Math.exp( (Math.floor(i/2) * 2) * (-Math.log(10000.0) / d_model) );
+                    
+                    if (i % 2 === 0) {
+                        val = Math.sin(pos * div_term); // Even: Sin
+                    } else {
+                        val = Math.cos(pos * div_term); // Odd: Cos
+                    }
+
+                    // Map -1..1 to 0..255 color (Heatmap: Blue to Red)
+                    // Normalize to 0..1
+                    const norm = (val + 1) / 2;
+                    
+                    // Simple Heatmap: Blue (0) -> White (0.5) -> Red (1)
+                    let r, g, b;
+                    if(norm < 0.5) {
+                        // Blue to White
+                        const t = norm * 2; // 0 to 1
+                        r = Math.floor(255 * t);
+                        g = Math.floor(255 * t);
+                        b = 255;
+                    } else {
+                        // White to Red
+                        const t = (norm - 0.5) * 2; // 0 to 1
+                        r = 255;
+                        g = Math.floor(255 * (1-t));
+                        b = Math.floor(255 * (1-t));
+                    }
+
+                    // Draw 4x4 pixel block
+                    for(let py=0; py<4; py++){
+                        for(let px=0; px<4; px++){
+                            const pixelIndex = ((pos * 4 + py) * canvas.width + (i * 4 + px)) * 4;
+                            data[pixelIndex] = r;
+                            data[pixelIndex + 1] = g;
+                            data[pixelIndex + 2] = b;
+                            data[pixelIndex + 3] = 255; // Alpha
+                        }
+                    }
+                }
+            }
+            ctx.putImageData(imgData, 0, 0);
+        }
+
+
+        // --- SPECTRAL CONV LOGIC (Simple DFT Simulation) ---
+        let signalData = [];
+        const N_SAMPLES = 128;
+
+        function generateNewSignal() {
+            signalData = [];
+            // Create a composite signal of 3 sine waves + noise
+            const f1 = 2 + Math.random() * 3;
+            const f2 = 10 + Math.random() * 10;
+            const f3 = 30 + Math.random() * 20; // High frequency
+            
+            for(let i=0; i<N_SAMPLES; i++) {
+                const t = i / N_SAMPLES;
+                let val = Math.sin(2 * Math.PI * f1 * t) 
+                        + 0.5 * Math.sin(2 * Math.PI * f2 * t)
+                        + 0.3 * Math.sin(2 * Math.PI * f3 * t)
+                        + (Math.random() - 0.5) * 0.2; // Noise
+                signalData.push(val);
+            }
+            updateSC();
+        }
+
+        // Simple DFT implementation (O(N^2) is fine for N=128)
+        function dft(signal) {
+            const X = [];
+            const N = signal.length;
+            for(let k=0; k<N; k++) {
+                let re = 0;
+                let im = 0;
+                for(let n=0; n<N; n++) {
+                    const phi = (2 * Math.PI * k * n) / N;
+                    re += signal[n] * Math.cos(phi);
+                    im -= signal[n] * Math.sin(phi);
+                }
+                X.push({ re, im, mag: Math.sqrt(re*re + im*im) });
+            }
+            return X;
+        }
+
+        function idft(freqData) {
+            const x = [];
+            const N = freqData.length;
+            for(let n=0; n<N; n++) {
+                let val = 0;
+                for(let k=0; k<N; k++) {
+                    const phi = (2 * Math.PI * k * n) / N;
+                    val += freqData[k].re * Math.cos(phi) - freqData[k].im * Math.sin(phi);
+                }
+                x.push(val / N);
+            }
+            return x;
+        }
+
+        function drawSignal(ctx, data, color, width, height, yOffset=0) {
+            ctx.beginPath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            const step = width / data.length;
+            
+            // Find max for scaling
+            const maxVal = Math.max(...data.map(Math.abs)) * 1.2 || 1;
+            
+            for(let i=0; i<data.length; i++) {
+                const x = i * step;
+                const y = (height/2) - (data[i] / maxVal) * (height/2.5) + yOffset;
+                if(i===0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+
+        function drawSpectrum(ctx, spectrum, width, height, cutoff) {
+            ctx.clearRect(0, 0, width, height);
+            const barWidth = width / (spectrum.length / 2); // Only show first half (Nyquist)
+            
+            const maxMag = Math.max(...spectrum.map(s => s.mag)) || 1;
+
+            for(let i=0; i<spectrum.length/2; i++) {
+                const h = (spectrum[i].mag / maxMag) * (height * 0.8);
+                const x = i * barWidth;
+                const y = height - h;
+                
+                // Color based on cutoff
+                ctx.fillStyle = i < cutoff ? '#a855f7' : '#475569'; // Purple if kept, Slate if cut
+                
+                ctx.fillRect(x, y, barWidth - 1, h);
+            }
+        }
+
+        function updateSC() {
+            const signalCanvas = document.getElementById('scSignalCanvas');
+            const specCanvas = document.getElementById('scSpectrumCanvas');
+            const ctxSig = signalCanvas.getContext('2d');
+            const ctxSpec = specCanvas.getContext('2d');
+            
+            // Fix resolution
+            signalCanvas.width = signalCanvas.offsetWidth;
+            signalCanvas.height = signalCanvas.offsetHeight;
+            specCanvas.width = specCanvas.offsetWidth;
+            specCanvas.height = specCanvas.offsetHeight;
+
+            // Get inputs
+            const modesKept = parseInt(document.getElementById('sc-modes').value);
+            const maxModes = 64; // Half of 128
+            const percentage = Math.round((modesKept / maxModes) * 100);
+            document.getElementById('sc-modes-val').innerText = `${modesKept} modes`;
+
+            // 1. DFT
+            const spectrum = dft(signalData);
+
+            // 2. Filter (Spectral Conv Simulation)
+            // We zero out high frequencies beyond 'modesKept'
+            const filteredSpectrum = spectrum.map((freq, i) => {
+                // Symmetric filter for real signal reconstruction
+                // Low freqs are at 0..modesKept AND N-modesKept..N
+                if (i < modesKept || i > (N_SAMPLES - modesKept)) {
+                    return freq;
+                } else {
+                    return { re: 0, im: 0, mag: 0 };
+                }
+            });
+
+            // 3. IDFT
+            const reconstructed = idft(filteredSpectrum);
+
+            // Draw Original Signal (Faint)
+            ctxSig.clearRect(0,0, signalCanvas.width, signalCanvas.height);
+            drawSignal(ctxSig, signalData, '#e2e8f0', signalCanvas.width, signalCanvas.height); // Light gray
+            
+            // Draw Reconstructed Signal (Purple)
+            drawSignal(ctxSig, reconstructed, '#9333ea', signalCanvas.width, signalCanvas.height);
+
+            // Draw Spectrum
+            drawSpectrum(ctxSpec, spectrum, specCanvas.width, specCanvas.height, modesKept);
+
+            // Draw overlay line on spectrum
+            const overlay = document.getElementById('scCutoffOverlay');
+            const cutX = (modesKept / maxModes) * 100;
+            overlay.style.left = `${cutX}%`;
+            overlay.style.width = `${100 - cutX}%`;
+        }
+
+
+        // --- TEMPORAL CONV LOGIC (TCN Visualization) ---
+        let tcnState = { dilation: 2, kernel: 2 };
+
+        function setDilation(d) {
+            tcnState.dilation = d;
+            document.querySelectorAll('.tc-btn-d').forEach(b => {
+                if(b.innerText.includes(`d=${d}`)) {
+                    b.classList.remove('bg-slate-100', 'hover:bg-emerald-50');
+                    b.classList.add('bg-emerald-600', 'text-white', 'border-emerald-600');
+                } else {
+                    b.classList.add('bg-slate-100', 'hover:bg-emerald-50');
+                    b.classList.remove('bg-emerald-600', 'text-white', 'border-emerald-600');
+                }
+            });
+            renderTCN();
+        }
+
+        function setKernel(k) {
+            tcnState.kernel = k;
+            document.querySelectorAll('.tc-btn-k').forEach(b => {
+                if(b.innerText.includes(`k=${k}`)) {
+                    b.classList.remove('bg-slate-100', 'hover:bg-emerald-50');
+                    b.classList.add('bg-emerald-600', 'text-white', 'border-emerald-600');
+                } else {
+                    b.classList.add('bg-slate-100', 'hover:bg-emerald-50');
+                    b.classList.remove('bg-emerald-600', 'text-white', 'border-emerald-600');
+                }
+            });
+            renderTCN();
+        }
+
+        function renderTCN() {
+            const container = document.getElementById('tc-container');
+            container.innerHTML = ''; // clear
+
+            // Setup SVG
+            const width = container.offsetWidth;
+            const height = container.offsetHeight;
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("width", width);
+            svg.setAttribute("height", height);
+            
+            // Grid Params
+            const layers = 3; // Input, Hidden, Output (Simplified)
+            const timeSteps = 20;
+            const nodeRad = 4;
+            const xStep = width / (timeSteps + 2);
+            const yStep = height / (layers + 1);
+            
+            // Create Nodes
+            // Layer 0: Input (Bottom), Layer 1: Hidden, Layer 2: Output (Top)
+            // Note: In SVG y=0 is top. So Layer 0 will be at y = 3 * yStep
+            
+            const nodes = []; // Store coords for hover logic
+
+            for (let l = 0; l < layers; l++) {
+                const y = height - ((l + 1) * yStep);
+                const layerGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                
+                for (let t = 0; t < timeSteps; t++) {
+                    const x = (t + 1) * xStep;
+                    
+                    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    circle.setAttribute("cx", x);
+                    circle.setAttribute("cy", y);
+                    circle.setAttribute("r", nodeRad);
+                    
+                    // Style
+                    if (l === layers - 1) circle.setAttribute("fill", "#10b981"); // Output: Emerald
+                    else if (l === 0) circle.setAttribute("fill", "#64748b"); // Input: Slate
+                    else circle.setAttribute("fill", "#94a3b8"); // Hidden
+
+                    circle.setAttribute("class", "transition-all duration-200");
+                    circle.setAttribute("id", `node-${l}-${t}`);
+                    
+                    // Interaction for Top Layer
+                    if (l === layers - 1) {
+                        circle.style.cursor = "pointer";
+                        circle.setAttribute("r", 6);
+                        circle.addEventListener("mouseenter", () => highlightReceptiveField(t, layers-1, svg, nodes));
+                        circle.addEventListener("mouseleave", () => clearHighlights(svg));
+                    }
+
+                    layerGroup.appendChild(circle);
+                    
+                    // Save for logic
+                    if (!nodes[l]) nodes[l] = [];
+                    nodes[l][t] = {x, y, el: circle};
+                }
+                svg.appendChild(layerGroup);
+            }
+            container.appendChild(svg);
+        }
+
+        function highlightReceptiveField(targetT, targetL, svg, nodes) {
+            // Clean previous lines
+            clearHighlights(svg);
+
+            const d = tcnState.dilation;
+            const k = tcnState.kernel;
+            
+            // Helper to recursively find parents
+            // This mimics the causal convolution logic
+            let activeNodes = new Set(); // strings "l-t"
+            let connections = []; // {x1, y1, x2, y2}
+
+            // We only show 1 step back for simplicity of the visualization logic in this limited view, 
+            // or we calculate the specific indices for the 'Hidden' layer and 'Input' layer.
+            
+            // Layer 2 (Output) -> Layer 1 (Hidden)
+            // Standard TCN: y[t] depends on x[t], x[t-d], x[t-2d]... depending on k
+            // With k=2, dilation=d: depends on (t) and (t - d)
+            
+            // 1. Identify immediate parents in Layer 1
+            let parentsL1 = [];
+            for(let i=0; i<k; i++) {
+                const pastIdx = targetT - (i * d);
+                if(pastIdx >= 0) parentsL1.push(pastIdx);
+            }
+
+            // 2. Identify parents in Layer 0 (Input) for each L1 parent
+            // The dilation often grows (e.g., 1, 2, 4).
+            // Let's assume d_l1 = d, and d_l0 = 1 (standard doubling: 1, 2, 4...)
+            // But for this single-block demo, let's assume fixed parameters per block or just chaining.
+            // Let's visualize a single block operation first (L1->L2) and maybe L0->L1 is Identity or smaller dilation.
+            // To make it intuitive: Let's assume the visualization shows ONE block with the user-selected dilation.
+            // So L0 is input, L2 is output. L1 is just a visual helper (the operation).
+            // Actually, better: L2 is output, L1 is the result of first conv, L0 is input.
+            // Let's just trace L2 -> L1 (using current d) -> L0 (using d=1 or same d).
+            
+            // Let's simplify: Highlight the tree.
+            // Target: L2[t]
+            const targetNode = nodes[2][targetT];
+            targetNode.el.setAttribute("fill", "#34d399"); // Highlight Trigger
+            
+            parentsL1.forEach(p1_idx => {
+                const p1 = nodes[1][p1_idx];
+                // Draw Line L2->L1
+                createLine(svg, targetNode.x, targetNode.y, p1.x, p1.y);
+                p1.el.setAttribute("fill", "#fcd34d"); // Amber
+
+                // Now parents of p1 in L0. 
+                // Usually previous layer has smaller dilation (e.g. 1 if current is 2).
+                // Let's assume previous dilation was d/2 or 1. Let's use 1 for L0->L1.
+                const prevD = Math.max(1, d/2); 
+                for(let j=0; j<k; j++) {
+                    const p0_idx = p1_idx - (j * prevD); // simplified growth
+                    if(p0_idx >= 0) {
+                        const p0 = nodes[0][p0_idx];
+                        createLine(svg, p1.x, p1.y, p0.x, p0.y, true); // Faint line
+                        p0.el.setAttribute("fill", "#60a5fa"); // Blue
+                    }
+                }
+            });
+        }
+
+        function createLine(svg, x1, y1, x2, y2, isSecondary=false) {
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", x1);
+            line.setAttribute("y1", y1);
+            line.setAttribute("x2", x2);
+            line.setAttribute("y2", y2);
+            line.setAttribute("stroke", isSecondary ? "#cbd5e1" : "#94a3b8");
+            line.setAttribute("stroke-width", isSecondary ? 1 : 2);
+            line.setAttribute("class", "tcn-line");
+            svg.insertBefore(line, svg.firstChild); // Behind nodes
+        }
+
+        function clearHighlights(svg) {
+            // Remove lines
+            svg.querySelectorAll('.tcn-line').forEach(e => e.remove());
+            // Reset colors
+            // (Re-rendering is easier but inefficient, let's just reset via class logic or simplified)
+            // Fast reset: just re-render TCN is cheap enough
+            // renderTCN(); // A bit heavy on mousemove
+            // DOM manipulation reset:
+            document.querySelectorAll('circle').forEach(c => {
+                 const id = c.id.split('-'); // node-l-t
+                 const l = parseInt(id[1]);
+                 if(l===2) c.setAttribute("fill", "#10b981");
+                 if(l===1) c.setAttribute("fill", "#94a3b8");
+                 if(l===0) c.setAttribute("fill", "#64748b");
+            });
+        }
+
+
+        // --- INIT ---
+        // Start with PE
+        window.onload = () => {
+            switchTab('pe');
+            generateNewSignal(); // Prep spectral data
+        };
+
+    </script>
+
+</body></html>
