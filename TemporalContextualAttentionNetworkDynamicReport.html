@@ -184,6 +184,14 @@
                             <label for="fixed-fee" class="text-sm font-medium text-gray-400">Fixed Fee</label>
                             <input type="number" id="fixed-fee" value="0" class="w-full bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 mt-1">
                         </div>
+                        <div>
+                            <label for="vol-gain-sigma" class="text-sm font-medium text-gray-400">Vol Gain Sigma</label>
+                            <input type="number" step="0.1" id="vol-gain-sigma" placeholder="Optional" class="w-full bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 mt-1">
+                        </div>
+                        <div>
+                            <label for="vol-loss-sigma" class="text-sm font-medium text-gray-400">Vol Loss Sigma</label>
+                            <input type="number" step="0.1" id="vol-loss-sigma" placeholder="Optional" class="w-full bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 mt-1">
+                        </div>
                     </div>
                      <div class="pt-2">
                         <button id="share-button" class="w-full bg-blue-600 text-white px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 hover:bg-blue-500 flex items-center justify-center gap-2">
@@ -221,6 +229,8 @@
     let feePerc = 0;
     let fixedFee = 0;
     let minGainPct = 0;
+    let volGainSigma = null;
+    let volLossSigma = null;
     let mergedChart = null;
 
     // --- DOM Elements ---
@@ -237,6 +247,8 @@
     const feePctInput = document.getElementById('fee-pct');
     const fixedFeeInput = document.getElementById('fixed-fee');
     const minGainInput = document.getElementById('min-gain-pct');
+    const volGainSigmaInput = document.getElementById('vol-gain-sigma');
+    const volLossSigmaInput = document.getElementById('vol-loss-sigma');
     const infoCardsContainer = document.getElementById('info-cards');
     const shareButton = document.getElementById('share-button');
     const jumpToLatestButton = document.getElementById('jump-to-latest');
@@ -319,7 +331,7 @@
     // --- Trade Simulation and Analysis ---
     function simulateAndAnalyzeTrades(data, start, end) {
         const result = {};
-        const trades = [];  // For profit calculations
+        const trades = []; 
 
         for (const creationDate in data) {
             if (new Date(creationDate) < new Date(start) || new Date(creationDate) > new Date(end)) continue;
@@ -330,6 +342,23 @@
             const valid = batch.every(p => p.actual_low > 0 && p.actual_high > 0 && p.actual_close > 0);
             if (!valid) continue;
 
+            // --- [NEW] Dynamic Threshold Logic ---
+            let currentMinGainPct = minGainPct;
+            let currentCutLossPct = cutLossPct;
+
+            if (volGainSigma !== null && volLossSigma !== null && !isNaN(volGainSigma) && !isNaN(volLossSigma)) {
+                const closes = batch.map(p => p.actual_close);
+                const batchMean = closes.reduce((a, b) => a + b, 0) / closes.length;
+                const sumSqDiff = closes.reduce((sum, x) => sum + Math.pow(x - batchMean, 2), 0);
+                const batchStd = Math.sqrt(sumSqDiff / closes.length);
+                
+                const volPctApprox = batchMean > 0 ? (batchStd / batchMean) * 100 : 1.0;
+
+                currentMinGainPct = Math.max(0.1, volPctApprox * volGainSigma);
+                currentCutLossPct = Math.max(0.1, volPctApprox * volLossSigma);
+            }
+            // -------------------------------------
+
             const lows = batch.map(p => p.predicted_low);
             const highs = batch.map(p => p.predicted_high);
             const actualLows = batch.map(p => p.actual_low);
@@ -339,26 +368,25 @@
             const batchMinLow = Math.min(...lows);
             const batchMaxHigh = Math.max(...highs);
 
-            // No action?
-            if (batchMaxHigh < batchMinLow * (1 + minGainPct / 100)) continue;
+            // Use currentMinGainPct
+            if (batchMaxHigh < batchMinLow * (1 + currentMinGainPct / 100)) continue;
 
-            // Buy?
             let buyDay = -1;
             for (let i = 0; i < 5; i++) if (actualLows[i] <= batchMinLow) { buyDay = i; break; }
             if (buyDay === -1) continue;
 
             const buyPrice = batchMinLow;
 
-            // Cut loss?
+            // Use currentCutLossPct
             let cutLossDay = null;
-            if (cutLossPct > 0) {
-                const stop = buyPrice * (1 - cutLossPct / 100);
+            if (currentCutLossPct > 0) {
+                const stop = buyPrice * (1 - currentCutLossPct / 100);
                 if (actualLows[buyDay] <= stop) cutLossDay = buyDay;
                 else {
                     let peak = actualHighs[buyDay];
                     for (let i = buyDay + 1; i < 5; i++) {
                         peak = Math.max(peak, actualHighs[i-1]);
-                        if (actualLows[i] <= peak * (1 - cutLossPct / 100)) {
+                        if (actualLows[i] <= peak * (1 - currentCutLossPct / 100)) {
                             cutLossDay = i;
                             break;
                         }
@@ -366,15 +394,17 @@
                 }
             }
             if (cutLossDay !== null) {
-                trades.push({ profit: -cutLossPct/100 * fixedAmount, forced: true, cutLoss: true });
+                trades.push({ profit: -currentCutLossPct/100 * fixedAmount, forced: true, cutLoss: true });
                 continue;
             }
 
-            // Success? Breakout above that day's predicted high (from day+2)
             let sold = false;
             for (let i = buyDay + 2; i < 5; i++) {
                 if (actualHighs[i] > highs[i]) {
                     const sellPrice = highs[i];
+                    // Use currentMinGainPct for sell check logic (optional but consistent)
+                    if (sellPrice < buyPrice * (1 + currentMinGainPct / 100)) continue; 
+
                     const shares = fixedAmount / buyPrice;
                     const gross = shares * (sellPrice - buyPrice);
                     const feeBuy = (feePerc/100)*fixedAmount + fixedFee;
@@ -387,7 +417,6 @@
                 }
             }
 
-            // Forced exit
             if (!sold) {
                 const sellPrice = actualCloses[4];
                 const shares = fixedAmount / buyPrice;
@@ -397,8 +426,9 @@
                 trades.push({ profit: gross - feeBuy - feeSell, forced: true });
             }
         }
-
-        // === Build full stats object (exactly like old version) ===
+        
+        // ... (Rest of result object construction remains identical) ...
+        // Copy the return result logic from your existing code
         const totalBatches = Object.keys(data).filter(d => {
             const b = data[d][activeAsset];
             return b && b.length === 5 && b.every(p => p.actual_low > 0);
@@ -407,7 +437,6 @@
         const numTrades = trades.length;
         const successful = trades.filter(t => !t.forced);
         const forced = trades.filter(t => t.forced);
-
         const totalProfit = trades.reduce((s, t) => s + t.profit, 0);
         const roi = numTrades > 0 ? (totalProfit / (numTrades * fixedAmount)) * 100 : 0;
 
@@ -439,12 +468,11 @@
             total_profit: totalProfit,
             roi: roi
         };
-
         return result;
     }
     
     // --- Batch Type Determination ---
-    function getBatchType(forecastDate, asset, cutLossPct = 0, fixedAmount = 10000, feePerc = 0, fixedFee = 0, minGainPct = 0) {
+    function getBatchType(forecastDate, asset, cutLossPct = 0, fixedAmount = 10000, feePerc = 0, fixedFee = 0, minGainPct = 0, vGainSigma = null, vLossSigma = null) {
         const predictions = forecastData[forecastDate]?.[asset];
         if (!predictions || predictions.length !== 5) {
             return { type: "invalid", text: "Invalid Batch", color: "gray" };
@@ -458,11 +486,27 @@
             return { type: "future", text: "Future (No Actuals)", color: "blue" };
         }
 
+        // --- [NEW] Dynamic Threshold Logic ---
+        let currentMinGainPct = minGainPct;
+        let currentCutLossPct = cutLossPct;
+
+        if (vGainSigma !== null && vLossSigma !== null && !isNaN(vGainSigma) && !isNaN(vLossSigma)) {
+            const closes = predictions.map(p => p.actual_close);
+            const batchMean = closes.reduce((a, b) => a + b, 0) / closes.length;
+            const sumSqDiff = closes.reduce((sum, x) => sum + Math.pow(x - batchMean, 2), 0);
+            const batchStd = Math.sqrt(sumSqDiff / closes.length);
+            const volPctApprox = batchMean > 0 ? (batchStd / batchMean) * 100 : 1.0;
+
+            currentMinGainPct = Math.max(0.1, volPctApprox * vGainSigma);
+            currentCutLossPct = Math.max(0.1, volPctApprox * vLossSigma);
+        }
+        // -------------------------------------
+
         const batchMinLow = Math.min(...predictions.map(p => p.predicted_low));
         const batchMaxHigh = Math.max(...predictions.map(p => p.predicted_high));
 
-        // 1. Insufficient predicted gain?
-        if (batchMaxHigh < batchMinLow * (1 + minGainPct / 100)) {
+        // 1. Insufficient predicted gain? (Use currentMinGainPct)
+        if (batchMaxHigh < batchMinLow * (1 + currentMinGainPct / 100)) {
             return { type: "noaction", text: "No Action (Low Gain)", color: "orange" };
         }
 
@@ -485,27 +529,27 @@
 
         const buyPrice = batchMinLow;
 
-        // 3. Cut-loss?
-        if (cutLossPct > 0) {
-            const initialStop = buyPrice * (1 - cutLossPct / 100);
+        // 3. Cut-loss? (Use currentCutLossPct)
+        if (currentCutLossPct > 0) {
+            const initialStop = buyPrice * (1 - currentCutLossPct / 100);
             if (actualLows[buyDay] <= initialStop) {
                 return { type: "failed", text: "Failed (Cut Loss on Buy)", color: "red" };
             }
             let peak = actualHighs[buyDay];
             for (let i = buyDay + 1; i < 5; i++) {
                 peak = Math.max(peak, actualHighs[i - 1]);
-                if (actualLows[i] <= peak * (1 - cutLossPct / 100)) {
+                if (actualLows[i] <= peak * (1 - currentCutLossPct / 100)) {
                     return { type: "failed", text: "Failed (Cut Loss)", color: "red" };
                 }
             }
         }
 
-        // 4. Success? Breakout above that exact day's predicted high (from day+2)
+        // 4. Success? (Use currentMinGainPct for sell logic if applicable)
         for (let i = buyDay + 2; i < 5; i++) {
             if (actualHighs[i] > predHighs[i]) {
                 const sellPriceCand = predHighs[i];
+                if (sellPriceCand < buyPrice * (1 + currentMinGainPct / 100)) continue; 
 
-                // Exact same fee-aware net profit check as Python
                 const shares = fixedAmount / buyPrice;
                 const gross = shares * (sellPriceCand - buyPrice);
                 const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
@@ -538,7 +582,7 @@
 
             totalBatches++;
 
-            const info = getBatchType(date, activeAsset, cutLossPct, fixedAmount, feePerc, fixedFee, minGainPct);
+            const info = getBatchType(date, activeAsset, cutLossPct, fixedAmount, feePerc, fixedFee, minGainPct, volGainSigma, volLossSigma);
 
             if (info.type === "success") success++;
             else if (info.type === "failed") failed++;
@@ -692,7 +736,7 @@
         // const batchType = getBatchType(activeForecastDate, activeAsset, cutLossPct, fixedAmount, feePerc, fixedFee, minGainPct);
         // batchTypeElement.textContent = `Batch Type: ${batchType}`;
 
-        const batchInfo = getBatchType(activeForecastDate, activeAsset, cutLossPct, fixedAmount, feePerc, fixedFee, minGainPct);
+        const batchInfo = getBatchType(activeForecastDate, activeAsset, cutLossPct, fixedAmount, feePerc, fixedFee, minGainPct, volGainSigma, volLossSigma);
         batchTypeElement.textContent = `Batch Type: ${batchInfo.text}`;
         batchTypeElement.style.color = 
             batchInfo.color === "green" ? "#22c55e" :
@@ -855,6 +899,8 @@
         params.set('fee_perc', feePerc);
         params.set('fixed_fee', fixedFee);
         params.set('min_gain_pct', minGainPct);
+        if (volGainSigma !== null) params.set('vol_gain_sigma', volGainSigma);
+        if (volLossSigma !== null) params.set('vol_loss_sigma', volLossSigma);
         history.pushState({}, '', `${location.pathname}?${params.toString()}`);
     }
 
@@ -903,6 +949,12 @@
 
             const urlParams = new URLSearchParams(window.location.search);
 
+            const vGain = parseFloat(urlParams.get('vol_gain_sigma'));
+            volGainSigma = !isNaN(vGain) ? vGain : null;
+
+            const vLoss = parseFloat(urlParams.get('vol_loss_sigma'));
+            volLossSigma = !isNaN(vLoss) ? vLoss : null;
+
             activeStartDate = urlParams.get('start_date') || minDate;
             if (new Date(activeStartDate) < new Date(minDate) || new Date(activeStartDate) > new Date(maxDate)) {
                 activeStartDate = minDate;
@@ -941,6 +993,8 @@
             feePctInput.value = feePerc;
             fixedFeeInput.value = fixedFee;
             minGainInput.value = minGainPct;
+            if(volGainSigma !== null) volGainSigmaInput.value = volGainSigma;
+            if(volLossSigma !== null) volLossSigmaInput.value = volLossSigma;
         }
         
         forecastDatePicker.addEventListener('change', () => {
@@ -988,6 +1042,22 @@
 
         minGainInput.addEventListener('input', () => {
             minGainPct = parseFloat(minGainInput.value) || 0;
+            updateURLParams();
+            updateStats();
+            renderCharts();
+        });
+
+        volGainSigmaInput.addEventListener('input', () => {
+            const val = parseFloat(volGainSigmaInput.value);
+            volGainSigma = !isNaN(val) ? val : null;
+            updateURLParams();
+            updateStats();
+            renderCharts();
+        });
+
+        volLossSigmaInput.addEventListener('input', () => {
+            const val = parseFloat(volLossSigmaInput.value);
+            volLossSigma = !isNaN(val) ? val : null;
             updateURLParams();
             updateStats();
             renderCharts();

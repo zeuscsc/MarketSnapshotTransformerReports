@@ -166,6 +166,14 @@
                             <label for="fixed-fee" class="text-sm font-medium text-gray-400">Fixed Fee</label>
                             <input type="number" id="fixed-fee" value="0" class="w-full bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 mt-1">
                         </div>
+                        <div>
+                            <label for="vol-gain-sigma" class="text-sm font-medium text-gray-400">Vol Gain Sigma</label>
+                            <input type="number" step="0.1" id="vol-gain-sigma" placeholder="Optional" class="w-full bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 mt-1">
+                        </div>
+                        <div>
+                            <label for="vol-loss-sigma" class="text-sm font-medium text-gray-400">Vol Loss Sigma</label>
+                            <input type="number" step="0.1" id="vol-loss-sigma" placeholder="Optional" class="w-full bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 mt-1">
+                        </div>
                     </div>
                 </div>
                 
@@ -215,6 +223,8 @@
     let feePerc = 0;
     let fixedFee = 0;
     let minGainPct = 0;
+    let volGainSigma = null; 
+    let volLossSigma = null;
     let profitChart = null;
     let successfulChart = null;
     let roiChart = null;
@@ -231,6 +241,8 @@
     const feePctInput = document.getElementById('fee-pct');
     const fixedFeeInput = document.getElementById('fixed-fee');
     const minGainInput = document.getElementById('min-gain-pct');
+    const volGainSigmaInput = document.getElementById('vol-gain-sigma');
+    const volLossSigmaInput = document.getElementById('vol-loss-sigma');
     const shareButton = document.getElementById('share-button');
     const jumpToLatestButton = document.getElementById('jump-to-latest');
     
@@ -309,232 +321,228 @@
     }
 
     // --- Rolling Monthly Stats ---
-    function computeRollingStats(data, startDate, endDate, cutLossPct = 2, fixedAmount = 10000, feePerc = 0.01, fixedFee = 0, minGainPct = 2.5) {
-        const statsByAsset = {};
-        const monthlyBreakdown = {}; // For potential future use (matches Python return)
+    function computeRollingStats(data, startDate, endDate, cutLossPct = 0, fixedAmount = 10000, feePerc = 0, fixedFee = 0, minGainPct = 0, volGainSigma = null, volLossSigma = null) {
+    const statsByAsset = {};
+    const monthlyBreakdown = {}; 
 
-        for (let creationDate in data) {
-            if (new Date(creationDate) < new Date(startDate) || new Date(creationDate) > new Date(endDate)) continue;
+    for (let creationDate in data) {
+        if (new Date(creationDate) < new Date(startDate) || new Date(creationDate) > new Date(endDate)) continue;
 
-            const month = creationDate.slice(0, 7);
-            if (!monthlyBreakdown[month]) monthlyBreakdown[month] = { success: 0, failed: 0, no_action: 0 };
+        const month = creationDate.slice(0, 7);
+        if (!monthlyBreakdown[month]) monthlyBreakdown[month] = { success: 0, failed: 0, no_action: 0 };
 
-            for (let asset in data[creationDate]) {
-                if (!statsByAsset[asset]) statsByAsset[asset] = {};
-                if (!statsByAsset[asset][month]) statsByAsset[asset][month] = {
-                    total_batches: 0,
-                    num_trades: 0,
-                    num_gains: 0,
-                    num_losses: 0,
-                    num_forced: 0,
-                    num_cut_gain: 0,
-                    num_cut_loss: 0,
-                    num_successful: 0,
-                    num_success_batches: 0,
-                    num_failed_batches: 0,
-                    num_no_action_batches: 0,
-                    pct_gains: 0,
-                    pct_losses: 0,
-                    pct_cut_gain: 0,
-                    pct_cut_loss: 0,
-                    pct_successful: 0,
-                    pct_success_batches: 0,
-                    pct_failed_batches: 0,
-                    pct_no_action_batches: 0,
-                    pct_success_vs_failed: 0,
-                    avg_successful_earning: 0,
-                    avg_failed_win: 0,
-                    avg_failed_loss: 0,
-                    avg_overall_win: 0,
-                    avg_overall_loss: 0,
-                    total_profit: 0,
-                    roi: 0
-                };
+        for (let asset in data[creationDate]) {
+            if (!statsByAsset[asset]) statsByAsset[asset] = {};
+            // ... (Ensure the stats object structure is initialized exactly as before) ...
+            if (!statsByAsset[asset][month]) statsByAsset[asset][month] = {
+                total_batches: 0, num_trades: 0, num_gains: 0, num_losses: 0, num_forced: 0,
+                num_cut_gain: 0, num_cut_loss: 0, num_successful: 0, num_success_batches: 0,
+                num_failed_batches: 0, num_no_action_batches: 0, pct_gains: 0, pct_losses: 0,
+                pct_cut_gain: 0, pct_cut_loss: 0, pct_successful: 0, pct_success_batches: 0,
+                pct_failed_batches: 0, pct_no_action_batches: 0, pct_success_vs_failed: 0,
+                avg_successful_earning: 0, avg_failed_win: 0, avg_failed_loss: 0,
+                avg_overall_win: 0, avg_overall_loss: 0, total_profit: 0, roi: 0
+            };
 
-                const predictions = data[creationDate][asset];
-                if (predictions.length !== 5) continue;
+            const predictions = data[creationDate][asset];
+            if (predictions.length !== 5) continue;
 
-                // Skip future predictions without actuals
-                const hasValidActuals = predictions.every(p =>
-                    p.actual_low != null && p.actual_high != null && p.actual_close != null &&
-                    p.actual_low > 0 && p.actual_high > 0 && p.actual_close > 0
-                );
-                if (!hasValidActuals) continue;
+            const hasValidActuals = predictions.every(p =>
+                p.actual_low != null && p.actual_high != null && p.actual_close != null &&
+                p.actual_low > 0 && p.actual_high > 0 && p.actual_close > 0
+            );
+            if (!hasValidActuals) continue;
 
-                statsByAsset[asset][month].total_batches += 1;
+            statsByAsset[asset][month].total_batches += 1;
 
-                const batchMinLow = Math.min(...predictions.map(p => p.predicted_low));
-                const batchMaxHigh = Math.max(...predictions.map(p => p.predicted_high));
+            // --- [NEW] Dynamic Threshold Logic ---
+            let currentMinGainPct = minGainPct;
+            let currentCutLossPct = cutLossPct;
 
-                // No-action: not enough predicted upside
-                if (batchMaxHigh < batchMinLow * (1 + minGainPct / 100)) {
-                    statsByAsset[asset][month].num_no_action_batches += 1;
-                    monthlyBreakdown[month].no_action += 1;
-                    continue;
-                }
+            // Check if Sigmas are active (not null and strictly valid numbers)
+            if ((volGainSigma !== null && !isNaN(volGainSigma)) || 
+                (volLossSigma !== null && !isNaN(volLossSigma))) {
+                
+                const closes = predictions.map(p => p.actual_close).filter(c => c > 0);
+                if (closes.length > 1) {
+                    const mean = closes.reduce((a,b) => a+b, 0) / closes.length;
+                    const variance = closes.reduce((s, x) => s + (x - mean)**2, 0) / closes.length;
+                    const std = Math.sqrt(variance);
+                    const volPctApprox = mean > 0 ? (std / mean) * 100 : 1.0;
 
-                const actualLows = predictions.map(p => p.actual_low);
-                const actualHighs = predictions.map(p => p.actual_high);
-                const actualCloses = predictions.map(p => p.actual_close);
-                const predHighs = predictions.map(p => p.predicted_high);
-
-                // Find buy index
-                let buyIndex = null;
-                for (let i = 0; i < 5; i++) {
-                    if (actualLows[i] <= batchMinLow) {
-                        buyIndex = i;
-                        break;
+                    if (volGainSigma !== null && !isNaN(volGainSigma)) {
+                        currentMinGainPct = Math.max(0.1, volPctApprox * volGainSigma);
+                    }
+                    if (volLossSigma !== null && !isNaN(volLossSigma)) {
+                        currentCutLossPct = Math.max(0.1, volPctApprox * volLossSigma);
                     }
                 }
-                if (buyIndex === null) {
-                    statsByAsset[asset][month].num_no_action_batches += 1;
-                    monthlyBreakdown[month].no_action += 1;
-                    continue;
+            }
+
+            const batchMinLow = Math.min(...predictions.map(p => p.predicted_low));
+            const batchMaxHigh = Math.max(...predictions.map(p => p.predicted_high));
+
+            // Use currentMinGainPct instead of minGainPct
+            if (batchMaxHigh < batchMinLow * (1 + currentMinGainPct / 100)) {
+                statsByAsset[asset][month].num_no_action_batches += 1;
+                monthlyBreakdown[month].no_action += 1;
+                continue;
+            }
+
+            const actualLows = predictions.map(p => p.actual_low);
+            const actualHighs = predictions.map(p => p.actual_high);
+            const actualCloses = predictions.map(p => p.actual_close);
+            const predHighs = predictions.map(p => p.predicted_high);
+
+            let buyIndex = null;
+            for (let i = 0; i < 5; i++) {
+                if (actualLows[i] <= batchMinLow) {
+                    buyIndex = i;
+                    break;
                 }
+            }
+            if (buyIndex === null) {
+                statsByAsset[asset][month].num_no_action_batches += 1;
+                monthlyBreakdown[month].no_action += 1;
+                continue;
+            }
 
-                const buyPrice = batchMinLow;
+            const buyPrice = batchMinLow;
 
-                // Cut-loss handling (trailing)
-                let cutLossTriggerIndex = null;
-                let cutLossSellPrice = null;
-                let highestHighAfterBuy = actualHighs[buyIndex];
+            // Cut-loss handling (trailing) using currentCutLossPct
+            let cutLossTriggerIndex = null;
+            let cutLossSellPrice = null;
+            let highestHighAfterBuy = actualHighs[buyIndex];
 
-                if (cutLossPct > 0) {
-                    const initialCutLossPrice = buyPrice * (1 - cutLossPct / 100);
-                    if (actualLows[buyIndex] <= initialCutLossPrice) {
-                        cutLossTriggerIndex = buyIndex;
-                        cutLossSellPrice = initialCutLossPrice;
-                    } else {
-                        for (let i = buyIndex + 1; i < 5; i++) {
-                            highestHighAfterBuy = Math.max(highestHighAfterBuy, actualHighs[i - 1]);
-                            const trailingStop = highestHighAfterBuy * (1 - cutLossPct / 100);
-                            if (actualLows[i] <= trailingStop) {
-                                cutLossTriggerIndex = i;
-                                cutLossSellPrice = trailingStop;
-                                break;
-                            }
+            if (currentCutLossPct > 0) {
+                const initialCutLossPrice = buyPrice * (1 - currentCutLossPct / 100);
+                if (actualLows[buyIndex] <= initialCutLossPrice) {
+                    cutLossTriggerIndex = buyIndex;
+                    cutLossSellPrice = initialCutLossPrice;
+                } else {
+                    for (let i = buyIndex + 1; i < 5; i++) {
+                        highestHighAfterBuy = Math.max(highestHighAfterBuy, actualHighs[i - 1]);
+                        const trailingStop = highestHighAfterBuy * (1 - currentCutLossPct / 100);
+                        if (actualLows[i] <= trailingStop) {
+                            cutLossTriggerIndex = i;
+                            cutLossSellPrice = trailingStop;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            let sellIndex, sellPrice, forced = false, cutGain = false, cutLoss = false;
+
+            if (cutLossTriggerIndex !== null) {
+                sellIndex = cutLossTriggerIndex;
+                sellPrice = cutLossSellPrice;
+                forced = true;
+                cutLoss = true;
+            } else {
+                let foundSell = false;
+                for (let i = buyIndex + 2; i < 5; i++) {
+                    if (actualHighs[i] > predHighs[i]) {
+                        const potentialSellPrice = predHighs[i];
+                        // Use currentMinGainPct
+                        if (potentialSellPrice < buyPrice * (1 + currentMinGainPct / 100)) continue;
+
+                        const shares = fixedAmount / buyPrice;
+                        const gross = shares * (potentialSellPrice - buyPrice);
+                        const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+                        const sellValue = shares * potentialSellPrice;
+                        const feeSell = (feePerc / 100) * sellValue + fixedFee;
+                        const net = gross - feeBuy - feeSell;
+
+                        if (net > 0) {
+                            sellIndex = i;
+                            sellPrice = potentialSellPrice;
+                            foundSell = true;
+                            forced = false;
+                            break;
                         }
                     }
                 }
 
-                let sellIndex, sellPrice, forced = false, cutGain = false, cutLoss = false;
-
-                if (cutLossTriggerIndex !== null) {
-                    sellIndex = cutLossTriggerIndex;
-                    sellPrice = cutLossSellPrice;
+                if (!foundSell) {
+                    sellIndex = 4;
+                    sellPrice = actualCloses[4];
                     forced = true;
-                    cutLoss = true;
-                } else {
-                    // === EXACT PYTHON SELL LOGIC: breakout above predicted high, starting day after next ===
-                    let foundSell = false;
-                    for (let i = buyIndex + 2; i < 5; i++) {  // Note: +2, not +1 → matches Python
-                        if (actualHighs[i] > predHighs[i]) {
-                            const potentialSellPrice = predHighs[i];
-                            if (potentialSellPrice < buyPrice * (1 + minGainPct / 100)) continue;
-
-                            const shares = fixedAmount / buyPrice;
-                            const gross = shares * (potentialSellPrice - buyPrice);
-                            const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
-                            const sellValue = shares * potentialSellPrice;
-                            const feeSell = (feePerc / 100) * sellValue + fixedFee;
-                            const net = gross - feeBuy - feeSell;
-
-                            if (net > 0) {
-                                sellIndex = i;
-                                sellPrice = potentialSellPrice;
-                                foundSell = true;
-                                forced = false;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (!foundSell) {
-                        // Forced exit at final close
-                        sellIndex = 4;
-                        sellPrice = actualCloses[4];
-                        forced = true;
-                        const profit = sellPrice - buyPrice;
-                        cutGain = profit > 0;
-                        cutLoss = profit < 0;
-                    }
+                    const profit = sellPrice - buyPrice;
+                    cutGain = profit > 0;
+                    cutLoss = profit < 0;
                 }
-
-                // Record trade
-                statsByAsset[asset][month].num_trades += 1;
-                const grossProfit = sellPrice - buyPrice;
-                const shares = fixedAmount / buyPrice;
-                const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
-                const sellValue = shares * sellPrice;
-                const feeSell = (feePerc / 100) * sellValue + fixedFee;
-                const netProfit = shares * grossProfit - feeBuy - feeSell;
-
-                if (grossProfit > 0) statsByAsset[asset][month].num_gains += 1;
-                if (grossProfit < 0) statsByAsset[asset][month].num_losses += 1;
-                if (forced) {
-                    statsByAsset[asset][month].num_forced += 1;
-                    statsByAsset[asset][month].num_failed_batches += 1;
-                    monthlyBreakdown[month].failed += 1;
-                    if (cutGain) statsByAsset[asset][month].num_cut_gain += 1;
-                    if (cutLoss) statsByAsset[asset][month].num_cut_loss += 1;
-                } else {
-                    statsByAsset[asset][month].num_successful += 1;
-                    statsByAsset[asset][month].num_success_batches += 1;
-                    monthlyBreakdown[month].success += 1;
-                }
-
-                // Accumulate for averages (you can compute them later in updateInfoCards/renderCharts)
-                // We'll store raw trades for precise final calc if needed
-                if (!statsByAsset[asset][month].trades) statsByAsset[asset][month].trades = [];
-                statsByAsset[asset][month].trades.push({
-                    netProfit,
-                    grossProfit,
-                    forced,
-                    cutGain,
-                    cutLoss
-                });
             }
-        }
 
-        // === Final percentage & average calculations (exact match to Python) ===
-        for (let asset in statsByAsset) {
-            for (let month in statsByAsset[asset]) {
-                const s = statsByAsset[asset][month];
-                const trades = s.trades || [];
+            // Record trade
+            statsByAsset[asset][month].num_trades += 1;
+            const grossProfit = sellPrice - buyPrice;
+            const shares = fixedAmount / buyPrice;
+            const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+            const sellValue = shares * sellPrice;
+            const feeSell = (feePerc / 100) * sellValue + fixedFee;
+            const netProfit = shares * grossProfit - feeBuy - feeSell;
 
-                s.pct_gains = s.num_trades ? (s.num_gains / s.num_trades) * 100 : 0;
-                s.pct_losses = s.num_trades ? (s.num_losses / s.num_trades) * 100 : 0;
-                s.pct_successful = s.num_trades ? (s.num_successful / s.num_trades) * 100 : 0;
-                s.pct_success_batches = s.total_batches ? (s.num_success_batches / s.total_batches) * 100 : 0;
-                s.pct_failed_batches = s.total_batches ? (s.num_failed_batches / s.total_batches) * 100 : 0;
-                s.pct_no_action_batches = s.total_batches ? (s.num_no_action_batches / s.total_batches) * 100 : 0;
-                s.pct_success_vs_failed = (s.num_success_batches + s.num_failed_batches) > 0 ? (s.num_success_batches / (s.num_success_batches + s.num_failed_batches)) * 100 : 0;
-                s.pct_cut_gain = s.num_forced ? (s.num_cut_gain / s.num_forced) * 100 : 0;
-                s.pct_cut_loss = s.num_forced ? (s.num_cut_loss / s.num_forced) * 100 : 0;
-
-                const netProfits = trades.map(t => t.netProfit);
-                s.total_profit = netProfits.reduce((a, b) => a + b, 0);
-                s.roi = s.num_trades ? (s.total_profit / (s.num_trades * fixedAmount)) * 100 : 0;
-
-                const successfulProfits = trades.filter(t => !t.forced).map(t => t.netProfit);
-                s.avg_successful_earning = successfulProfits.length ? successfulProfits.reduce((a, b) => a + b, 0) / successfulProfits.length : 0;
-
-                const failedWins = trades.filter(t => t.forced && t.grossProfit > 0).map(t => t.netProfit);
-                s.avg_failed_win = failedWins.length ? failedWins.reduce((a, b) => a + b, 0) / failedWins.length : 0;
-
-                const failedLosses = trades.filter(t => t.forced && t.grossProfit < 0).map(t => t.netProfit);
-                s.avg_failed_loss = failedLosses.length ? failedLosses.reduce((a, b) => a + b, 0) / failedLosses.length : 0;
-
-                const allWins = trades.filter(t => t.grossProfit > 0).map(t => t.netProfit);
-                s.avg_overall_win = allWins.length ? allWins.reduce((a, b) => a + b, 0) / allWins.length : 0;
-
-                const allLosses = trades.filter(t => t.grossProfit < 0).map(t => t.netProfit);
-                s.avg_overall_loss = allLosses.length ? allLosses.reduce((a, b) => a + b, 0) / allLosses.length : 0;
+            if (grossProfit > 0) statsByAsset[asset][month].num_gains += 1;
+            if (grossProfit < 0) statsByAsset[asset][month].num_losses += 1;
+            if (forced) {
+                statsByAsset[asset][month].num_forced += 1;
+                statsByAsset[asset][month].num_failed_batches += 1;
+                monthlyBreakdown[month].failed += 1;
+                if (cutGain) statsByAsset[asset][month].num_cut_gain += 1;
+                if (cutLoss) statsByAsset[asset][month].num_cut_loss += 1;
+            } else {
+                statsByAsset[asset][month].num_successful += 1;
+                statsByAsset[asset][month].num_success_batches += 1;
+                monthlyBreakdown[month].success += 1;
             }
-        }
 
-        return statsByAsset;
+            if (!statsByAsset[asset][month].trades) statsByAsset[asset][month].trades = [];
+            statsByAsset[asset][month].trades.push({
+                netProfit, grossProfit, forced, cutGain, cutLoss
+            });
+        }
     }
+
+    // === Final percentage & average calculations (exact match to Python) ===
+    for (let asset in statsByAsset) {
+        for (let month in statsByAsset[asset]) {
+            const s = statsByAsset[asset][month];
+            const trades = s.trades || [];
+
+            s.pct_gains = s.num_trades ? (s.num_gains / s.num_trades) * 100 : 0;
+            s.pct_losses = s.num_trades ? (s.num_losses / s.num_trades) * 100 : 0;
+            s.pct_successful = s.num_trades ? (s.num_successful / s.num_trades) * 100 : 0;
+            s.pct_success_batches = s.total_batches ? (s.num_success_batches / s.total_batches) * 100 : 0;
+            s.pct_failed_batches = s.total_batches ? (s.num_failed_batches / s.total_batches) * 100 : 0;
+            s.pct_no_action_batches = s.total_batches ? (s.num_no_action_batches / s.total_batches) * 100 : 0;
+            s.pct_success_vs_failed = (s.num_success_batches + s.num_failed_batches) > 0 ? (s.num_success_batches / (s.num_success_batches + s.num_failed_batches)) * 100 : 0;
+            s.pct_cut_gain = s.num_forced ? (s.num_cut_gain / s.num_forced) * 100 : 0;
+            s.pct_cut_loss = s.num_forced ? (s.num_cut_loss / s.num_forced) * 100 : 0;
+
+            const netProfits = trades.map(t => t.netProfit);
+            s.total_profit = netProfits.reduce((a, b) => a + b, 0);
+            s.roi = s.num_trades ? (s.total_profit / (s.num_trades * fixedAmount)) * 100 : 0;
+
+            const successfulProfits = trades.filter(t => !t.forced).map(t => t.netProfit);
+            s.avg_successful_earning = successfulProfits.length ? successfulProfits.reduce((a, b) => a + b, 0) / successfulProfits.length : 0;
+
+            const failedWins = trades.filter(t => t.forced && t.grossProfit > 0).map(t => t.netProfit);
+            s.avg_failed_win = failedWins.length ? failedWins.reduce((a, b) => a + b, 0) / failedWins.length : 0;
+
+            const failedLosses = trades.filter(t => t.forced && t.grossProfit < 0).map(t => t.netProfit);
+            s.avg_failed_loss = failedLosses.length ? failedLosses.reduce((a, b) => a + b, 0) / failedLosses.length : 0;
+
+            const allWins = trades.filter(t => t.grossProfit > 0).map(t => t.netProfit);
+            s.avg_overall_win = allWins.length ? allWins.reduce((a, b) => a + b, 0) / allWins.length : 0;
+
+            const allLosses = trades.filter(t => t.grossProfit < 0).map(t => t.netProfit);
+            s.avg_overall_loss = allLosses.length ? allLosses.reduce((a, b) => a + b, 0) / allLosses.length : 0;
+        }
+    }
+
+    return statsByAsset;
+}
     
     // --- Chart Rendering Function ---
     function renderRollingCharts() {
@@ -796,7 +804,7 @@
     }
 
     function updateStats() {
-        statsData = computeRollingStats(forecastData, activeStartDate, activeEndDate, cutLossPct, fixedAmount, feePerc, fixedFee, minGainPct);
+        statsData = computeRollingStats(forecastData, activeStartDate, activeEndDate, cutLossPct, fixedAmount, feePerc, fixedFee, minGainPct, volGainSigma, volLossSigma);
         console.log("✅ Rolling stats dynamically computed for range:", statsData);
         updateInfoCards(activeAsset);
         renderRollingCharts();
@@ -813,6 +821,8 @@
         params.set('fee_perc', feePerc);
         params.set('fixed_fee', fixedFee);
         params.set('min_gain_pct', minGainPct);
+        if (volGainSigma !== null) params.set('vol_gain_sigma', volGainSigma);
+        if (volLossSigma !== null) params.set('vol_loss_sigma', volLossSigma);
         history.pushState({}, '', `${location.pathname}?${params.toString()}`);
     }
 
@@ -859,6 +869,12 @@
 
             const urlParams = new URLSearchParams(window.location.search);
 
+            const vGain = parseFloat(urlParams.get('vol_gain_sigma'));
+            volGainSigma = !isNaN(vGain) ? vGain : null;
+
+            const vLoss = parseFloat(urlParams.get('vol_loss_sigma'));
+            volLossSigma = !isNaN(vLoss) ? vLoss : null;
+
             activeStartDate = urlParams.get('start_date') || minDate;
             if (new Date(activeStartDate) < new Date(minDate) || new Date(activeStartDate) > new Date(maxDate)) {
                 activeStartDate = minDate;
@@ -891,6 +907,8 @@
             feePctInput.value = feePerc;
             fixedFeeInput.value = fixedFee;
             minGainInput.value = minGainPct;
+            if(volGainSigma !== null) volGainSigmaInput.value = volGainSigma;
+            if(volLossSigma !== null) volLossSigmaInput.value = volLossSigma;
         }
         
         startDatePicker.addEventListener('change', () => {
@@ -931,6 +949,20 @@
 
         minGainInput.addEventListener('input', () => {
             minGainPct = parseFloat(minGainInput.value) || 0;
+            updateURLParams();
+            updateStats();
+        });
+
+        volGainSigmaInput.addEventListener('input', () => {
+            const val = parseFloat(volGainSigmaInput.value);
+            volGainSigma = !isNaN(val) ? val : null;
+            updateURLParams();
+            updateStats();
+        });
+
+        volLossSigmaInput.addEventListener('input', () => {
+            const val = parseFloat(volLossSigmaInput.value);
+            volLossSigma = !isNaN(val) ? val : null;
             updateURLParams();
             updateStats();
         });
