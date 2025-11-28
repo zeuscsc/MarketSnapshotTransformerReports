@@ -185,12 +185,16 @@
                             <input type="number" id="fixed-fee" value="0" class="w-full bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 mt-1">
                         </div>
                         <div>
-                            <label for="vol-gain-sigma" class="text-sm font-medium text-gray-400">Vol Gain Sigma</label>
-                            <input type="number" step="0.1" id="vol-gain-sigma" placeholder="Optional" class="w-full bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 mt-1">
+                            <label for="edge-risk-multiplier" class="text-sm font-medium text-gray-400">Edge Risk Multiplier</label>
+                            <input type="number" step="0.1" id="edge-risk-multiplier" value="1.5" class="w-full bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 mt-1">
                         </div>
                         <div>
-                            <label for="vol-loss-sigma" class="text-sm font-medium text-gray-400">Vol Loss Sigma</label>
-                            <input type="number" step="0.1" id="vol-loss-sigma" placeholder="Optional" class="w-full bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 mt-1">
+                            <label for="edge-min-abs" class="text-sm font-medium text-gray-400">Edge Min Abs</label>
+                            <input type="number" step="0.001" id="edge-min-abs" value="0.034" class="w-full bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 mt-1">
+                        </div>
+                        <div>
+                            <label for="edge-vol-factor" class="text-sm font-medium text-gray-400">Edge Vol Factor</label>
+                            <input type="number" step="0.1" id="edge-vol-factor" value="0.0" class="w-full bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 mt-1">
                         </div>
                     </div>
                      <div class="pt-2">
@@ -229,8 +233,9 @@
     let feePerc = 0;
     let fixedFee = 0;
     let minGainPct = 0;
-    let volGainSigma = null;
-    let volLossSigma = null;
+    let edgeRiskMultiplier = 1.5;
+    let edgeMinAbs = 0.034;
+    let edgeVolFactor = 0.0;
     let mergedChart = null;
 
     // --- DOM Elements ---
@@ -247,8 +252,9 @@
     const feePctInput = document.getElementById('fee-pct');
     const fixedFeeInput = document.getElementById('fixed-fee');
     const minGainInput = document.getElementById('min-gain-pct');
-    const volGainSigmaInput = document.getElementById('vol-gain-sigma');
-    const volLossSigmaInput = document.getElementById('vol-loss-sigma');
+    const edgeRiskMultiplierInput = document.getElementById('edge-risk-multiplier');
+    const edgeMinAbsInput = document.getElementById('edge-min-abs');
+    const edgeVolFactorInput = document.getElementById('edge-vol-factor');
     const infoCardsContainer = document.getElementById('info-cards');
     const shareButton = document.getElementById('share-button');
     const jumpToLatestButton = document.getElementById('jump-to-latest');
@@ -329,9 +335,52 @@
     }
 
     // --- Trade Simulation and Analysis ---
+    function calculateRequiredEdge(batch, edge_risk_multiplier = 1.5, edge_min_abs = 0.015, edge_vol_factor = 0.0) {
+        const mids = batch.map(p => (p.predicted_low + p.predicted_high) / 2);
+        const lows = batch.map(p => p.predicted_low);
+        const highs = batch.map(p => p.predicted_high);
+
+        // Expected return: from first mid to last mid
+        const expected_return = mids[4] / mids[0] - 1.0;
+        if (expected_return <= 0) return { valid: false, reason: "no positive expected return" };
+
+        // 1. Range-based risk (same as Python)
+        const daily_range_pct = highs.map((h, i) => (h - lows[i]) / mids[i]);
+        const avg_range_pct = daily_range_pct.reduce((a, b) => a + b, 0) / daily_range_pct.length;
+        const estimated_risk = Math.max(0.008, avg_range_pct * edge_risk_multiplier);
+
+        // 2. Optional volatility component
+        let vol_component = 0;
+        if (edge_vol_factor > 0) {
+            const log_rets = [];
+            for (let i = 1; i < mids.length; i++) {
+                log_rets.push(Math.log(mids[i] / mids[i - 1]));
+            }
+            if (log_rets.length > 1) {
+                const mean_log_ret = log_rets.reduce((a, b) => a + b, 0) / log_rets.length;
+                const variance_log_ret = log_rets.reduce((s, x) => s + Math.pow(x - mean_log_ret, 2), 0) / log_rets.length;
+                const std_log_ret = Math.sqrt(variance_log_ret);
+                const pred_vol_annual = std_log_ret * Math.sqrt(252 / 4); // 4 periods ~ week
+                vol_component = edge_vol_factor * pred_vol_annual;
+            }
+        }
+
+        const required_edge = edge_min_abs + estimated_risk + vol_component;
+
+        if (expected_return < required_edge) {
+            return { valid: false, reason: "edge too small", expected_return, required_edge };
+        }
+
+        return {
+            valid: true,
+            expected_return,
+            required_edge,
+            batch_min_low: Math.min(...lows),
+            batch_max_high: Math.max(...highs)
+        };
+    }
     function simulateAndAnalyzeTrades(data, start, end) {
-        const result = {};
-        const trades = []; 
+        const trades = [];
 
         for (const creationDate in data) {
             if (new Date(creationDate) < new Date(start) || new Date(creationDate) > new Date(end)) continue;
@@ -342,229 +391,212 @@
             const valid = batch.every(p => p.actual_low > 0 && p.actual_high > 0 && p.actual_close > 0);
             if (!valid) continue;
 
-            // --- [NEW] Dynamic Threshold Logic ---
-            let currentMinGainPct = minGainPct;
-            let currentCutLossPct = cutLossPct;
+            const edgeResult = calculateRequiredEdge(batch, edgeRiskMultiplier, edgeMinAbs, edgeVolFactor);
+            if (!edgeResult.valid) continue;
 
-            if (volGainSigma !== null && volLossSigma !== null && !isNaN(volGainSigma) && !isNaN(volLossSigma)) {
-                const closes = batch.map(p => p.actual_close);
-                const batchMean = closes.reduce((a, b) => a + b, 0) / closes.length;
-                const sumSqDiff = closes.reduce((sum, x) => sum + Math.pow(x - batchMean, 2), 0);
-                const batchStd = Math.sqrt(sumSqDiff / closes.length);
-                
-                const volPctApprox = batchMean > 0 ? (batchStd / batchMean) * 100 : 1.0;
+            const { batch_min_low, batch_max_high } = edgeResult;
 
-                currentMinGainPct = Math.max(0.1, volPctApprox * volGainSigma);
-                currentCutLossPct = Math.max(0.1, volPctApprox * volLossSigma);
-            }
-            // -------------------------------------
-
-            const lows = batch.map(p => p.predicted_low);
-            const highs = batch.map(p => p.predicted_high);
             const actualLows = batch.map(p => p.actual_low);
             const actualHighs = batch.map(p => p.actual_high);
             const actualCloses = batch.map(p => p.actual_close);
 
-            const batchMinLow = Math.min(...lows);
-            const batchMaxHigh = Math.max(...highs);
-
-            // Use currentMinGainPct
-            if (batchMaxHigh < batchMinLow * (1 + currentMinGainPct / 100)) continue;
-
+            // === Buy fill ===
             let buyDay = -1;
-            for (let i = 0; i < 5; i++) if (actualLows[i] <= batchMinLow) { buyDay = i; break; }
+            for (let i = 0; i < 5; i++) {
+                if (actualLows[i] <= batch_min_low) {
+                    buyDay = i;
+                    break;
+                }
+            }
             if (buyDay === -1) continue;
 
-            const buyPrice = batchMinLow;
+            const buyPrice = batch_min_low;
 
-            // Use currentCutLossPct
-            let cutLossDay = null;
-            if (currentCutLossPct > 0) {
-                const stop = buyPrice * (1 - currentCutLossPct / 100);
-                if (actualLows[buyDay] <= stop) cutLossDay = buyDay;
-                else {
-                    let peak = actualHighs[buyDay];
+            // === Cut loss logic ===
+            let cutLossTriggered = false;
+            let sellPrice = actualCloses[4];
+            let forcedExit = true;
+
+            if (cutLossPct > 0) {
+                let peakHigh = actualHighs[buyDay];
+                const stopPrice = buyPrice * (1 - cutLossPct / 100);
+
+                if (actualLows[buyDay] <= stopPrice) {
+                    sellPrice = stopPrice;
+                    cutLossTriggered = true;
+                } else {
                     for (let i = buyDay + 1; i < 5; i++) {
-                        peak = Math.max(peak, actualHighs[i-1]);
-                        if (actualLows[i] <= peak * (1 - currentCutLossPct / 100)) {
-                            cutLossDay = i;
+                        peakHigh = Math.max(peakHigh, actualHighs[i - 1]);
+                        if (actualLows[i] <= peakHigh * (1 - cutLossPct / 100)) {
+                            sellPrice = peakHigh * (1 - cutLossPct / 100);
+                            cutLossTriggered = true;
                             break;
                         }
                     }
                 }
-            }
-            if (cutLossDay !== null) {
-                trades.push({ profit: -currentCutLossPct/100 * fixedAmount, forced: true, cutLoss: true });
-                continue;
-            }
-
-            let sold = false;
-            for (let i = buyDay + 2; i < 5; i++) {
-                if (actualHighs[i] > highs[i]) {
-                    const sellPrice = highs[i];
-                    // Use currentMinGainPct for sell check logic (optional but consistent)
-                    if (sellPrice < buyPrice * (1 + currentMinGainPct / 100)) continue; 
-
+                if (cutLossTriggered) {
                     const shares = fixedAmount / buyPrice;
                     const gross = shares * (sellPrice - buyPrice);
                     const feeBuy = (feePerc/100)*fixedAmount + fixedFee;
                     const feeSell = (feePerc/100)*(shares*sellPrice) + fixedFee;
-                    if (gross - feeBuy - feeSell > 0) {
-                        trades.push({ profit: gross - feeBuy - feeSell, forced: false });
-                        sold = true;
-                        break;
-                    }
+                    trades.push({ profit: gross - feeBuy - feeSell, forced: true, cutLoss: true });
+                    continue;
                 }
             }
 
-            if (!sold) {
-                const sellPrice = actualCloses[4];
-                const shares = fixedAmount / buyPrice;
-                const gross = shares * (sellPrice - buyPrice);
-                const feeBuy = (feePerc/100)*fixedAmount + fixedFee;
-                const feeSell = (feePerc/100)*(shares*sellPrice) + fixedFee;
-                trades.push({ profit: gross - feeBuy - feeSell, forced: true });
+            // === NEW: Correct envelope take-profit ===
+            let soldAtTarget = false;
+            for (let i = buyDay + 1; i < 5; i++) {
+                if (actualHighs[i] >= batch_max_high) {
+                    sellPrice = batch_max_high;
+                    soldAtTarget = true;
+                    forcedExit = false;
+                    break;
+                }
             }
+
+            // If not sold at target → forced exit
+            if (!soldAtTarget) {
+                sellPrice = actualCloses[4];
+            }
+
+            const shares = fixedAmount / buyPrice;
+            const gross = shares * (sellPrice - buyPrice);
+            const feeBuy = (feePerc/100)*fixedAmount + fixedFee;
+            const feeSell = (feePerc/100)*(shares*sellPrice) + fixedFee;
+            const netProfit = gross - feeBuy - feeSell;
+
+            trades.push({
+                profit: netProfit,
+                forced: forcedExit,
+                success: soldAtTarget
+            });
         }
-        
-        // ... (Rest of result object construction remains identical) ...
-        // Copy the return result logic from your existing code
+
+        // === Build stats (same structure as rolling backtest) ===
         const totalBatches = Object.keys(data).filter(d => {
             const b = data[d][activeAsset];
             return b && b.length === 5 && b.every(p => p.actual_low > 0);
         }).length;
 
         const numTrades = trades.length;
-        const successful = trades.filter(t => !t.forced);
-        const forced = trades.filter(t => t.forced);
+        const successful = trades.filter(t => t.success);
+        const forced = trades.filter(t => t.forced || !t.success); // all non-success are forced
+        const wins = trades.filter(t => t.profit > 0);
+        const losses = trades.filter(t => t.profit <= 0);
+        const forcedWins = forced.filter(t => t.profit > 0);
+        const forcedLosses = forced.filter(t => t.profit <= 0);
+
         const totalProfit = trades.reduce((s, t) => s + t.profit, 0);
         const roi = numTrades > 0 ? (totalProfit / (numTrades * fixedAmount)) * 100 : 0;
 
+        const result = {};
         result[activeAsset] = {
             total_batches: totalBatches,
             num_trades: numTrades,
-            num_gains: trades.filter(t => t.profit > 0).length,
-            num_losses: trades.filter(t => t.profit < 0).length,
-            pct_gains: numTrades ? (trades.filter(t => t.profit > 0).length / numTrades) * 100 : 0,
-            pct_losses: numTrades ? (trades.filter(t => t.profit < 0).length / numTrades) * 100 : 0,
-            num_forced: forced.length,
-            num_cut_gain: forced.filter(t => t.cutLoss !== true && t.profit > 0).length,
-            num_cut_loss: forced.filter(t => t.cutLoss).length,
-            pct_cut_gain: forced.length ? (forced.filter(t => t.cutLoss !== true && t.profit > 0).length / forced.length) * 100 : 0,
-            pct_cut_loss: forced.length ? (forced.filter(t => t.cutLoss).length / forced.length) * 100 : 0,
+            num_gains: wins.length,
+            num_losses: losses.length,
+            pct_gains: numTrades ? (wins.length / numTrades) * 100 : 0,
+            pct_losses: numTrades ? (losses.length / numTrades) * 100 : 0,
+
             num_successful: successful.length,
-            pct_successful: numTrades ? (successful.length / numTrades) * 100 : 0,
             num_success_batches: successful.length,
             num_failed_batches: forced.length,
             num_no_action_batches: totalBatches - numTrades,
+
             pct_success_batches: totalBatches ? (successful.length / totalBatches) * 100 : 0,
             pct_failed_batches: totalBatches ? (forced.length / totalBatches) * 100 : 0,
             pct_no_action_batches: totalBatches ? ((totalBatches - numTrades) / totalBatches) * 100 : 0,
+
             avg_successful_earning: successful.length ? successful.reduce((s,t)=>s+t.profit,0)/successful.length : 0,
-            avg_failed_win: forced.filter(t=>t.profit>0).length ? forced.filter(t=>t.profit>0).reduce((s,t)=>s+t.profit,0)/forced.filter(t=>t.profit>0).length : 0,
-            avg_failed_loss: forced.filter(t=>t.profit<0).length ? forced.filter(t=>t.profit<0).reduce((s,t)=>s+t.profit,0)/forced.filter(t=>t.profit<0).length : 0,
-            avg_overall_win: trades.filter(t=>t.profit>0).length ? trades.filter(t=>t.profit>0).reduce((s,t)=>s+t.profit,0)/trades.filter(t=>t.profit>0).length : 0,
-            avg_overall_loss: trades.filter(t=>t.profit<0).length ? trades.filter(t=>t.profit<0).reduce((s,t)=>s+t.profit,0)/trades.filter(t=>t.profit<0).length : 0,
+
+            // THESE WERE MISSING → CRASH!
+            avg_overall_win: wins.length ? wins.reduce((s,t)=>s+t.profit,0)/wins.length : 0,
+            avg_overall_loss: losses.length ? losses.reduce((s,t)=>s+t.profit,0)/losses.length : 0,
+
+            num_forced: forced.length,
+            num_forced_win: forcedWins.length,
+            num_forced_loss: forcedLosses.length,
+            pct_forced_win: forced.length ? (forcedWins.length / forced.length) * 100 : 0,
+            pct_forced_loss: forced.length ? (forcedLosses.length / forced.length) * 100 : 0,
+            avg_forced_win: forcedWins.length ? forcedWins.reduce((s,t)=>s+t.profit,0)/forcedWins.length : 0,
+            avg_forced_loss: forcedLosses.length ? forcedLosses.reduce((s,t)=>s+t.profit,0)/forcedLosses.length : 0,
+
             total_profit: totalProfit,
             roi: roi
         };
+
         return result;
     }
     
+
     // --- Batch Type Determination ---
-    function getBatchType(forecastDate, asset, cutLossPct = 0, fixedAmount = 10000, feePerc = 0, fixedFee = 0, minGainPct = 0, vGainSigma = null, vLossSigma = null) {
-        const predictions = forecastData[forecastDate]?.[asset];
-        if (!predictions || predictions.length !== 5) {
-            return { type: "invalid", text: "Invalid Batch", color: "gray" };
+    function getBatchType(forecastDate, asset, params = {}) {
+        const {
+            cutLossPct = 0,
+            edge_risk_multiplier = 1.5,
+            edge_min_abs = 0.034,
+            edge_vol_factor = 0.0
+        } = params;
+
+        const batch = forecastData[forecastDate]?.[asset];
+        if (!batch || batch.length !== 5) return { type: "invalid", text: "Invalid Batch", color: "gray" };
+
+        const allActualsFilled = batch.every(p => p.actual_low > 0 && p.actual_high > 0 && p.actual_close > 0);
+        if (!allActualsFilled) return { type: "future", text: "Future Batch", color: "blue" };
+
+        // === APPLY REAL EDGE FILTER ===
+        const edgeResult = calculateRequiredEdge(batch, edge_risk_multiplier, edge_min_abs, edge_vol_factor);
+        // if (edgeResult.valid) {
+        //     subtitle.textContent = `${getAssetLabel(asset)} | Edge: ${(edgeResult.expected_return*100).toFixed(2)}% > Req: ${(edgeResult.required_edge*100).toFixed(2)}% → TRADE`;
+        // } else {
+        //     subtitle.textContent = `${getAssetLabel(asset)} | Edge: ${(edgeResult.expected_return*100).toFixed(2)}% < Req: ${(edgeResult.required_edge*100).toFixed(2)}% → NO TRADE`;
+        // }
+        if (!edgeResult.valid) {
+            return { type: "noaction", text: `No Action (${edgeResult.reason})`, color: "orange" };
         }
 
-        const validActuals = predictions.every(p =>
-            p.actual_low != null && p.actual_high != null && p.actual_close != null &&
-            p.actual_low > 0 && p.actual_high > 0 && p.actual_close > 0
-        );
-        if (!validActuals) {
-            return { type: "future", text: "Future (No Actuals)", color: "blue" };
-        }
+        const { batch_min_low, batch_max_high } = edgeResult;
 
-        // --- [NEW] Dynamic Threshold Logic ---
-        let currentMinGainPct = minGainPct;
-        let currentCutLossPct = cutLossPct;
-
-        if (vGainSigma !== null && vLossSigma !== null && !isNaN(vGainSigma) && !isNaN(vLossSigma)) {
-            const closes = predictions.map(p => p.actual_close);
-            const batchMean = closes.reduce((a, b) => a + b, 0) / closes.length;
-            const sumSqDiff = closes.reduce((sum, x) => sum + Math.pow(x - batchMean, 2), 0);
-            const batchStd = Math.sqrt(sumSqDiff / closes.length);
-            const volPctApprox = batchMean > 0 ? (batchStd / batchMean) * 100 : 1.0;
-
-            currentMinGainPct = Math.max(0.1, volPctApprox * vGainSigma);
-            currentCutLossPct = Math.max(0.1, volPctApprox * vLossSigma);
-        }
-        // -------------------------------------
-
-        const batchMinLow = Math.min(...predictions.map(p => p.predicted_low));
-        const batchMaxHigh = Math.max(...predictions.map(p => p.predicted_high));
-
-        // 1. Insufficient predicted gain? (Use currentMinGainPct)
-        if (batchMaxHigh < batchMinLow * (1 + currentMinGainPct / 100)) {
-            return { type: "noaction", text: "No Action (Low Gain)", color: "orange" };
-        }
-
-        const actualLows   = predictions.map(p => p.actual_low);
-        const actualHighs  = predictions.map(p => p.actual_high);
-        const actualCloses = predictions.map(p => p.actual_close);
-        const predHighs    = predictions.map(p => p.predicted_high);
-
-        // 2. Buy trigger?
+        // Buy fill?
         let buyDay = -1;
         for (let i = 0; i < 5; i++) {
-            if (actualLows[i] <= batchMinLow) {
+            if (batch[i].actual_low <= batch_min_low) {
                 buyDay = i;
                 break;
             }
         }
         if (buyDay === -1) {
-            return { type: "noaction", text: "No Action (Buy Not Hit)", color: "orange" };
+            return { type: "failed", text: "Failed (No Fill)", color: "red" };
         }
 
-        const buyPrice = batchMinLow;
-
-        // 3. Cut-loss? (Use currentCutLossPct)
-        if (currentCutLossPct > 0) {
-            const initialStop = buyPrice * (1 - currentCutLossPct / 100);
-            if (actualLows[buyDay] <= initialStop) {
-                return { type: "failed", text: "Failed (Cut Loss on Buy)", color: "red" };
-            }
-            let peak = actualHighs[buyDay];
-            for (let i = buyDay + 1; i < 5; i++) {
-                peak = Math.max(peak, actualHighs[i - 1]);
-                if (actualLows[i] <= peak * (1 - currentCutLossPct / 100)) {
+        // Cut loss?
+        if (cutLossPct > 0) {
+            const stop = batch_min_low * (1 - cutLossPct / 100);
+            for (let i = buyDay; i < 5; i++) {
+                if (batch[i].actual_low <= stop) {
                     return { type: "failed", text: "Failed (Cut Loss)", color: "red" };
                 }
             }
         }
 
-        // 4. Success? (Use currentMinGainPct for sell logic if applicable)
-        for (let i = buyDay + 2; i < 5; i++) {
-            if (actualHighs[i] > predHighs[i]) {
-                const sellPriceCand = predHighs[i];
-                if (sellPriceCand < buyPrice * (1 + currentMinGainPct / 100)) continue; 
-
-                const shares = fixedAmount / buyPrice;
-                const gross = shares * (sellPriceCand - buyPrice);
-                const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
-                const feeSell = (feePerc / 100) * (shares * sellPriceCand) + fixedFee;
-
-                if (gross - feeBuy - feeSell > 0) {
-                    return { type: "success", text: "Success (Breakout)", color: "green" };
-                }
+        // Success = hit batch_max_high BEFORE day 5
+        let targetHitDay = -1;
+        for (let i = buyDay + 1; i < 5; i++) {  // start checking next day
+            if (batch[i].actual_high >= batch_max_high) {
+                targetHitDay = i;
+                break;
             }
         }
 
-        // 5. No breakout → forced exit
-        return { type: "failed", text: "Failed (Forced Exit)", color: "red" };
-    }
+        if (targetHitDay !== -1) {
+            return { type: "success", text: "Success (Target Hit)", color: "green" };
+        }
 
+        // Everything else = failed (forced exit, small profit, late hit, etc.)
+        return { type: "failed", text: "Failed (No Target Hit)", color: "red" };
+    }
+    
     // --- Infographics Rendering Function ---
     function computeOverallStats() {
         const allDates = Object.keys(forecastData)
@@ -582,7 +614,7 @@
 
             totalBatches++;
 
-            const info = getBatchType(date, activeAsset, cutLossPct, fixedAmount, feePerc, fixedFee, minGainPct, volGainSigma, volLossSigma);
+            const info = getBatchType(date, activeAsset, { cutLossPct, edge_risk_multiplier: edgeRiskMultiplier, edge_min_abs: edgeMinAbs, edge_vol_factor: edgeVolFactor });
 
             if (info.type === "success") success++;
             else if (info.type === "failed") failed++;
@@ -625,7 +657,8 @@
             num_success_batches: 0, num_failed_batches: 0, num_no_action_batches: 0,
             pct_success_batches: 0, pct_failed_batches: 0, pct_no_action_batches: 100,
             avg_successful_earning: 0, avg_failed_win: 0, avg_failed_loss: 0,
-            avg_overall_win: 0, avg_overall_loss: 0, total_profit: 0, roi: 0
+            avg_overall_win: 0, avg_overall_loss: 0, total_profit: 0, roi: 0,
+            pct_forced_win: 0, pct_forced_loss: 0, avg_forced_win: 0, avg_forced_loss: 0,
         });
 
         const formatCurrency = (value) => {
@@ -657,7 +690,7 @@
                 <p class="text-3xl font-bold text-green-400">${d.pct_gains.toFixed(1)}%</p>
                 <p class="text-sm text-gray-300 mt-1">${d.num_gains} Wins / Avg: <span class="font-semibold">${formatCurrency(d.avg_overall_win)}</span></p>
             </div>
-
+            
             <div class="info-card border-accent-red">
                 <div class="info-card-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" /></svg>
@@ -687,13 +720,21 @@
             
             <div class="info-card border-accent-red">
                 <div class="info-card-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
                 </div>
                 <h3 class="text-base font-semibold text-gray-400">Failed Batches</h3>
-                <p class="text-3xl font-bold text-red-400">${d.pct_failed_batches.toFixed(1)}%</p>
+                <p class="text-3xl font-bold text-red-400">${(d.pct_failed_batches || 0).toFixed(1)}%</p>
                 <div class="mt-2 text-xs">
-                    <p class="text-green-400">${d.pct_cut_gain.toFixed(1)}% Win / Avg: ${formatCurrency(d.avg_failed_win)}</p>
-                    <p class="text-red-400">${d.pct_cut_loss.toFixed(1)}% Loss / Avg: ${formatCurrency(d.avg_failed_loss)}</p>
+                    <p class="text-green-400">
+                        ${(d.pct_forced_win || 0).toFixed(1)}% Forced Win / Avg: 
+                        <span class="font-semibold">${formatCurrency(d.avg_forced_win || 0)}</span>
+                    </p>
+                    <p class="text-red-400">
+                        ${(d.pct_forced_loss || 0).toFixed(1)}% Forced Loss / Avg: 
+                        <span class="font-semibold">${formatCurrency(d.avg_forced_loss || 0)}</span>
+                    </p>
                 </div>
             </div>
 
@@ -736,7 +777,7 @@
         // const batchType = getBatchType(activeForecastDate, activeAsset, cutLossPct, fixedAmount, feePerc, fixedFee, minGainPct);
         // batchTypeElement.textContent = `Batch Type: ${batchType}`;
 
-        const batchInfo = getBatchType(activeForecastDate, activeAsset, cutLossPct, fixedAmount, feePerc, fixedFee, minGainPct, volGainSigma, volLossSigma);
+        const batchInfo = getBatchType(activeForecastDate, activeAsset, { cutLossPct, edge_risk_multiplier: edgeRiskMultiplier, edge_min_abs: edgeMinAbs, edge_vol_factor: edgeVolFactor });
         batchTypeElement.textContent = `Batch Type: ${batchInfo.text}`;
         batchTypeElement.style.color = 
             batchInfo.color === "green" ? "#22c55e" :
@@ -899,8 +940,9 @@
         params.set('fee_perc', feePerc);
         params.set('fixed_fee', fixedFee);
         params.set('min_gain_pct', minGainPct);
-        if (volGainSigma !== null) params.set('vol_gain_sigma', volGainSigma);
-        if (volLossSigma !== null) params.set('vol_loss_sigma', volLossSigma);
+        if (edgeRiskMultiplier !== null) params.set('edge_risk_multiplier', edgeRiskMultiplier);
+        if (edgeMinAbs !== null) params.set('edge_min_abs', edgeMinAbs);
+        if (edgeVolFactor !== null) params.set('edge_vol_factor', edgeVolFactor);
         history.pushState({}, '', `${location.pathname}?${params.toString()}`);
     }
 
@@ -949,11 +991,14 @@
 
             const urlParams = new URLSearchParams(window.location.search);
 
-            const vGain = parseFloat(urlParams.get('vol_gain_sigma'));
-            volGainSigma = !isNaN(vGain) ? vGain : null;
+            const erm = parseFloat(urlParams.get('edge_risk_multiplier'));
+            edgeRiskMultiplier = !isNaN(erm) ? erm : 1.5;
 
-            const vLoss = parseFloat(urlParams.get('vol_loss_sigma'));
-            volLossSigma = !isNaN(vLoss) ? vLoss : null;
+            const ema = parseFloat(urlParams.get('edge_min_abs'));
+            edgeMinAbs = !isNaN(ema) ? ema : 0.034;
+
+            const evf = parseFloat(urlParams.get('edge_vol_factor'));
+            edgeVolFactor = !isNaN(evf) ? evf : 0.0;
 
             activeStartDate = urlParams.get('start_date') || minDate;
             if (new Date(activeStartDate) < new Date(minDate) || new Date(activeStartDate) > new Date(maxDate)) {
@@ -993,8 +1038,9 @@
             feePctInput.value = feePerc;
             fixedFeeInput.value = fixedFee;
             minGainInput.value = minGainPct;
-            if(volGainSigma !== null) volGainSigmaInput.value = volGainSigma;
-            if(volLossSigma !== null) volLossSigmaInput.value = volLossSigma;
+            edgeRiskMultiplierInput.value = edgeRiskMultiplier;
+            edgeMinAbsInput.value = edgeMinAbs;
+            edgeVolFactorInput.value = edgeVolFactor;
         }
         
         forecastDatePicker.addEventListener('change', () => {
@@ -1047,17 +1093,25 @@
             renderCharts();
         });
 
-        volGainSigmaInput.addEventListener('input', () => {
-            const val = parseFloat(volGainSigmaInput.value);
-            volGainSigma = !isNaN(val) ? val : null;
+        edgeRiskMultiplierInput.addEventListener('input', () => {
+            const val = parseFloat(edgeRiskMultiplierInput.value);
+            edgeRiskMultiplier = !isNaN(val) ? val : 1.5;
             updateURLParams();
             updateStats();
             renderCharts();
         });
 
-        volLossSigmaInput.addEventListener('input', () => {
-            const val = parseFloat(volLossSigmaInput.value);
-            volLossSigma = !isNaN(val) ? val : null;
+        edgeMinAbsInput.addEventListener('input', () => {
+            const val = parseFloat(edgeMinAbsInput.value);
+            edgeMinAbs = !isNaN(val) ? val : 0.034;
+            updateURLParams();
+            updateStats();
+            renderCharts();
+        });
+
+        edgeVolFactorInput.addEventListener('input', () => {
+            const val = parseFloat(edgeVolFactorInput.value);
+            edgeVolFactor = !isNaN(val) ? val : 0.0;
             updateURLParams();
             updateStats();
             renderCharts();

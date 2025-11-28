@@ -167,12 +167,16 @@
                             <input type="number" id="fixed-fee" value="0" class="w-full bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 mt-1">
                         </div>
                         <div>
-                            <label for="vol-gain-sigma" class="text-sm font-medium text-gray-400">Vol Gain Sigma</label>
-                            <input type="number" step="0.1" id="vol-gain-sigma" placeholder="Optional" class="w-full bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 mt-1">
+                            <label for="edge-risk-multiplier" class="text-sm font-medium text-gray-400">Edge Risk Multiplier</label>
+                            <input type="number" step="0.1" id="edge-risk-multiplier" value="1.5" class="w-full bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 mt-1">
                         </div>
                         <div>
-                            <label for="vol-loss-sigma" class="text-sm font-medium text-gray-400">Vol Loss Sigma</label>
-                            <input type="number" step="0.1" id="vol-loss-sigma" placeholder="Optional" class="w-full bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 mt-1">
+                            <label for="edge-min-abs" class="text-sm font-medium text-gray-400">Edge Min Abs</label>
+                            <input type="number" step="0.001" id="edge-min-abs" value="0.034" class="w-full bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 mt-1">
+                        </div>
+                        <div>
+                            <label for="edge-vol-factor" class="text-sm font-medium text-gray-400">Edge Vol Factor</label>
+                            <input type="number" step="0.1" id="edge-vol-factor" value="0.0" class="w-full bg-gray-700 text-white rounded-md p-2 text-sm border-gray-600 focus:ring-blue-500 focus:border-blue-500 mt-1">
                         </div>
                     </div>
                 </div>
@@ -223,8 +227,9 @@
     let feePerc = 0;
     let fixedFee = 0;
     let minGainPct = 0;
-    let volGainSigma = null; 
-    let volLossSigma = null;
+    let edgeRiskMultiplier = 1.5;
+    let edgeMinAbs = 0.034;
+    let edgeVolFactor = 0.0;
     let profitChart = null;
     let successfulChart = null;
     let roiChart = null;
@@ -241,8 +246,9 @@
     const feePctInput = document.getElementById('fee-pct');
     const fixedFeeInput = document.getElementById('fixed-fee');
     const minGainInput = document.getElementById('min-gain-pct');
-    const volGainSigmaInput = document.getElementById('vol-gain-sigma');
-    const volLossSigmaInput = document.getElementById('vol-loss-sigma');
+    const edgeRiskMultiplierInput = document.getElementById('edge-risk-multiplier');
+    const edgeMinAbsInput = document.getElementById('edge-min-abs');
+    const edgeVolFactorInput = document.getElementById('edge-vol-factor');
     const shareButton = document.getElementById('share-button');
     const jumpToLatestButton = document.getElementById('jump-to-latest');
     
@@ -320,195 +326,230 @@
         return labels[asset] || asset.split(/[-_]/).pop().toUpperCase(); // Fallback to last part
     }
 
+    function calculateRequiredEdge(batch, edge_risk_multiplier = 1.5, edge_min_abs = 0.015, edge_vol_factor = 0.0) {
+        const mids = batch.map(p => (p.predicted_low + p.predicted_high) / 2);
+        const lows = batch.map(p => p.predicted_low);
+        const highs = batch.map(p => p.predicted_high);
+
+        // Expected return: from first mid to last mid
+        const expected_return = mids[4] / mids[0] - 1.0;
+        if (expected_return <= 0) return { valid: false, reason: "no positive expected return" };
+
+        // 1. Range-based risk (same as Python)
+        const daily_range_pct = highs.map((h, i) => (h - lows[i]) / mids[i]);
+        const avg_range_pct = daily_range_pct.reduce((a, b) => a + b, 0) / daily_range_pct.length;
+        const estimated_risk = Math.max(0.008, avg_range_pct * edge_risk_multiplier);
+
+        // 2. Optional volatility component
+        let vol_component = 0;
+        if (edge_vol_factor > 0) {
+            const log_rets = [];
+            for (let i = 1; i < mids.length; i++) {
+                log_rets.push(Math.log(mids[i] / mids[i - 1]));
+            }
+            if (log_rets.length > 1) {
+                const mean_log_ret = log_rets.reduce((a, b) => a + b, 0) / log_rets.length;
+                const variance_log_ret = log_rets.reduce((s, x) => s + Math.pow(x - mean_log_ret, 2), 0) / log_rets.length;
+                const std_log_ret = Math.sqrt(variance_log_ret);
+                const pred_vol_annual = std_log_ret * Math.sqrt(252 / 4); // 4 periods ~ week
+                vol_component = edge_vol_factor * pred_vol_annual;
+            }
+        }
+
+        const required_edge = edge_min_abs + estimated_risk + vol_component;
+
+        if (expected_return < required_edge) {
+            return { valid: false, reason: "edge too small", expected_return, required_edge };
+        }
+
+        return {
+            valid: true,
+            expected_return,
+            required_edge,
+            batch_min_low: Math.min(...lows),
+            batch_max_high: Math.max(...highs)
+        };
+    }
+
     // --- Rolling Monthly Stats ---
-    function computeRollingStats(data, startDate, endDate, cutLossPct = 0, fixedAmount = 10000, feePerc = 0, fixedFee = 0, minGainPct = 0, volGainSigma = null, volLossSigma = null) {
+    function computeRollingStats(data, startDate, endDate, cutLossPct = 0, fixedAmount = 10000, feePerc = 0, fixedFee = 0, minGainPct = 0, edgeRiskMultiplier = 1.5, edgeMinAbs = 0.034, edgeVolFactor = 0.0) {
     const statsByAsset = {};
-    const monthlyBreakdown = {}; 
 
     for (let creationDate in data) {
         if (new Date(creationDate) < new Date(startDate) || new Date(creationDate) > new Date(endDate)) continue;
 
-        const month = creationDate.slice(0, 7);
-        if (!monthlyBreakdown[month]) monthlyBreakdown[month] = { success: 0, failed: 0, no_action: 0 };
+        const month = creationDate.slice(0, 7); // YYYY-MM
 
         for (let asset in data[creationDate]) {
             if (!statsByAsset[asset]) statsByAsset[asset] = {};
-            // ... (Ensure the stats object structure is initialized exactly as before) ...
-            if (!statsByAsset[asset][month]) statsByAsset[asset][month] = {
-                total_batches: 0, num_trades: 0, num_gains: 0, num_losses: 0, num_forced: 0,
-                num_cut_gain: 0, num_cut_loss: 0, num_successful: 0, num_success_batches: 0,
-                num_failed_batches: 0, num_no_action_batches: 0, pct_gains: 0, pct_losses: 0,
-                pct_cut_gain: 0, pct_cut_loss: 0, pct_successful: 0, pct_success_batches: 0,
-                pct_failed_batches: 0, pct_no_action_batches: 0, pct_success_vs_failed: 0,
-                avg_successful_earning: 0, avg_failed_win: 0, avg_failed_loss: 0,
-                avg_overall_win: 0, avg_overall_loss: 0, total_profit: 0, roi: 0
-            };
+            if (!statsByAsset[asset][month]) {
+                statsByAsset[asset][month] = {
+                    total_batches: 0,
+                    num_trades: 0,
+                    num_gains: 0,
+                    num_losses: 0,
+                    num_forced: 0,
+                    num_cut_gain: 0,
+                    num_cut_loss: 0,
+                    num_successful: 0,
+                    num_success_batches: 0,
+                    num_failed_batches: 0,
+                    num_no_action_batches: 0,
+                    pct_gains: 0,
+                    pct_losses: 0,
+                    pct_cut_gain: 0,
+                    pct_cut_loss: 0,
+                    pct_successful: 0,
+                    pct_success_batches: 0,
+                    pct_failed_batches: 0,
+                    pct_no_action_batches: 0,
+                    pct_success_vs_failed: 0,
+                    avg_successful_earning: 0,
+                    avg_failed_win: 0,
+                    avg_failed_loss: 0,
+                    avg_overall_win: 0,
+                    avg_overall_loss: 0,
+                    total_profit: 0,
+                    roi: 0,
+                    trades: [] // For detailed profit tracking
+                };
+            }
 
+            const s = statsByAsset[asset][month];
             const predictions = data[creationDate][asset];
+
             if (predictions.length !== 5) continue;
 
             const hasValidActuals = predictions.every(p =>
-                p.actual_low != null && p.actual_high != null && p.actual_close != null &&
                 p.actual_low > 0 && p.actual_high > 0 && p.actual_close > 0
             );
             if (!hasValidActuals) continue;
 
-            statsByAsset[asset][month].total_batches += 1;
+            s.total_batches += 1;
 
-            // --- [NEW] Dynamic Threshold Logic ---
-            let currentMinGainPct = minGainPct;
-            let currentCutLossPct = cutLossPct;
-
-            // Check if Sigmas are active (not null and strictly valid numbers)
-            if ((volGainSigma !== null && !isNaN(volGainSigma)) || 
-                (volLossSigma !== null && !isNaN(volLossSigma))) {
-                
-                const closes = predictions.map(p => p.actual_close).filter(c => c > 0);
-                if (closes.length > 1) {
-                    const mean = closes.reduce((a,b) => a+b, 0) / closes.length;
-                    const variance = closes.reduce((s, x) => s + (x - mean)**2, 0) / closes.length;
-                    const std = Math.sqrt(variance);
-                    const volPctApprox = mean > 0 ? (std / mean) * 100 : 1.0;
-
-                    if (volGainSigma !== null && !isNaN(volGainSigma)) {
-                        currentMinGainPct = Math.max(0.1, volPctApprox * volGainSigma);
-                    }
-                    if (volLossSigma !== null && !isNaN(volLossSigma)) {
-                        currentCutLossPct = Math.max(0.1, volPctApprox * volLossSigma);
-                    }
-                }
-            }
-
-            const batchMinLow = Math.min(...predictions.map(p => p.predicted_low));
-            const batchMaxHigh = Math.max(...predictions.map(p => p.predicted_high));
-
-            // Use currentMinGainPct instead of minGainPct
-            if (batchMaxHigh < batchMinLow * (1 + currentMinGainPct / 100)) {
-                statsByAsset[asset][month].num_no_action_batches += 1;
-                monthlyBreakdown[month].no_action += 1;
+            const edgeResult = calculateRequiredEdge(predictions, edgeRiskMultiplier, edgeMinAbs, edgeVolFactor);
+            if (!edgeResult.valid) {
+                s.num_no_action_batches += 1;
                 continue;
             }
 
+            const { batch_min_low } = edgeResult;
             const actualLows = predictions.map(p => p.actual_low);
             const actualHighs = predictions.map(p => p.actual_high);
             const actualCloses = predictions.map(p => p.actual_close);
             const predHighs = predictions.map(p => p.predicted_high);
 
-            let buyIndex = null;
+            // === Find Buy Day ===
+            let buyIndex = -1;
             for (let i = 0; i < 5; i++) {
-                if (actualLows[i] <= batchMinLow) {
+                if (actualLows[i] <= batch_min_low) {
                     buyIndex = i;
                     break;
                 }
             }
-            if (buyIndex === null) {
-                statsByAsset[asset][month].num_no_action_batches += 1;
-                monthlyBreakdown[month].no_action += 1;
+            if (buyIndex === -1) {
+                s.num_no_action_batches += 1;
                 continue;
             }
 
-            const buyPrice = batchMinLow;
+            const buyPrice = batch_min_low;
 
-            // Cut-loss handling (trailing) using currentCutLossPct
-            let cutLossTriggerIndex = null;
-            let cutLossSellPrice = null;
-            let highestHighAfterBuy = actualHighs[buyIndex];
+            // === Cut Loss Logic (Trailing Stop) ===
+            let cutLossTriggered = false;
+            let sellPrice = actualCloses[4]; // default: forced exit at day 5 close
+            let sellIndex = 4;
+            let forcedExit = true;
 
-            if (currentCutLossPct > 0) {
-                const initialCutLossPrice = buyPrice * (1 - currentCutLossPct / 100);
-                if (actualLows[buyIndex] <= initialCutLossPrice) {
-                    cutLossTriggerIndex = buyIndex;
-                    cutLossSellPrice = initialCutLossPrice;
+            if (cutLossPct > 0) {
+                let peakHigh = actualHighs[buyIndex];
+                let stopPrice = buyPrice * (1 - cutLossPct / 100);
+
+                // Check same-day cut loss
+                if (actualLows[buyIndex] <= stopPrice) {
+                    sellPrice = stopPrice;
+                    sellIndex = buyIndex;
+                    cutLossTriggered = true;
                 } else {
+                    // Trail from next day onward
                     for (let i = buyIndex + 1; i < 5; i++) {
-                        highestHighAfterBuy = Math.max(highestHighAfterBuy, actualHighs[i - 1]);
-                        const trailingStop = highestHighAfterBuy * (1 - currentCutLossPct / 100);
-                        if (actualLows[i] <= trailingStop) {
-                            cutLossTriggerIndex = i;
-                            cutLossSellPrice = trailingStop;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            let sellIndex, sellPrice, forced = false, cutGain = false, cutLoss = false;
-
-            if (cutLossTriggerIndex !== null) {
-                sellIndex = cutLossTriggerIndex;
-                sellPrice = cutLossSellPrice;
-                forced = true;
-                cutLoss = true;
-            } else {
-                let foundSell = false;
-                for (let i = buyIndex + 2; i < 5; i++) {
-                    if (actualHighs[i] > predHighs[i]) {
-                        const potentialSellPrice = predHighs[i];
-                        // Use currentMinGainPct
-                        if (potentialSellPrice < buyPrice * (1 + currentMinGainPct / 100)) continue;
-
-                        const shares = fixedAmount / buyPrice;
-                        const gross = shares * (potentialSellPrice - buyPrice);
-                        const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
-                        const sellValue = shares * potentialSellPrice;
-                        const feeSell = (feePerc / 100) * sellValue + fixedFee;
-                        const net = gross - feeBuy - feeSell;
-
-                        if (net > 0) {
+                        peakHigh = Math.max(peakHigh, actualHighs[i - 1]);
+                        stopPrice = peakHigh * (1 - cutLossPct / 100);
+                        if (actualLows[i] <= stopPrice) {
+                            sellPrice = stopPrice;
                             sellIndex = i;
-                            sellPrice = potentialSellPrice;
-                            foundSell = true;
-                            forced = false;
+                            cutLossTriggered = true;
                             break;
                         }
                     }
                 }
+            }
 
-                if (!foundSell) {
-                    sellIndex = 4;
+            // === Try to Sell Early on Predicted High Break (Success Condition) ===
+            let soldEarly = false;
+            if (!cutLossTriggered) {
+                const batch_max_high = Math.max(...predHighs);
+                let soldAtTarget = false;
+                for (let i = buyIndex + 1; i < 5; i++) {
+                    if (actualHighs[i] >= batch_max_high) {
+                        sellPrice = batch_max_high;
+                        sellIndex = i;
+                        soldEarly = true;
+                        forcedExit = false;
+                        soldAtTarget = true;
+                        break;
+                    }
+                }
+                if (!soldEarly && !cutLossTriggered) {
                     sellPrice = actualCloses[4];
-                    forced = true;
-                    const profit = sellPrice - buyPrice;
-                    cutGain = profit > 0;
-                    cutLoss = profit < 0;
                 }
             }
 
-            // Record trade
-            statsByAsset[asset][month].num_trades += 1;
-            const grossProfit = sellPrice - buyPrice;
-            const shares = fixedAmount / buyPrice;
-            const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
-            const sellValue = shares * sellPrice;
-            const feeSell = (feePerc / 100) * sellValue + fixedFee;
-            const netProfit = shares * grossProfit - feeBuy - feeSell;
-
-            if (grossProfit > 0) statsByAsset[asset][month].num_gains += 1;
-            if (grossProfit < 0) statsByAsset[asset][month].num_losses += 1;
-            if (forced) {
-                statsByAsset[asset][month].num_forced += 1;
-                statsByAsset[asset][month].num_failed_batches += 1;
-                monthlyBreakdown[month].failed += 1;
-                if (cutGain) statsByAsset[asset][month].num_cut_gain += 1;
-                if (cutLoss) statsByAsset[asset][month].num_cut_loss += 1;
-            } else {
-                statsByAsset[asset][month].num_successful += 1;
-                statsByAsset[asset][month].num_success_batches += 1;
-                monthlyBreakdown[month].success += 1;
+            // Final forced exit at close of day 4 if not sold
+            if (soldEarly === false && cutLossTriggered === false) {
+                sellPrice = actualCloses[4];
             }
 
-            if (!statsByAsset[asset][month].trades) statsByAsset[asset][month].trades = [];
-            statsByAsset[asset][month].trades.push({
-                netProfit, grossProfit, forced, cutGain, cutLoss
+            // === Calculate P&L ===
+            const shares = fixedAmount / buyPrice;
+            const grossProfit = shares * (sellPrice - buyPrice);
+            const feeBuy = (feePerc / 100) * fixedAmount + fixedFee;
+            const feeSell = (feePerc / 100) * (shares * sellPrice) + fixedFee;
+            const netProfit = grossProfit - feeBuy - feeSell;
+
+            // === Classify Trade ===
+            s.num_trades += 1;
+
+            if (grossProfit > 0) s.num_gains += 1;
+            if (grossProfit < 0) s.num_losses += 1;
+
+            const isCutGain = forcedExit && grossProfit > 0;
+            const isCutLoss = forcedExit && grossProfit <= 0;
+
+            if (forcedExit) {
+                s.num_forced += 1;
+                s.num_failed_batches += 1;
+                if (isCutGain) s.num_cut_gain += 1;
+                if (isCutLoss) s.num_cut_loss += 1;
+            } else {
+                s.num_successful += 1;
+                s.num_success_batches += 1;
+            }
+
+            s.trades.push({
+                netProfit,
+                grossProfit,
+                forced: forcedExit,
+                cutGain: isCutGain,
+                cutLoss: isCutLoss
             });
         }
     }
 
-    // === Final percentage & average calculations (exact match to Python) ===
+    // === Final Calculations (same as before) ===
     for (let asset in statsByAsset) {
         for (let month in statsByAsset[asset]) {
             const s = statsByAsset[asset][month];
-            const trades = s.trades || [];
+            const trades = s.trades;
 
             s.pct_gains = s.num_trades ? (s.num_gains / s.num_trades) * 100 : 0;
             s.pct_losses = s.num_trades ? (s.num_losses / s.num_trades) * 100 : 0;
@@ -516,7 +557,8 @@
             s.pct_success_batches = s.total_batches ? (s.num_success_batches / s.total_batches) * 100 : 0;
             s.pct_failed_batches = s.total_batches ? (s.num_failed_batches / s.total_batches) * 100 : 0;
             s.pct_no_action_batches = s.total_batches ? (s.num_no_action_batches / s.total_batches) * 100 : 0;
-            s.pct_success_vs_failed = (s.num_success_batches + s.num_failed_batches) > 0 ? (s.num_success_batches / (s.num_success_batches + s.num_failed_batches)) * 100 : 0;
+            s.pct_success_vs_failed = (s.num_success_batches + s.num_failed_batches) > 0
+                ? (s.num_success_batches / (s.num_success_batches + s.num_failed_batches)) * 100 : 0;
             s.pct_cut_gain = s.num_forced ? (s.num_cut_gain / s.num_forced) * 100 : 0;
             s.pct_cut_loss = s.num_forced ? (s.num_cut_loss / s.num_forced) * 100 : 0;
 
@@ -524,20 +566,20 @@
             s.total_profit = netProfits.reduce((a, b) => a + b, 0);
             s.roi = s.num_trades ? (s.total_profit / (s.num_trades * fixedAmount)) * 100 : 0;
 
-            const successfulProfits = trades.filter(t => !t.forced).map(t => t.netProfit);
-            s.avg_successful_earning = successfulProfits.length ? successfulProfits.reduce((a, b) => a + b, 0) / successfulProfits.length : 0;
+            const successful = trades.filter(t => !t.forced);
+            s.avg_successful_earning = successful.length ? successful.reduce((a, t) => a + t.netProfit, 0) / successful.length : 0;
 
-            const failedWins = trades.filter(t => t.forced && t.grossProfit > 0).map(t => t.netProfit);
-            s.avg_failed_win = failedWins.length ? failedWins.reduce((a, b) => a + b, 0) / failedWins.length : 0;
+            const failedWins = trades.filter(t => t.forced && t.grossProfit > 0);
+            s.avg_failed_win = failedWins.length ? failedWins.reduce((a, t) => a + t.netProfit, 0) / failedWins.length : 0;
 
-            const failedLosses = trades.filter(t => t.forced && t.grossProfit < 0).map(t => t.netProfit);
-            s.avg_failed_loss = failedLosses.length ? failedLosses.reduce((a, b) => a + b, 0) / failedLosses.length : 0;
+            const failedLosses = trades.filter(t => t.forced && t.grossProfit <= 0);
+            s.avg_failed_loss = failedLosses.length ? failedLosses.reduce((a, t) => a + t.netProfit, 0) / failedLosses.length : 0;
 
-            const allWins = trades.filter(t => t.grossProfit > 0).map(t => t.netProfit);
-            s.avg_overall_win = allWins.length ? allWins.reduce((a, b) => a + b, 0) / allWins.length : 0;
+            const wins = trades.filter(t => t.grossProfit > 0);
+            s.avg_overall_win = wins.length ? wins.reduce((a, t) => a + t.netProfit, 0) / wins.length : 0;
 
-            const allLosses = trades.filter(t => t.grossProfit < 0).map(t => t.netProfit);
-            s.avg_overall_loss = allLosses.length ? allLosses.reduce((a, b) => a + b, 0) / allLosses.length : 0;
+            const losses = trades.filter(t => t.grossProfit <= 0);
+            s.avg_overall_loss = losses.length ? losses.reduce((a, t) => a + t.netProfit, 0) / losses.length : 0;
         }
     }
 
@@ -673,6 +715,9 @@
                 transactionFeePercentage: feePerc,
                 transactionFixedFee: fixedFee,
                 minGainPercentage: minGainPct,
+                edgeRiskMultiplier,
+                edgeMinAbs,
+                edgeVolFactor
             },
             overall: {
                 totalProfit: total_profit,
@@ -804,7 +849,7 @@
     }
 
     function updateStats() {
-        statsData = computeRollingStats(forecastData, activeStartDate, activeEndDate, cutLossPct, fixedAmount, feePerc, fixedFee, minGainPct, volGainSigma, volLossSigma);
+        statsData = computeRollingStats(forecastData, activeStartDate, activeEndDate, cutLossPct, fixedAmount, feePerc, fixedFee, minGainPct, edgeRiskMultiplier, edgeMinAbs, edgeVolFactor);
         console.log("✅ Rolling stats dynamically computed for range:", statsData);
         updateInfoCards(activeAsset);
         renderRollingCharts();
@@ -821,8 +866,9 @@
         params.set('fee_perc', feePerc);
         params.set('fixed_fee', fixedFee);
         params.set('min_gain_pct', minGainPct);
-        if (volGainSigma !== null) params.set('vol_gain_sigma', volGainSigma);
-        if (volLossSigma !== null) params.set('vol_loss_sigma', volLossSigma);
+        if (edgeRiskMultiplier !== null) params.set('edge_risk_multiplier', edgeRiskMultiplier);
+        if (edgeMinAbs !== null) params.set('edge_min_abs', edgeMinAbs);
+        if (edgeVolFactor !== null) params.set('edge_vol_factor', edgeVolFactor);
         history.pushState({}, '', `${location.pathname}?${params.toString()}`);
     }
 
@@ -869,11 +915,14 @@
 
             const urlParams = new URLSearchParams(window.location.search);
 
-            const vGain = parseFloat(urlParams.get('vol_gain_sigma'));
-            volGainSigma = !isNaN(vGain) ? vGain : null;
+            const erm = parseFloat(urlParams.get('edge_risk_multiplier'));
+            edgeRiskMultiplier = !isNaN(erm) ? erm : 1.5;
 
-            const vLoss = parseFloat(urlParams.get('vol_loss_sigma'));
-            volLossSigma = !isNaN(vLoss) ? vLoss : null;
+            const ema = parseFloat(urlParams.get('edge_min_abs'));
+            edgeMinAbs = !isNaN(ema) ? ema : 0.034;
+
+            const evf = parseFloat(urlParams.get('edge_vol_factor'));
+            edgeVolFactor = !isNaN(evf) ? evf : 0.0;
 
             activeStartDate = urlParams.get('start_date') || minDate;
             if (new Date(activeStartDate) < new Date(minDate) || new Date(activeStartDate) > new Date(maxDate)) {
@@ -907,8 +956,9 @@
             feePctInput.value = feePerc;
             fixedFeeInput.value = fixedFee;
             minGainInput.value = minGainPct;
-            if(volGainSigma !== null) volGainSigmaInput.value = volGainSigma;
-            if(volLossSigma !== null) volLossSigmaInput.value = volLossSigma;
+            edgeRiskMultiplierInput.value = edgeRiskMultiplier;
+            edgeMinAbsInput.value = edgeMinAbs;
+            edgeVolFactorInput.value = edgeVolFactor;
         }
         
         startDatePicker.addEventListener('change', () => {
@@ -953,16 +1003,23 @@
             updateStats();
         });
 
-        volGainSigmaInput.addEventListener('input', () => {
-            const val = parseFloat(volGainSigmaInput.value);
-            volGainSigma = !isNaN(val) ? val : null;
+        edgeRiskMultiplierInput.addEventListener('input', () => {
+            const val = parseFloat(edgeRiskMultiplierInput.value);
+            edgeRiskMultiplier = !isNaN(val) ? val : 1.5;
             updateURLParams();
             updateStats();
         });
 
-        volLossSigmaInput.addEventListener('input', () => {
-            const val = parseFloat(volLossSigmaInput.value);
-            volLossSigma = !isNaN(val) ? val : null;
+        edgeMinAbsInput.addEventListener('input', () => {
+            const val = parseFloat(edgeMinAbsInput.value);
+            edgeMinAbs = !isNaN(val) ? val : 0.034;
+            updateURLParams();
+            updateStats();
+        });
+
+        edgeVolFactorInput.addEventListener('input', () => {
+            const val = parseFloat(edgeVolFactorInput.value);
+            edgeVolFactor = !isNaN(val) ? val : 0.0;
             updateURLParams();
             updateStats();
         });
