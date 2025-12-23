@@ -239,17 +239,17 @@
     let statsData = {}; // This will hold dynamically computed stats per asset per month
     let activeStartDate;
     let activeEndDate;
-    let activeAsset = 'INDEXNASDAQ-_IXIC';
+    let activeAsset = 'QQQ';
     let cutLossPct = 0;
     let fixedAmount = 10000;
     let feePerc = 0;
     let fixedFee = 0;
     let minGainPct = 0;
-    let edgeRiskMultiplier = 1.5;
-    let edgeMinAbs = 0.034;
+    let edgeRiskMultiplier = 0.0;
+    let edgeMinAbs = 0.0;
     let edgeVolFactor = 0.0;
-    let scaleParts = 4;
-    let scaleEntryStyle = 'low_bias';
+    let scaleParts = 1;
+    let scaleEntryStyle = 'even';
     let scaleExitStyle = 'even';
     let profitChart = null;
     let successfulChart = null;
@@ -365,9 +365,10 @@
         const mids = batch.map(p => (p.predicted_low + p.predicted_high) / 2);
         const lows = batch.map(p => p.predicted_low);
         const highs = batch.map(p => p.predicted_high);
+        const n = batch.length;
 
         // Expected return: from first mid to last mid
-        const expected_return = mids[4] / mids[0] - 1.0;
+        const expected_return = mids[n - 1] / mids[0] - 1.0;
         if (expected_return <= 0) return { valid: false, reason: "no positive expected return" };
 
         // 1. Range-based risk (same as Python)
@@ -386,7 +387,7 @@
                 const mean_log_ret = log_rets.reduce((a, b) => a + b, 0) / log_rets.length;
                 const variance_log_ret = log_rets.reduce((s, x) => s + Math.pow(x - mean_log_ret, 2), 0) / log_rets.length;
                 const std_log_ret = Math.sqrt(variance_log_ret);
-                const pred_vol_annual = std_log_ret * Math.sqrt(252 / 4); // 4 periods ~ week
+                const pred_vol_annual = std_log_ret * Math.sqrt(252 / (n - 1)); // Annualize based on horizon
                 vol_component = edge_vol_factor * pred_vol_annual;
             }
         }
@@ -407,7 +408,7 @@
     }
 
     // --- Rolling Monthly Stats ---
-    function computeRollingStats(data, startDate, endDate, cutLossPct = 0, fixedAmount = 10000, feePerc = 0, fixedFee = 0, minGainPct = 0, edgeRiskMultiplier = 1.5, edgeMinAbs = 0.034, edgeVolFactor = 0.0, scaleParts = 4, scaleEntryStyle = 'low_bias', scaleExitStyle = 'even') {
+    function computeRollingStats(data, startDate, endDate, cutLossPct = 0, fixedAmount = 10000, feePerc = 0, fixedFee = 0, minGainPct = 0, edgeRiskMultiplier = 0.0, edgeMinAbs = 0.0, edgeVolFactor = 0.0, scaleParts = 1, scaleEntryStyle = 'even', scaleExitStyle = 'even') {
         const statsByAsset = {};
 
         for (let creationDate in data) {
@@ -453,7 +454,7 @@
                 const s = statsByAsset[asset][month];
                 const predictions = data[creationDate][asset];
 
-                if (predictions.length !== 5) continue;
+                if (predictions.length === 0) continue;
 
                 const hasValidActuals = predictions.every(p =>
                     p.actual_low > 0 && p.actual_high > 0 && p.actual_close > 0
@@ -511,9 +512,10 @@
                 const actualHighs = predictions.map(p => p.actual_high);
                 const actualOpens = predictions.map(p => p.actual_open);
                 const actualCloses = predictions.map(p => p.actual_close);
+                const n = predictions.length;
 
                 // === 4. Day-by-Day Execution ===
-                for (let day = 0; day < 5; day++) {
+                for (let day = 0; day < n; day++) {
                     const low_today = actualLows[day];
                     const high_today = actualHighs[day];
 
@@ -559,7 +561,7 @@
                     }
 
                     // --- Force exit on last day ---
-                    if (day === 4 && total_shares > 0) {
+                    if (day === n - 1 && total_shares > 0) {
                         force_exit_day = day;
                     }
                 }
@@ -584,12 +586,12 @@
                 if (remaining_weight < 0.000001) remaining_weight = 0;
 
                 if (remaining_weight > 0 && total_shares > 0) {
-                    const exit_price = Math.min(actualOpens[4], actualCloses[4]);
+                    const exit_price = Math.min(actualOpens[n - 1], actualCloses[n - 1]);
                     gross_pnl += remaining_weight * fixedAmount * (exit_price / avg_entry_price - 1);
                 }
 
                 // Stop-loss override
-                if (force_exit_day !== null && cut_price !== null && force_exit_day < 4) {
+                if (force_exit_day !== null && cut_price !== null && force_exit_day < n - 1) {
                     gross_pnl = total_invested_usd * (cut_price / avg_entry_price - 1);
                 }
 
@@ -603,9 +605,11 @@
                 
                 const netProfit = gross_pnl - feeBuy - feeSell;
 
-                // === 6. Success Criteria ===
+                // === 6. Success Criteria (Smoothed) ===
                 const exit_fill_rate = filled_exit_idx.size / scaleParts;
-                const isSuccess = (exit_fill_rate >= 0.7) && (force_exit_day !== 4 || netProfit > 0);
+                
+                // Calculate success score (0.0 to 1.0)
+                const successScore = (netProfit > 0) ? exit_fill_rate : 0.0;
 
                 // === Classify Trade ===
                 if (total_invested_usd === 0) {
@@ -621,15 +625,16 @@
                     roi: (netProfit / total_invested_usd) * 100,
                     netProfit: netProfit,
                     grossProfit: gross_pnl,
-                    forced: !isSuccess
+                    forced: successScore === 0, // Considered forced/failed if score is 0
+                    successScore: successScore
                 });
 
                 if (netProfit > 0) s.num_gains += 1;
                 if (netProfit < 0) s.num_losses += 1;
 
-                if (isSuccess && netProfit > 0) {
-                    s.num_successful += 1;
-                    s.num_success_batches += 1;
+                if (successScore > 0) {
+                    s.num_successful += successScore;
+                    s.num_success_batches += successScore;
                     s.avg_successful_earning += netProfit;
                 } else {
                     s.num_failed_batches += 1;
@@ -1021,18 +1026,18 @@
             const urlParams = new URLSearchParams(window.location.search);
 
             const erm = parseFloat(urlParams.get('edge_risk_multiplier'));
-            edgeRiskMultiplier = !isNaN(erm) ? erm : 1.5;
+            edgeRiskMultiplier = !isNaN(erm) ? erm : 0.0;
 
             const ema = parseFloat(urlParams.get('edge_min_abs'));
-            edgeMinAbs = !isNaN(ema) ? ema : 0.034;
+            edgeMinAbs = !isNaN(ema) ? ema : 0.0;
 
             const evf = parseFloat(urlParams.get('edge_vol_factor'));
             edgeVolFactor = !isNaN(evf) ? evf : 0.0;
 
             const sp = parseInt(urlParams.get('scale_parts'));
-            scaleParts = !isNaN(sp) ? sp : 4;
+            scaleParts = !isNaN(sp) ? sp : 1;
 
-            scaleEntryStyle = urlParams.get('scale_entry_style') || 'low_bias';
+            scaleEntryStyle = urlParams.get('scale_entry_style') || 'even';
             scaleExitStyle = urlParams.get('scale_exit_style') || 'even';
 
             activeStartDate = urlParams.get('start_date') || minDate;
@@ -1119,14 +1124,14 @@
 
         edgeRiskMultiplierInput.addEventListener('input', () => {
             const val = parseFloat(edgeRiskMultiplierInput.value);
-            edgeRiskMultiplier = !isNaN(val) ? val : 1.5;
+            edgeRiskMultiplier = !isNaN(val) ? val : 0.0;
             updateURLParams();
             updateStats();
         });
 
         edgeMinAbsInput.addEventListener('input', () => {
             const val = parseFloat(edgeMinAbsInput.value);
-            edgeMinAbs = !isNaN(val) ? val : 0.034;
+            edgeMinAbs = !isNaN(val) ? val : 0.0;
             updateURLParams();
             updateStats();
         });
@@ -1140,7 +1145,7 @@
 
         scalePartsInput.addEventListener('input', () => {
             const val = parseInt(scalePartsInput.value);
-            scaleParts = !isNaN(val) ? val : 4;
+            scaleParts = !isNaN(val) ? val : 1;
             updateURLParams();
             updateStats();
         });

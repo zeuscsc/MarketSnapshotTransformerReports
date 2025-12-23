@@ -215,10 +215,14 @@
                             </select>
                         </div>
                     </div>
-                     <div class="pt-2">
+                     <div class="pt-2 flex flex-col space-y-2">
                         <button id="share-button" class="w-full bg-blue-600 text-white px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 hover:bg-blue-500 flex items-center justify-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.368a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" /></svg>
                             Share View
+                        </button>
+                        <button id="copy-json-button" class="w-full bg-teal-600 text-white px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 hover:bg-teal-500 flex items-center justify-center gap-2">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM5 11a1 1 0 100 2h4a1 1 0 100-2H5z" /></svg>
+                            Copy JSON
                         </button>
                     </div>
                 </div>
@@ -374,9 +378,10 @@
         const mids = batch.map(p => (p.predicted_low + p.predicted_high) / 2);
         const lows = batch.map(p => p.predicted_low);
         const highs = batch.map(p => p.predicted_high);
+        const n = batch.length;
 
         // Expected return: from first mid to last mid
-        const expected_return = mids[4] / mids[0] - 1.0;
+        const expected_return = mids[n - 1] / mids[0] - 1.0;
         if (expected_return <= 0) return { valid: false, reason: "no positive expected return" };
 
         // 1. Range-based risk (same as Python)
@@ -395,7 +400,7 @@
                 const mean_log_ret = log_rets.reduce((a, b) => a + b, 0) / log_rets.length;
                 const variance_log_ret = log_rets.reduce((s, x) => s + Math.pow(x - mean_log_ret, 2), 0) / log_rets.length;
                 const std_log_ret = Math.sqrt(variance_log_ret);
-                const pred_vol_annual = std_log_ret * Math.sqrt(252 / 4); // 4 periods ~ week
+                const pred_vol_annual = std_log_ret * Math.sqrt(252 / (n - 1)); // Annualize based on horizon
                 vol_component = edge_vol_factor * pred_vol_annual;
             }
         }
@@ -421,7 +426,7 @@
             if (new Date(creationDate) < new Date(start) || new Date(creationDate) > new Date(end)) continue;
 
             const batch = data[creationDate][activeAsset];
-            if (!batch || batch.length !== 5) continue;
+            if (!batch || batch.length === 0) continue;
 
             const valid = batch.every(p => p.actual_low > 0 && p.actual_high > 0 && p.actual_close > 0);
             if (!valid) continue;
@@ -472,9 +477,10 @@
             const actualHighs = batch.map(p => p.actual_high);
             const actualOpens = batch.map(p => p.actual_open);
             const actualCloses = batch.map(p => p.actual_close);
+            const n = batch.length;
 
             // === 4. Day-by-Day Execution ===
-            for (let day = 0; day < 5; day++) {
+            for (let day = 0; day < n; day++) {
                 const low_today = actualLows[day];
                 const high_today = actualHighs[day];
 
@@ -520,7 +526,7 @@
                 }
 
                 // --- Force exit on last day ---
-                if (day === 4 && total_shares > 0) {
+                if (day === n - 1 && total_shares > 0) {
                     force_exit_day = day;
                 }
             }
@@ -545,12 +551,12 @@
             if (remaining_weight < 0.000001) remaining_weight = 0;
 
             if (remaining_weight > 0 && total_shares > 0) {
-                const exit_price = Math.min(actualOpens[4], actualCloses[4]);
+                const exit_price = Math.min(actualOpens[n - 1], actualCloses[n - 1]);
                 gross_pnl += remaining_weight * fixedAmount * (exit_price / avg_entry_price - 1);
             }
 
             // Stop-loss override
-            if (force_exit_day !== null && cut_price !== null && force_exit_day < 4) {
+            if (force_exit_day !== null && cut_price !== null && force_exit_day < n - 1) {
                 gross_pnl = total_invested_usd * (cut_price / avg_entry_price - 1);
             }
 
@@ -564,15 +570,17 @@
             
             const netProfit = gross_pnl - feeBuy - feeSell;
 
-            // === 6. Success Criteria ===
+            // === 6. Success Criteria (Smoothed) ===
             const exit_fill_rate = filled_exit_idx.size / scaleParts;
-            const isSuccess = (exit_fill_rate >= 0.7) && (force_exit_day !== 4 || netProfit > 0);
+            // Calculate success score (0.0 to 1.0)
+            const successScore = (netProfit > 0) ? exit_fill_rate : 0.0;
 
             if (total_invested_usd > 0) {
                 trades.push({
                     profit: netProfit,
-                    forced: !isSuccess,
-                    success: isSuccess
+                    forced: successScore === 0,
+                    successScore: successScore,
+                    success: successScore > 0
                 });
             }
         }
@@ -580,14 +588,21 @@
         // === Build stats (same structure as rolling backtest) ===
         const totalBatches = Object.keys(data).filter(d => {
             const b = data[d][activeAsset];
-            return b && b.length === 5 && b.every(p => p.actual_low > 0);
+            return b && b.length > 0 && b.every(p => p.actual_low > 0);
         }).length;
 
         const numTrades = trades.length;
-        const successful = trades.filter(t => t.success);
-        const forced = trades.filter(t => t.forced || !t.success); // all non-success are forced
+        
+        // Sum of success scores
+        const totalSuccessScore = trades.reduce((sum, t) => sum + (t.successScore || 0), 0);
+        
+        const successfulTrades = trades.filter(t => t.successScore > 0);
+        const failedTrades = trades.filter(t => t.successScore === 0);
+        
         const wins = trades.filter(t => t.profit > 0);
         const losses = trades.filter(t => t.profit <= 0);
+        
+        const forced = failedTrades;
         const forcedWins = forced.filter(t => t.profit > 0);
         const forcedLosses = forced.filter(t => t.profit <= 0);
 
@@ -603,16 +618,16 @@
             pct_gains: numTrades ? (wins.length / numTrades) * 100 : 0,
             pct_losses: numTrades ? (losses.length / numTrades) * 100 : 0,
 
-            num_successful: successful.length,
-            num_success_batches: successful.length,
+            num_successful: totalSuccessScore,
+            num_success_batches: totalSuccessScore,
             num_failed_batches: forced.length,
             num_no_action_batches: totalBatches - numTrades,
 
-            pct_success_batches: totalBatches ? (successful.length / totalBatches) * 100 : 0,
+            pct_success_batches: totalBatches ? (totalSuccessScore / totalBatches) * 100 : 0,
             pct_failed_batches: totalBatches ? (forced.length / totalBatches) * 100 : 0,
             pct_no_action_batches: totalBatches ? ((totalBatches - numTrades) / totalBatches) * 100 : 0,
 
-            avg_successful_earning: successful.length ? successful.reduce((s,t)=>s+t.profit,0)/successful.length : 0,
+            avg_successful_earning: successfulTrades.length ? successfulTrades.reduce((s,t)=>s+t.profit,0)/successfulTrades.length : 0,
 
             // THESE WERE MISSING → CRASH!
             avg_overall_win: wins.length ? wins.reduce((s,t)=>s+t.profit,0)/wins.length : 0,
@@ -644,7 +659,7 @@
         } = params;
 
         const batch = forecastData[forecastDate]?.[asset];
-        if (!batch || batch.length !== 5) return { type: "invalid", text: "Invalid Batch", color: "gray" };
+        if (!batch || batch.length === 0) return { type: "invalid", text: "Invalid Batch", color: "gray" };
 
         const allActualsFilled = batch.every(p => p.actual_low > 0 && p.actual_high > 0 && p.actual_close > 0);
         if (!allActualsFilled) return { type: "future", text: "Future Batch", color: "blue" };
@@ -661,10 +676,11 @@
         }
 
         const { batch_min_low, batch_max_high } = edgeResult;
+        const n = batch.length;
 
         // Buy fill?
         let buyDay = -1;
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < n; i++) {
             if (batch[i].actual_low <= batch_min_low) {
                 buyDay = i;
                 break;
@@ -677,16 +693,16 @@
         // Cut loss?
         if (cutLossPct > 0) {
             const stop = batch_min_low * (1 - cutLossPct / 100);
-            for (let i = buyDay; i < 5; i++) {
+            for (let i = buyDay; i < n; i++) {
                 if (batch[i].actual_low <= stop) {
                     return { type: "failed", text: "Failed (Cut Loss)", color: "red" };
                 }
             }
         }
 
-        // Success = hit batch_max_high BEFORE day 5
+        // Success = hit batch_max_high BEFORE day n
         let targetHitDay = -1;
-        for (let i = buyDay + 1; i < 5; i++) {  // start checking next day
+        for (let i = buyDay + 1; i < n; i++) {  // start checking next day
             if (batch[i].actual_high >= batch_max_high) {
                 targetHitDay = i;
                 break;
@@ -714,7 +730,7 @@
 
         allDates.forEach(date => {
             const batch = forecastData[date]?.[activeAsset];
-            if (!batch || batch.length !== 5) return;
+            if (!batch || batch.length === 0) return;
 
             totalBatches++;
 
@@ -746,6 +762,50 @@
             total_profit: 0,
             roi: 0
         };
+    }
+
+    // --- Function to get Overall Results as JSON ---
+    function getOverallResultsJSON(asset) {
+        const d = statsData[asset] || {};
+        
+        const results = {
+            asset: asset,
+            assetLabel: getAssetLabel(asset),
+            dateRange: {
+                start: activeStartDate,
+                end: activeEndDate,
+            },
+            simulationParameters: {
+                initialCapitalPerTrade: fixedAmount,
+                cutLossPercentage: cutLossPct,
+                transactionFeePercentage: feePerc,
+                transactionFixedFee: fixedFee,
+                minGainPercentage: minGainPct,
+                edgeRiskMultiplier,
+                edgeMinAbs,
+                edgeVolFactor,
+                scaleParts,
+                scaleEntryStyle,
+                scaleExitStyle
+            },
+            overall: {
+                totalProfit: d.total_profit,
+                totalTrades: d.num_trades,
+                totalBatches: d.total_batches,
+                winRate: d.pct_gains,
+                lossRate: d.pct_losses,
+                roi: d.roi,
+                avgWin: d.avg_overall_win,
+                avgLoss: d.avg_overall_loss,
+                successBatchesPct: d.pct_success_batches,
+                failedBatchesPct: d.pct_failed_batches,
+                noActionBatchesPct: d.pct_no_action_batches,
+                forcedWinPct: d.pct_forced_win,
+                forcedLossPct: d.pct_forced_loss
+            }
+        };
+
+        return JSON.stringify(results, null, 2);
     }
 
     function updateStats() {
@@ -1259,6 +1319,16 @@
         });
 
         shareButton.addEventListener('click', shareCurrentView);
+
+        document.getElementById('copy-json-button').addEventListener('click', () => {
+            const jsonResults = getOverallResultsJSON(activeAsset);
+            navigator.clipboard.writeText(jsonResults).then(() => {
+                alert('Overall results copied to clipboard as JSON!');
+            }).catch(err => {
+                console.error('Failed to copy JSON:', err);
+                alert('Failed to copy results. See console for details.');
+            });
+        });
 
         jumpToLatestButton.addEventListener('click', () => {
             // Step 1: Get all available model creation dates, newest first
