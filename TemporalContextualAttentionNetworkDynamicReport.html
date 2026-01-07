@@ -249,18 +249,18 @@
     let activeForecastDate;
     let activeStartDate;
     let activeEndDate;
-    let activeAsset = 'INDEXNASDAQ-_IXIC';
-    let cutLossPct = 0;
+    let activeAsset = 'QQQ';
+    let cutLossPct = 6;
     let fixedAmount = 10000;
     let feePerc = 0;
     let fixedFee = 0;
     let minGainPct = 0;
-    let edgeRiskMultiplier = 1.5;
-    let edgeMinAbs = 0.034;
-    let edgeVolFactor = 0.0;
-    let scaleParts = 4;
-    let scaleEntryStyle = 'low_bias';
-    let scaleExitStyle = 'even';
+    let edgeRiskMultiplier = 0.0;
+    let edgeMinAbs = 0.0001;
+    let edgeVolFactor = 0.00009;
+    let scaleParts = 1;
+    let scaleEntryStyle = 'even';
+    let scaleExitStyle = 'high_bias';
     let mergedChart = null;
 
     // --- DOM Elements ---
@@ -387,7 +387,7 @@
         // 1. Range-based risk (same as Python)
         const daily_range_pct = highs.map((h, i) => (h - lows[i]) / mids[i]);
         const avg_range_pct = daily_range_pct.reduce((a, b) => a + b, 0) / daily_range_pct.length;
-        const estimated_risk = Math.max(0.008, avg_range_pct * edge_risk_multiplier);
+        const estimated_risk = Math.max(0.0, avg_range_pct * edge_risk_multiplier);
 
         // 2. Optional volatility component
         let vol_component = 0;
@@ -687,7 +687,7 @@
             }
         }
         if (buyDay === -1) {
-            return { type: "failed", text: "Failed (No Fill)", color: "red" };
+            return { type: "noaction", text: "No Action (No Fill)", color: "orange" };
         }
 
         // Cut loss?
@@ -1159,24 +1159,24 @@
             const urlParams = new URLSearchParams(window.location.search);
 
             const erm = parseFloat(urlParams.get('edge_risk_multiplier'));
-            edgeRiskMultiplier = !isNaN(erm) ? erm : 1.5;
+            edgeRiskMultiplier = !isNaN(erm) ? erm : 0.0;
 
             const ema = parseFloat(urlParams.get('edge_min_abs'));
-            edgeMinAbs = !isNaN(ema) ? ema : 0.034;
+            edgeMinAbs = !isNaN(ema) ? ema : 0.0001;
 
             const evf = parseFloat(urlParams.get('edge_vol_factor'));
-            edgeVolFactor = !isNaN(evf) ? evf : 0.0;
+            edgeVolFactor = !isNaN(evf) ? evf : 0.00009;
 
             const sp = parseInt(urlParams.get('scale_parts'));
-            scaleParts = !isNaN(sp) ? sp : 4;
+            scaleParts = !isNaN(sp) ? sp : 1;
 
             const ses = urlParams.get('scale_entry_style');
             scaleEntryStyle = ses || "even";
 
             const sxs = urlParams.get('scale_exit_style');
-            scaleExitStyle = sxs || "even";
+            scaleExitStyle = sxs || "high_bias";
 
-            activeStartDate = urlParams.get('start_date') || minDate;
+            activeStartDate = urlParams.get('start_date') || "2025-01-01";
             if (new Date(activeStartDate) < new Date(minDate) || new Date(activeStartDate) > new Date(maxDate)) {
                 activeStartDate = minDate;
             }
@@ -1191,8 +1191,8 @@
                 activeForecastDate = minDate;
             }
 
-            cutLossPct = parseFloat(urlParams.get('cutloss_pct')) || 0;
-            if (isNaN(cutLossPct) || cutLossPct < 0) cutLossPct = 0;
+            cutLossPct = parseFloat(urlParams.get('cutloss_pct')) || 6;
+            if (isNaN(cutLossPct) || cutLossPct < 0) cutLossPct = 6;
 
             fixedAmount = parseFloat(urlParams.get('initial_capital')) || 10000;
             if (isNaN(fixedAmount) || fixedAmount < 1) fixedAmount = 10000;

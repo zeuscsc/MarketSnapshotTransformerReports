@@ -240,17 +240,17 @@
     let activeStartDate;
     let activeEndDate;
     let activeAsset = 'QQQ';
-    let cutLossPct = 0;
+    let cutLossPct = 6;
     let fixedAmount = 10000;
     let feePerc = 0;
     let fixedFee = 0;
     let minGainPct = 0;
     let edgeRiskMultiplier = 0.0;
-    let edgeMinAbs = 0.0;
-    let edgeVolFactor = 0.0;
+    let edgeMinAbs = 0.0001;
+    let edgeVolFactor = 0.00009;
     let scaleParts = 1;
     let scaleEntryStyle = 'even';
-    let scaleExitStyle = 'even';
+    let scaleExitStyle = 'high_bias';
     let profitChart = null;
     let successfulChart = null;
     let roiChart = null;
@@ -374,7 +374,7 @@
         // 1. Range-based risk (same as Python)
         const daily_range_pct = highs.map((h, i) => (h - lows[i]) / mids[i]);
         const avg_range_pct = daily_range_pct.reduce((a, b) => a + b, 0) / daily_range_pct.length;
-        const estimated_risk = Math.max(0.008, avg_range_pct * edge_risk_multiplier);
+        const estimated_risk = Math.max(0.0, avg_range_pct * edge_risk_multiplier);
 
         // 2. Optional volatility component
         let vol_component = 0;
