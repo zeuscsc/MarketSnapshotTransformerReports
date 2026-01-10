@@ -368,7 +368,18 @@
         const n = batch.length;
 
         // Expected return: from first mid to last mid
-        const expected_return = mids[n - 1] / mids[0] - 1.0;
+        const trend_return = mids[n - 1] / mids[0] - 1.0;
+
+        // Logic update: also consider buying at current low and selling at future high
+        let volatility_return = -1.0;
+        if (n > 1) {
+            const future_highs = highs.slice(1);
+            const max_future_high = Math.max(...future_highs);
+            volatility_return = (max_future_high / lows[0]) - 1.0;
+        }
+
+        const expected_return = Math.max(trend_return, volatility_return);
+
         if (expected_return <= 0) return { valid: false, reason: "no positive expected return" };
 
         // 1. Range-based risk (same as Python)
@@ -402,6 +413,8 @@
             valid: true,
             expected_return,
             required_edge,
+            trend_return,
+            volatility_return,
             batch_min_low: Math.min(...lows),
             batch_max_high: Math.max(...highs)
         };
@@ -472,8 +485,15 @@
                 // === 2. Define Scale-In & Scale-Out Levels ===
                 const lows = predictions.map(p => p.predicted_low);
                 const highs = predictions.map(p => p.predicted_high);
-                const entry_min = Math.min(...lows);
-                const entry_max = Math.max(...lows);
+                let entry_min = Math.min(...lows);
+                let entry_max = Math.max(...lows);
+                
+                // Adjust for volatility play (Day 0 low vs future high)
+                if (edgeResult.volatility_return > edgeResult.trend_return) {
+                    entry_min = lows[0];
+                }
+                if (entry_min > entry_max) entry_max = entry_min;
+                
                 const exit_min = Math.min(...highs);
                 const exit_max = Math.max(...highs);
 
@@ -520,7 +540,8 @@
                     const high_today = actualHighs[day];
 
                     // --- Scale-In Entries ---
-                    if (filled_entry_idx.size < scaleParts) {
+                    // NEW LOGIC: Only consider entries on the first day
+                    if (day === 0 && filled_entry_idx.size < scaleParts) {
                         for (let i = 0; i < scaleParts; i++) {
                             if (!filled_entry_idx.has(i) && low_today <= entry_levels[i]) {
                                 const usd = fixedAmount * entry_weights[i];

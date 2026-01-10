@@ -250,7 +250,7 @@
     let activeStartDate;
     let activeEndDate;
     let activeAsset = 'QQQ';
-    let cutLossPct = 6;
+    let cutLossPct = 0;
     let fixedAmount = 10000;
     let feePerc = 0;
     let fixedFee = 0;
@@ -381,7 +381,17 @@
         const n = batch.length;
 
         // Expected return: from first mid to last mid
-        const expected_return = mids[n - 1] / mids[0] - 1.0;
+        const trend_return = mids[n - 1] / mids[0] - 1.0;
+
+        // Logic update: also consider buying at current low and selling at future high
+        let volatility_return = -1.0;
+        if (n > 1) {
+            const future_highs = highs.slice(1);
+            const max_future_high = Math.max(...future_highs);
+            volatility_return = (max_future_high / lows[0]) - 1.0;
+        }
+
+        const expected_return = Math.max(trend_return, volatility_return);
         if (expected_return <= 0) return { valid: false, reason: "no positive expected return" };
 
         // 1. Range-based risk (same as Python)
@@ -415,7 +425,9 @@
             valid: true,
             expected_return,
             required_edge,
-            batch_min_low: Math.min(...lows),
+            trend_return,
+            volatility_return,
+            batch_min_low: Math.min(...lows), // Raw min, logic might adjust later
             batch_max_high: Math.max(...highs)
         };
     }
@@ -437,8 +449,15 @@
             // === 2. Define Scale-In & Scale-Out Levels ===
             const lows = batch.map(p => p.predicted_low);
             const highs = batch.map(p => p.predicted_high);
-            const entry_min = Math.min(...lows);
-            const entry_max = Math.max(...lows);
+            let entry_min = Math.min(...lows);
+            let entry_max = Math.max(...lows);
+            
+            // Adjust for volatility play (Day 0 low vs future high)
+            if (edgeResult.volatility_return > edgeResult.trend_return) {
+                 entry_min = lows[0];
+            }
+            if (entry_min > entry_max) entry_max = entry_min;
+            
             const exit_min = Math.min(...highs);
             const exit_max = Math.max(...highs);
 
@@ -485,7 +504,8 @@
                 const high_today = actualHighs[day];
 
                 // --- Scale-In Entries ---
-                if (filled_entry_idx.size < scaleParts) {
+                // NEW LOGIC: Only consider entries on the first day
+                if (day === 0 && filled_entry_idx.size < scaleParts) {
                     for (let i = 0; i < scaleParts; i++) {
                         if (!filled_entry_idx.has(i) && low_today <= entry_levels[i]) {
                             const usd = fixedAmount * entry_weights[i];
@@ -1191,8 +1211,8 @@
                 activeForecastDate = minDate;
             }
 
-            cutLossPct = parseFloat(urlParams.get('cutloss_pct')) || 6;
-            if (isNaN(cutLossPct) || cutLossPct < 0) cutLossPct = 6;
+            cutLossPct = parseFloat(urlParams.get('cutloss_pct')) || 0;
+            if (isNaN(cutLossPct) || cutLossPct < 0) cutLossPct = 0;
 
             fixedAmount = parseFloat(urlParams.get('initial_capital')) || 10000;
             if (isNaN(fixedAmount) || fixedAmount < 1) fixedAmount = 10000;
