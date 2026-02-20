@@ -485,13 +485,11 @@
                 // === 2. Define Scale-In & Scale-Out Levels ===
                 const lows = predictions.map(p => p.predicted_low);
                 const highs = predictions.map(p => p.predicted_high);
-                let entry_min = Math.min(...lows);
+                
+                // Modified: Always anchor entry to Day 1 Prediction (lows[0])
+                let entry_min = lows[0];
                 let entry_max = Math.max(...lows);
                 
-                // Adjust for volatility play (Day 0 low vs future high)
-                if (edgeResult.volatility_return > edgeResult.trend_return) {
-                    entry_min = lows[0];
-                }
                 if (entry_min > entry_max) entry_max = entry_min;
                 
                 const exit_min = Math.min(...highs);
@@ -508,7 +506,13 @@
                     entry_weights = Array(scaleParts).fill(1 / scaleParts);
                 }
 
-                const exit_levels = linspace(exit_min, exit_max, scaleParts);
+                // Modified: If scaleParts=1, target the Highest High (Max Profit).
+                let exit_levels;
+                if (scaleParts === 1) {
+                    exit_levels = [exit_max];
+                } else {
+                    exit_levels = linspace(exit_min, exit_max, scaleParts);
+                }
                 
                 let exit_weights;
                 if (scaleExitStyle === "high_bias") {
@@ -538,6 +542,31 @@
                 for (let day = 0; day < n; day++) {
                     const low_today = actualLows[day];
                     const high_today = actualHighs[day];
+
+                    // --- Forward Fill / Non-Trading Day Detector ---
+                    let is_stale = false;
+
+                    // 1. Weekend Check on Entry Day (Day 0)
+                    // The prediction 'date' property usually corresponds to the prediction target date 
+                    // or we check the batch's creation date + index.
+                    // predictions[day].prediction_date is present in the data structure based on typical output.
+                    if (predictions[day].prediction_date) {
+                         const d = new Date(predictions[day].prediction_date);
+                         const dayOfWeek = d.getDay(); // 0=Sun, 6=Sat
+                         if (dayOfWeek === 0 || dayOfWeek === 6) is_stale = true;
+                    }
+
+                    // 2. Identical Candle Check (Market Closed / Holiday)
+                    if (day > 0) {
+                        if (actualOpens[day] === actualOpens[day-1] &&
+                            actualHighs[day] === actualHighs[day-1] &&
+                            actualLows[day]  === actualLows[day-1] &&
+                            actualCloses[day] === actualCloses[day-1]) {
+                            is_stale = true;
+                        }
+                    }
+
+                    if (is_stale) continue;
 
                     // --- Scale-In Entries ---
                     // NEW LOGIC: Only consider entries on the first day
@@ -569,7 +598,8 @@
                     }
 
                     // --- Scale-Out Exits ---
-                    if (total_shares > 0 && filled_exit_idx.size < scaleParts) {
+                    // Modified: Strictly prevent same-day exit to ensure "sellability"
+                    if (day > 0 && total_shares > 0 && filled_exit_idx.size < scaleParts) {
                         for (let i = 0; i < scaleParts; i++) {
                             if (!filled_exit_idx.has(i) && high_today >= exit_levels[i]) {
                                 const weight = exit_weights[i];

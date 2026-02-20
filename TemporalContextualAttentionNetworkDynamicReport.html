@@ -222,7 +222,11 @@
                         </button>
                         <button id="copy-json-button" class="w-full bg-teal-600 text-white px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 hover:bg-teal-500 flex items-center justify-center gap-2">
                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM5 11a1 1 0 100 2h4a1 1 0 100-2H5z" /></svg>
-                            Copy JSON
+                            Copy Overall Data
+                        </button>
+                        <button id="btn-copy-batch-details" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 flex items-center justify-center gap-2" style="display: none;">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                            Copy Batch JSON
                         </button>
                     </div>
                 </div>
@@ -267,6 +271,7 @@
     const mergedContainer = document.querySelector("#mergedChart");
     const subtitle = document.getElementById('subtitle');
     const batchTypeElement = document.getElementById('batch-type');
+    const btnCopyBatchDetails = document.getElementById('btn-copy-batch-details');
     const suggestedPricesElement = document.getElementById('suggested-prices');
     let assetButtons = document.querySelectorAll('.asset-btn');
     const forecastDatePicker = document.getElementById('forecast-date-picker');
@@ -427,7 +432,7 @@
             required_edge,
             trend_return,
             volatility_return,
-            batch_min_low: Math.min(...lows), // Raw min, logic might adjust later
+            batch_min_low: lows[0], // Modified: specific to Day 1 only
             batch_max_high: Math.max(...highs)
         };
     }
@@ -472,7 +477,12 @@
                 entry_weights = Array(scaleParts).fill(1 / scaleParts);
             }
 
-            const exit_levels = linspace(exit_min, exit_max, scaleParts);
+            let exit_levels;
+            if (scaleParts === 1) {
+                exit_levels = [Math.max(...highs)];
+            } else {
+                exit_levels = linspace(exit_min, exit_max, scaleParts);
+            }
             
             let exit_weights;
             if (scaleExitStyle === "high_bias") {
@@ -502,6 +512,28 @@
             for (let day = 0; day < n; day++) {
                 const low_today = actualLows[day];
                 const high_today = actualHighs[day];
+
+                // --- Forward Fill / Non-Trading Day Detector ---
+                let is_stale = false;
+
+                // 1. Weekend Check on Entry Day (Day 0)
+                if (batch[day].prediction_date) {
+                        const d = new Date(batch[day].prediction_date);
+                        const dayOfWeek = d.getDay(); // 0=Sun, 6=Sat
+                        if (dayOfWeek === 0 || dayOfWeek === 6) is_stale = true;
+                }
+
+                // 2. Identical Candle Check (Market Closed / Holiday)
+                if (day > 0) {
+                    if (actualOpens[day] === actualOpens[day-1] &&
+                        actualHighs[day] === actualHighs[day-1] &&
+                        actualLows[day]  === actualLows[day-1] &&
+                        actualCloses[day] === actualCloses[day-1]) {
+                        is_stale = true;
+                    }
+                }
+
+                if (is_stale) continue;
 
                 // --- Scale-In Entries ---
                 // NEW LOGIC: Only consider entries on the first day
@@ -533,7 +565,7 @@
                 }
 
                 // --- Scale-Out Exits ---
-                if (total_shares > 0 && filled_exit_idx.size < scaleParts) {
+                if (day > 0 && total_shares > 0 && filled_exit_idx.size < scaleParts) {
                     for (let i = 0; i < scaleParts; i++) {
                         if (!filled_exit_idx.has(i) && high_today >= exit_levels[i]) {
                             const weight = exit_weights[i];
@@ -700,7 +732,8 @@
 
         // Buy fill?
         let buyDay = -1;
-        for (let i = 0; i < n; i++) {
+        // Modified: Only check the first day for entry to maximize time for target hit
+        for (let i = 0; i < 1; i++) { 
             if (batch[i].actual_low <= batch_min_low) {
                 buyDay = i;
                 break;
@@ -953,6 +986,7 @@
             mergedContainer.innerHTML = `<div class="flex items-center justify-center h-full"><p class="text-gray-400">No data available for ${activeAsset} on ${activeForecastDate}.</p></div>`;
             batchTypeElement.textContent = '';
             suggestedPricesElement.textContent = '';
+            if (btnCopyBatchDetails) btnCopyBatchDetails.style.display = 'none';
             return;
         } else {
             mergedContainer.innerHTML = '';
@@ -968,6 +1002,34 @@
             batchInfo.color === "red" ? "#ef4444" :
             batchInfo.color === "orange" ? "#f97316" :
             batchInfo.color === "blue" ? "#3b82f6" : "#9ca3af";
+
+        if (btnCopyBatchDetails) {
+            btnCopyBatchDetails.style.display = 'flex';
+            btnCopyBatchDetails.onclick = () => {
+                const dataToCopy = {
+                    batch_info: {
+                        type: batchInfo.text,
+                        color: batchInfo.color,
+                        date: activeForecastDate,
+                        asset: activeAsset
+                    },
+                    prices: chartData.map(d => ({
+                        date: d.prediction_date,
+                        actual_open: d.actual_open,
+                        actual_high: d.actual_high,
+                        actual_low: d.actual_low,
+                        actual_close: d.actual_close,
+                        predicted_open: d.predicted_open,
+                        predicted_high: d.predicted_high,
+                        predicted_low: d.predicted_low,
+                        predicted_close: d.predicted_close
+                    }))
+                };
+                navigator.clipboard.writeText(JSON.stringify(dataToCopy, null, 2))
+                    .then(() => alert("Batch JSON copied to clipboard!"))
+                    .catch(err => console.error("Failed to copy", err));
+            };
+        }
 
         subtitle.textContent = `Analysis for ${activeAsset} (Last observation: ${activeForecastDate}, Predictions for subsequent days)`;
 
